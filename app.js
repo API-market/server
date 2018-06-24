@@ -76,9 +76,14 @@ var router = express.Router();
 
 router.post('/users', function(req, res) {
   sequelize.sync()
-    .then(() => User.create(req.body))
-    .then(jane => {
-      res.json({ contact_id: jane["id"] });
+    .then(() => {
+      User.create(req.body)
+      .then(user => {
+        res.json({ user_id: user["id"] });
+      })
+      .catch(error => {
+        res.status(400).json({ error: "Bad Request", message: "Could not create user with " + JSON.stringify(req.body)})
+      })
     });
 });
 
