@@ -51,7 +51,8 @@ sequelize
   })
   const Result = sequelize.define('result', {
     poll_id: Sequelize.INTEGER,
-    answer: Sequelize.STRING
+    answer: Sequelize.STRING,
+    user_id: Sequelize.INTEGER
   });
   
   const User = sequelize.define('user', {
@@ -113,7 +114,7 @@ router.post('/polls/:poll_id', function(req, res) {
     .then(() => {
       Poll.findById(parseInt(req.params["poll_id"])).then(poll => {
         Result
-          .build({ poll_id: poll["id"], answer: req.body["answer"] })
+          .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
           .save()
           .then(result => {
             res.status(204).json();
