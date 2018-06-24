@@ -118,15 +118,19 @@ router.post('/polls/:poll_id', function(req, res) {
   sequelize.sync()
     .then(() => {
       Poll.findById(parseInt(req.params["poll_id"])).then(poll => {
-        Result
-          .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
-          .save()
-          .then(result => {
-            res.status(204).json();
-          })
-          .catch(error => {
-            console.log(error);
-          })
+        if(poll) {
+          Result
+            .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
+            .save()
+            .then(result => {
+              res.status(204).json();
+            })
+            .catch(error => {
+              console.log(error);
+            })
+          } else {
+            res.status(404).json({ error: "Not Found", message: "Poll not found"})
+          }
       })
     })
 });
