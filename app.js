@@ -87,7 +87,7 @@ router.post('/users', function(req, res) {
     });
 });
 
-router.get('/user/:id', function(req, res) {
+router.get('/users/:id', function(req, res) {
   User.findById(parseInt(req.params["id"])).then(user =>{
     res.json(user);
   })
@@ -108,7 +108,7 @@ router.post('/polls', function(req, res) {
     })
 });
 
-router.get('/poll/:id', function(req, res) {
+router.get('/polls/:id', function(req, res) {
   Poll.findById(parseInt(req.params["id"])).then(poll =>{
     res.json(poll);
   })
