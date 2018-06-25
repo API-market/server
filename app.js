@@ -176,7 +176,16 @@ router.post('/polls', function(req, res) {
 router.get('/polls/:id', function(req, res) {
   Poll.findById(parseInt(req.params["id"])).then(poll =>{
     if(poll) {
-      res.json(poll);
+      Result.findAndCountAll({ where: { poll_id: poll['id'] } }).then( results => {
+        var json_out = {
+          poll_id: poll['id'],
+          question: poll['question'],
+          answers: poll['answers'],
+          participant_count: results.count,
+          price: poll["price"]
+        }
+        res.json(json_out);
+      })
     } else {
       res.status(404).json({ error: "Not Found", message: "Poll not found"})
     }
