@@ -183,6 +183,30 @@ router.get('/polls/:id', function(req, res) {
   })
 });
 
+router.get('/polls', function(req, res) {
+  var where_params = [];
+  if(req.query["queryQuestion"]){
+    where_params.push({
+      question: {[Op.like]: "%" + req.query["queryQuestion"] + "%"}
+    });
+  }
+  var where_object = { where: Object.assign({}, ...where_params)}
+  where_object.attributes = [["id", "poll_id"], "question", "participant_count", "price" ];
+  Poll.findAll(where_object).then( poll => {
+    if (poll) {
+      var arr = [];
+      poll.forEach( element => {
+        arr.push(element.dataValues);
+      })
+      res.json(arr);
+    } else {
+      res.json();
+    }
+  }).catch(error => {
+    console.log(error);
+  });
+});
+
 router.post('/polls/:poll_id', function(req, res) {
   sequelize.sync()
     .then(() => {
