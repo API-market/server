@@ -132,6 +132,20 @@ router.get('/users', function(req, res) {
   });
 });
 
+router.put('/users/:id', function(req, res) {
+  User.findById(parseInt(req.params['id'])).then( user => {
+    if(user){
+      user.update(req.body).then(() => {
+        res.status(204).json();
+      }).catch(error => {
+        console.log(error);
+      })
+    } else {
+      res.status(404).json({ error: "Not Found", message: "User not found"})
+    }
+  });
+});
+
 router.post('/polls', function(req, res) {
   sequelize.sync()
     .then(() => {
