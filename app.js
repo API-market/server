@@ -31,6 +31,8 @@ sequelize
   
   const Poll = sequelize.define('poll', {
     question: Sequelize.STRING,
+    price: Sequelize.DOUBLE,
+    participant_count: { type: Sequelize.INTEGER, defaultValue: 0 },
     answers: {
       type: Sequelize.STRING, 
       get: function() {
