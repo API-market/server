@@ -3,6 +3,7 @@ const app = express();
 var bodyParser = require('body-parser');
 
 const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const sequelize = new Sequelize('database', 'username', 'password', {
   host: 'localhost',
   dialect: 'sqlite',
@@ -91,6 +92,44 @@ router.get('/users/:id', function(req, res) {
   User.findById(parseInt(req.params["id"])).then(user =>{
     res.json(user);
   })
+});
+
+router.get('/users', function(req, res) {
+  var where_params = [];
+  if(req.query["queryName"]){
+    where_params.push({
+        [Op.or]: [
+          {firstName: {[Op.like]: "%" + req.query["queryName"] + "%"}},
+          {lastName: {[Op.like]: "%" + req.query["queryName"] + "%"}}
+        ]
+    });
+  }
+  if(req.query["querySchool"]){
+    where_params.push({
+      school: {[Op.like]: "%" + req.query["querySchool"] + "%"}
+    });
+  }
+  if(req.query["queryEmployer"]){
+    where_params.push({
+      employer: {[Op.like]: "%" + req.query["queryEmployer"] + "%"}
+    });
+  }
+  if(req.query["queryEmail"]){
+    where_params.push({
+      email: req.query["queryEmail"]
+    });
+  }
+  if(req.query["queryPhone"]){
+    where_params.push({
+      phone: req.query["queryPhone"]
+    });
+  }
+  var where_object = { where: Object.assign({}, ...where_params)}
+  User.findAll(where_object).then( user => {
+    res.json(user);
+  }).catch(error => {
+    console.log(error);
+  });
 });
 
 router.post('/polls', function(req, res) {
