@@ -225,6 +225,7 @@ router.post('/polls/:poll_id', function(req, res) {
             .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
             .save()
             .then(result => {
+              poll.increment('participant_count')
               res.status(204).json();
             })
             .catch(error => {
