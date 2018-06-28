@@ -36,19 +36,19 @@ sequelize
     answers: {
       type: Sequelize.STRING, 
       get: function() {
-          return JSON.parse(this.getDataValue('answers'));
+        if (this.getDataValue('answers')) return JSON.parse(this.getDataValue('answers'));
       }, 
       set: function(val) {
-          return this.setDataValue('answers', JSON.stringify(val));
+        return this.setDataValue('answers', JSON.stringify(val));
       }
     },
     tags: {
       type: Sequelize.STRING, 
       get: function() {
-          return JSON.parse(this.getDataValue('tags'));
+        if (this.getDataValue('tags')) return JSON.parse(this.getDataValue('tags'));
       }, 
       set: function(val) {
-          return this.setDataValue('tags', JSON.stringify(val));
+        return this.setDataValue('tags', JSON.stringify(val));
       }
     }
   })
@@ -174,18 +174,20 @@ router.post('/polls', function(req, res) {
 });
 
 router.get('/polls/:id', function(req, res) {
-  Poll.findById(parseInt(req.params["id"])).then(poll =>{
+  Poll.find({
+    where: {
+      id: parseInt(req.params["id"])
+    },
+    attributes: [
+      ["id", "poll_id"],
+      "question",
+      "answers",
+      "participant_count",
+      "price"
+    ]
+  }).then(poll =>{
     if(poll) {
-      Result.findAndCountAll({ where: { poll_id: poll['id'] } }).then( results => {
-        var json_out = {
-          poll_id: poll['id'],
-          question: poll['question'],
-          answers: poll['answers'],
-          participant_count: results.count,
-          price: poll["price"]
-        }
-        res.json(json_out);
-      })
+      res.json(poll);
     } else {
       res.status(404).json({ error: "Not Found", message: "Poll not found"})
     }
@@ -200,14 +202,10 @@ router.get('/polls', function(req, res) {
     });
   }
   var where_object = { where: Object.assign({}, ...where_params)}
-  where_object.attributes = [["id", "poll_id"], "question", "participant_count", "price" ];
+  where_object.attributes = [["id", "poll_id"], "question", "answers", "participant_count", "price" ];
   Poll.findAll(where_object).then( poll => {
     if (poll) {
-      var arr = [];
-      poll.forEach( element => {
-        arr.push(element.dataValues);
-      })
-      res.json(arr);
+      res.json(poll);
     } else {
       res.json();
     }
@@ -225,6 +223,7 @@ router.post('/polls/:poll_id', function(req, res) {
             .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
             .save()
             .then(result => {
+              poll.increment('participant_count')
               res.status(204).json();
             })
             .catch(error => {
