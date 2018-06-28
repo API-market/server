@@ -36,19 +36,19 @@ sequelize
     answers: {
       type: Sequelize.STRING, 
       get: function() {
-          return JSON.parse(this.getDataValue('answers'));
+        if (this.getDataValue('answers')) return JSON.parse(this.getDataValue('answers'));
       }, 
       set: function(val) {
-          return this.setDataValue('answers', JSON.stringify(val));
+        return this.setDataValue('answers', JSON.stringify(val));
       }
     },
     tags: {
       type: Sequelize.STRING, 
       get: function() {
-          return JSON.parse(this.getDataValue('tags'));
+        if (this.getDataValue('tags')) return JSON.parse(this.getDataValue('tags'));
       }, 
       set: function(val) {
-          return this.setDataValue('tags', JSON.stringify(val));
+        return this.setDataValue('tags', JSON.stringify(val));
       }
     }
   })
