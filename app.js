@@ -264,6 +264,14 @@ router.post('/polls/:poll_id/results', function(req, res) {
     })
 });
 
+router.post('/login', function(req, res) {
+  res.status(501).json();
+});
+
+router.post('/logout', function(req, res) {
+  res.status(501).json();
+});
+
 app.use('/v1', router);
 app.listen(3000);
 console.log('listening on port ' + 3000);
