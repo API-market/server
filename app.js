@@ -67,7 +67,8 @@ sequelize
     gender: Sequelize.STRING,
     school: Sequelize.STRING,
     employer: Sequelize.STRING,
-    balance: Sequelize.STRING
+    balance: Sequelize.STRING,
+    image: Sequelize.STRING
   });
 
 app.use(bodyParser.urlencoded({ extended: true }));
