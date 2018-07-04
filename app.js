@@ -290,6 +290,7 @@ router.get('/polls/:id', function(req, res) {
       ["id", "poll_id"],
       "question",
       "answers",
+      "tags",
       "participant_count",
       "price"
     ]
@@ -314,8 +315,13 @@ router.get('/polls', function(req, res) {
       question: {[Op.like]: "%" + req.query["queryQuestion"] + "%"}
     });
   }
+  if(req.query["queryTag"]){
+    where_params.push({
+      tags: {[Op.like]: "%" + req.query["queryTag"] + "%"}
+    });
+  }
   var where_object = { where: Object.assign({}, ...where_params)}
-  where_object.attributes = [["id", "poll_id"], "question", "answers", "participant_count", "price", "creator"];
+  where_object.attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price" ];
   Poll.findAll(where_object).then( poll => {
   if(poll) {
     res.json(poll);
