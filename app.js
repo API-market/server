@@ -1,3 +1,27 @@
+//
+//  Copyright (c) 2018, Respective Authors all rights reserved.
+//
+//  The MIT License
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to
+//  deal in the Software without restriction, including without limitation the
+//  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+//  sell copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+//  IN THE SOFTWARE.
+//
+
 const express = require('express');
 const app = express();
 var bodyParser = require('body-parser');
@@ -74,7 +98,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 var router = express.Router();
-
 
 
 router.post('/users', function(req, res) {
@@ -229,25 +252,36 @@ router.get('/polls', function(req, res) {
 });
 
 router.post('/polls/:poll_id', function(req, res) {
-  sequelize.sync()
-    .then(() => {
-      Poll.findById(parseInt(req.params["poll_id"])).then(poll => {
-        if(poll) {
-          Result
-            .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
-            .save()
-            .then(result => {
-              poll.increment('participant_count')
-              res.status(204).json();
-            })
-            .catch(error => {
-              console.log(error);
-            })
-          } else {
-            res.status(404).json({ error: "Not Found", message: "Poll not found"})
-          }
-      })
-    })
+
+  User.findById(parseInt(req.body["user_id"])).then(user =>{
+    if(user)
+    {
+      sequelize.sync()
+        .then(() => {
+          Poll.findById(parseInt(req.params["poll_id"])).then(poll => {
+            if(poll) {
+              Result
+                .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
+                .save()
+                .then(result => {
+                  poll.increment('participant_count')
+                  res.status(204).json();
+                })
+                .catch(error => {
+                  console.log(error);
+                })
+              } else {
+                res.status(404).json({ error: "Not Found", message: "Poll not found"})
+              }
+          })
+        })
+    }
+    else {
+      res.status(404).json({ error: "Not Found", message: "User not found"})
+    }
+  }).catch(error => {
+      res.status(404).json({ error: "Not Found", message: "Users table doesn't exist"})
+  });
 });
 
 router.post('/polls/:poll_id/results', function(req, res) {
