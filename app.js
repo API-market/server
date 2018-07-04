@@ -27,26 +27,26 @@ sequelize
   .catch(err => {
     console.error('Unable to connect to the database:', err);
   });
-  
-  
+
+
   const Poll = sequelize.define('poll', {
     question: Sequelize.STRING,
     price: Sequelize.DOUBLE,
     participant_count: { type: Sequelize.INTEGER, defaultValue: 0 },
     answers: {
-      type: Sequelize.STRING, 
+      type: Sequelize.STRING,
       get: function() {
         if (this.getDataValue('answers')) return JSON.parse(this.getDataValue('answers'));
-      }, 
+      },
       set: function(val) {
         return this.setDataValue('answers', JSON.stringify(val));
       }
     },
     tags: {
-      type: Sequelize.STRING, 
+      type: Sequelize.STRING,
       get: function() {
         if (this.getDataValue('tags')) return JSON.parse(this.getDataValue('tags'));
-      }, 
+      },
       set: function(val) {
         return this.setDataValue('tags', JSON.stringify(val));
       }
@@ -57,7 +57,7 @@ sequelize
     answer: Sequelize.STRING,
     user_id: Sequelize.INTEGER
   });
-  
+
   const User = sequelize.define('user', {
     firstName: Sequelize.STRING,
     lastName: Sequelize.STRING,
@@ -92,8 +92,16 @@ router.post('/users', function(req, res) {
 
 router.get('/users/:id', function(req, res) {
   User.findById(parseInt(req.params["id"])).then(user =>{
-    res.json(user);
-  })
+    if(user)
+    {
+      res.json(user);
+    }
+    else {
+      res.status(404).json({ error: "Not Found", message: "User not found"})
+    }
+  }).catch(error => {
+      res.status(404).json({ error: "Not Found", message: "Users table doesn't exist"})
+  });
 });
 
 router.get('/users', function(req, res) {
@@ -128,9 +136,15 @@ router.get('/users', function(req, res) {
   }
   var where_object = { where: Object.assign({}, ...where_params)}
   User.findAll(where_object).then( user => {
+    if(user) {
     res.json(user);
+  }
+  else
+  {
+    res.status(404).json({ error: "Not Found", message: "User not found"})
+  }
   }).catch(error => {
-    console.log(error);
+      res.status(404).json({ error: "Not Found", message: "Users table doesn't exist"})
   });
 });
 
