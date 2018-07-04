@@ -136,7 +136,7 @@ router.get('/users', function(req, res) {
   }
   var where_object = { where: Object.assign({}, ...where_params)}
   User.findAll(where_object).then( user => {
-    if(user) {
+  if(user) {
     res.json(user);
   }
   else
@@ -218,13 +218,15 @@ router.get('/polls', function(req, res) {
   var where_object = { where: Object.assign({}, ...where_params)}
   where_object.attributes = [["id", "poll_id"], "question", "answers", "participant_count", "price" ];
   Poll.findAll(where_object).then( poll => {
-    if (poll) {
-      res.json(poll);
-    } else {
-      res.json();
-    }
+  if(poll) {
+    res.json(poll);
+  }
+  else
+  {
+    res.status(404).json({ error: "Not Found", message: "Poll not found"})
+  }
   }).catch(error => {
-    console.log(error);
+      res.status(404).json({ error: "Not Found", message: "poll table doesn't exist"})
   });
 });
 
