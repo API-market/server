@@ -32,6 +32,7 @@ sequelize
   const Poll = sequelize.define('poll', {
     question: Sequelize.STRING,
     price: Sequelize.DOUBLE,
+    price: { type: Sequelize.DOUBLE, defaultValue: 0 },
     participant_count: { type: Sequelize.INTEGER, defaultValue: 0 },
     answers: {
       type: Sequelize.STRING,
@@ -238,6 +239,7 @@ router.post('/polls/:poll_id', function(req, res) {
             .save()
             .then(result => {
               poll.increment('participant_count')
+              poll.increment('price', { by: 0.01 })
               res.status(204).json();
             })
             .catch(error => {
