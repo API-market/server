@@ -67,7 +67,14 @@ sequelize
     gender: Sequelize.STRING,
     school: Sequelize.STRING,
     employer: Sequelize.STRING,
-    balance: Sequelize.STRING,
+    balance: Sequelize.STRING
+  });
+
+  const ProfileImage = sequelize.define('profile_image', {
+    user_id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true
+    },
     image: Sequelize.STRING
   });
 
@@ -76,7 +83,66 @@ app.use(bodyParser.json());
 
 var router = express.Router();
 
+router.post('/profile_images/', function(req, res) {
+  User.findById(parseInt(req.body["user_id"])).then(user =>{
+    if(user)
+    {
+      sequelize.sync()
+        .then(() => {
+          ProfileImage.create(req.body)
+          .then(() => {
+            res.json({ user_id: req.body["user_id"] });
+          })
+          .catch(error => {
+            res.status(400).json({ error: "Bad Request", message: "Could not create image with " + JSON.stringify(req.body)})
+          })
+        });
+    }
+    else {
+      res.status(404).json({ error: "Not Found", message: "User not found"})
+    }
+  }).catch(error => {
+      res.status(404).json({ error: "Not Found", message: "Users table doesn't exist"})
+  });
+});
 
+router.get('/profile_images/:id', function(req, res) {
+  ProfileImage.findOne({ where: {user_id: parseInt(req.params["id"])} }).then(profileImage => {
+    if(profileImage)
+    {
+      res.json(profileImage);
+    }
+    else {
+      res.status(404).json({ error: "Not Found", message: "Profile image not found"})
+    }
+  }).catch(error => {
+      res.status(404).json({ error: "Not Found", message: "profile_image table doesn't exist"})
+  });
+});
+
+router.put('/profile_images/:id', function(req, res) {
+  ProfileImage.findOne({ where: {user_id: parseInt(req.params["id"])} }).then(profileImage => {
+    if(profileImage){
+      profileImage.update(req.body).then(() => {
+        res.status(204).json();
+      }).catch(error => {
+        console.log(error);
+      })
+    } else {
+      res.status(404).json({ error: "Not Found", message: "Profile image not found"})
+    }
+  });
+});
+
+router.delete('/profile_images/:id', function(req, res) {
+  ProfileImage.destroy({ where: {user_id: parseInt(req.params["id"])} }).then(profileImage => {
+    if (profileImage) {
+      res.status(202).json();
+    } else {
+      res.status(404).json({ error: "Not Found", message: "Profile Image not found"})
+    }
+  });
+});
 
 router.post('/users', function(req, res) {
   sequelize.sync()
