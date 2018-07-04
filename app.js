@@ -50,7 +50,8 @@ sequelize
       set: function(val) {
         return this.setDataValue('tags', JSON.stringify(val));
       }
-    }
+    },
+    creator: Sequelize.INTEGER
   })
   const Result = sequelize.define('result', {
     poll_id: Sequelize.INTEGER,
@@ -210,13 +211,18 @@ router.get('/polls/:id', function(req, res) {
 
 router.get('/polls', function(req, res) {
   var where_params = [];
+  if(req.query["queryCreator"]){
+    where_params.push({
+      creator: req.query["queryCreator"]
+    });
+  }
   if(req.query["queryQuestion"]){
     where_params.push({
       question: {[Op.like]: "%" + req.query["queryQuestion"] + "%"}
     });
   }
   var where_object = { where: Object.assign({}, ...where_params)}
-  where_object.attributes = [["id", "poll_id"], "question", "answers", "participant_count", "price" ];
+  where_object.attributes = [["id", "poll_id"], "question", "answers", "participant_count", "price", "creator"];
   Poll.findAll(where_object).then( poll => {
     if (poll) {
       res.json(poll);
