@@ -321,7 +321,7 @@ router.get('/polls', function(req, res) {
     });
   }
   var where_object = { where: Object.assign({}, ...where_params)}
-  where_object.attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price" ];
+  where_object.attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator"];
   Poll.findAll(where_object).then( poll => {
   if(poll) {
     res.json(poll);
