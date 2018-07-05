@@ -1,3 +1,27 @@
+//
+//  Copyright (c) 2018, Respective Authors all rights reserved.
+//
+//  The MIT License
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to
+//  deal in the Software without restriction, including without limitation the
+//  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+//  sell copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+//  IN THE SOFTWARE.
+//
+
 const express = require('express');
 const app = express();
 var bodyParser = require('body-parser');
@@ -51,7 +75,8 @@ sequelize
       set: function(val) {
         return this.setDataValue('tags', JSON.stringify(val));
       }
-    }
+    },
+    creator: Sequelize.INTEGER
   })
   const Result = sequelize.define('result', {
     poll_id: Sequelize.INTEGER,
@@ -71,12 +96,80 @@ sequelize
     balance: Sequelize.STRING
   });
 
+  const ProfileImage = sequelize.define('profile_image', {
+    user_id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true
+    },
+    image: Sequelize.STRING
+  });
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 var router = express.Router();
 
+router.post('/profile_images/', function(req, res) {
+  User.findById(parseInt(req.body["user_id"])).then(user =>{
+    if(user)
+    {
+      sequelize.sync()
+        .then(() => {
+          ProfileImage.create(req.body)
+          .then(() => {
+            res.json({ user_id: req.body["user_id"] });
+          })
+          .catch(error => {
+            res.status(400).json({ error: "Bad Request", message: "Could not create image with " + JSON.stringify(req.body)})
+          })
+        });
+    }
+    else {
+      res.status(404).json({ error: "Not Found", message: "User not found"})
+    }
+  }).catch(error => {
+      res.status(404).json({ error: "Not Found", message: "Users table doesn't exist"})
+  });
+});
 
+router.get('/profile_images/:id', function(req, res) {
+  ProfileImage.findOne({ where: {user_id: parseInt(req.params["id"])} }).then(profileImage => {
+    if(profileImage)
+    {
+      res.json(profileImage);
+    }
+    else {
+      res.status(404).json({ error: "Not Found", message: "Profile image not found"})
+    }
+  }).catch(error => {
+      res.status(404).json({ error: "Not Found", message: "profile_image table doesn't exist"})
+  });
+});
+
+router.put('/profile_images/:id', function(req, res) {
+  ProfileImage.findOne({ where: {user_id: parseInt(req.params["id"])} }).then(profileImage => {
+    if(profileImage){
+      profileImage.update(req.body).then(() => {
+        res.status(204).json();
+      }).catch(error => {
+        console.log(error);
+      })
+    } else {
+      res.status(404).json({ error: "Not Found", message: "Profile image not found"})
+    }
+  });
+});
+
+
+router.delete('/profile_images/:id', function(req, res) {
+  ProfileImage.destroy({ where: {user_id: parseInt(req.params["id"])} }).then(profileImage => {
+    if (profileImage) {
+      res.status(202).json();
+    } else {
+      res.status(404).json({ error: "Not Found", message: "Profile Image not found"})
+    }
+  });
+});
 
 router.post('/users', function(req, res) {
   sequelize.sync()
@@ -137,7 +230,7 @@ router.get('/users', function(req, res) {
   }
   var where_object = { where: Object.assign({}, ...where_params)}
   User.findAll(where_object).then( user => {
-    if(user) {
+  if(user) {
     res.json(user);
   }
   else
@@ -211,45 +304,61 @@ router.get('/polls/:id', function(req, res) {
 
 router.get('/polls', function(req, res) {
   var where_params = [];
+  if(req.query["queryCreator"]){
+    where_params.push({
+      creator: req.query["queryCreator"]
+    });
+  }
   if(req.query["queryQuestion"]){
     where_params.push({
       question: {[Op.like]: "%" + req.query["queryQuestion"] + "%"}
     });
   }
   var where_object = { where: Object.assign({}, ...where_params)}
-  where_object.attributes = [["id", "poll_id"], "question", "answers", "participant_count", "price" ];
+  where_object.attributes = [["id", "poll_id"], "question", "answers", "participant_count", "price", "creator"];
   Poll.findAll(where_object).then( poll => {
-    if (poll) {
-      res.json(poll);
-    } else {
-      res.json();
-    }
+  if(poll) {
+    res.json(poll);
+  }
+  else
+  {
+    res.status(404).json({ error: "Not Found", message: "Poll not found"})
+  }
   }).catch(error => {
-    console.log(error);
+      res.status(404).json({ error: "Not Found", message: "poll table doesn't exist"})
   });
 });
 
 router.post('/polls/:poll_id', function(req, res) {
-  sequelize.sync()
-    .then(() => {
-      Poll.findById(parseInt(req.params["poll_id"])).then(poll => {
-        if(poll) {
-          Result
-            .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
-            .save()
-            .then(result => {
-              poll.increment('participant_count')
-              poll.increment('price', { by: 0.01 })
-              res.status(204).json();
-            })
-            .catch(error => {
-              console.log(error);
-            })
-          } else {
-            res.status(404).json({ error: "Not Found", message: "Poll not found"})
-          }
-      })
-    })
+  User.findById(parseInt(req.body["user_id"])).then(user =>{
+    if(user)
+    {
+      sequelize.sync()
+        .then(() => {
+          Poll.findById(parseInt(req.params["poll_id"])).then(poll => {
+            if(poll) {
+              Result
+                .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
+                .save()
+                .then(result => {
+                  poll.increment('participant_count')
+                  res.status(204).json();
+                })
+                .catch(error => {
+                  console.log(error);
+                })
+              } else {
+                res.status(404).json({ error: "Not Found", message: "Poll not found"})
+              }
+          })
+        })
+    }
+    else {
+      res.status(404).json({ error: "Not Found", message: "User not found"})
+    }
+  }).catch(error => {
+      res.status(404).json({ error: "Not Found", message: "Users table doesn't exist"})
+  });
 });
 
 router.post('/polls/:poll_id/results', function(req, res) {
