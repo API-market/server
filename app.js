@@ -25,6 +25,8 @@
 const express = require('express');
 const app = express();
 var bodyParser = require('body-parser');
+var bcrypt = require('bcrypt');
+var jwt = require('jsonwebtoken');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
