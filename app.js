@@ -92,7 +92,19 @@ sequelize
   const User = sequelize.define('user', {
     firstName: Sequelize.STRING,
     lastName: Sequelize.STRING,
-    email: Sequelize.STRING,
+    email: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      unique: true
+    },
+    password: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      set: function(val) {
+        if(val)
+          return this.setDataValue('password', bcrypt.hashSync(val, bcrypt.genSaltSync(8)));
+      }
+    },
     phone: Sequelize.STRING,
     dob: Sequelize.STRING,
     gender: Sequelize.STRING,
@@ -100,6 +112,9 @@ sequelize
     employer: Sequelize.STRING,
     balance: Sequelize.STRING
   });
+  User.prototype.verifyPassword = function(password) {
+    return bcrypt.compareSync(password, this.password);
+  };
 
   const ProfileImage = sequelize.define('profile_image', {
     user_id: {
