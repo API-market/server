@@ -28,6 +28,9 @@ var bodyParser = require('body-parser');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 
+const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "test";
+const SEED_AUTH = process.env.SUPER_SECRET_KEY || "whatever";
+
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const sequelize = new Sequelize('database', 'username', 'password', {
