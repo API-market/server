@@ -433,6 +433,29 @@ router.post('/polls/:poll_id/results', function(req, res) {
     })
 });
 
+router.post('/logout', function(req, res) {
+  res.status(501).json();
+});
+
+router.post('/login', function(req, res) {
+  User.findOne( { where: { email: req.body["email"] } } ).then(function(user){
+    if(user.verifyPassword(req.body["password"])){
+      res.json(
+        {
+          token: jwt.sign(
+            {
+              user_id: user['id'],
+              iat: Math.floor(new Date() / 1000)
+            },
+            SUPER_SECRET_JWT_KEY
+          )
+        }
+      )
+    }
+  })
+});
+
+
 app.use('/v1', router);
 app.listen(3000);
 console.log('listening on port ' + 3000);
