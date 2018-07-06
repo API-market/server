@@ -30,3 +30,19 @@ THE SOFTWARE.
 $ npm install 
 $ npm start
 ```
+
+# Using JWT
+
+First login to get the JSON web token.
+```sh
+$ curl -H "Content-Type: application/json" --request POST --data '{"email":"some@email.com", "password":"some_password"}' localhost:3000/v1/login/
+
+{"token":"some.hashed.token"}
+```
+
+Then use the JWT in your header to access other endpoints. __KEEP YOUR JTW SECRET__
+```sh
+$ curl  -H "Authorization: Bearer some.hashed.token" localhost:3000/v1/users/1
+
+{"id":1,"email":"some@email.com"}
+```

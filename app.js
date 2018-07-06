@@ -25,6 +25,11 @@
 const express = require('express');
 const app = express();
 var bodyParser = require('body-parser');
+var bcrypt = require('bcrypt');
+var jwt = require('jsonwebtoken');
+
+const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "test";
+const SEED_AUTH = process.env.SUPER_SECRET_KEY || "whatever";
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -87,7 +92,19 @@ sequelize
   const User = sequelize.define('user', {
     firstName: Sequelize.STRING,
     lastName: Sequelize.STRING,
-    email: Sequelize.STRING,
+    email: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      unique: true
+    },
+    password: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      set: function(val) {
+        if(val)
+          return this.setDataValue('password', bcrypt.hashSync(val, bcrypt.genSaltSync(8)));
+      }
+    },
     phone: Sequelize.STRING,
     dob: Sequelize.STRING,
     gender: Sequelize.STRING,
@@ -95,6 +112,9 @@ sequelize
     employer: Sequelize.STRING,
     balance: Sequelize.STRING
   });
+  User.prototype.verifyPassword = function(password) {
+    return bcrypt.compareSync(password, this.password);
+  };
 
   const ProfileImage = sequelize.define('profile_image', {
     user_id: {
@@ -103,6 +123,19 @@ sequelize
     },
     image: Sequelize.STRING
   });
+
+sequelize.sync().then(() => {
+  User.create({
+    "email" : "lovely@gmail.com",
+    "password": SEED_AUTH
+  }).then(user => {
+    console.log("seeded with user with id " + user["id"])
+  })
+  .catch(error => {
+    console.log("Error seeding:");
+    console.log(error);
+  })
+})
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -185,7 +218,19 @@ router.post('/users', function(req, res) {
 });
 
 router.get('/users/:id', function(req, res) {
-  User.findById(parseInt(req.params["id"])).then(user =>{
+  User.findById(parseInt(req.params["id"]), {
+    attributes: [
+      "email",
+      "firstName",
+      "lastName",
+      "phone",
+      "dob",
+      "gender",
+      "school",
+      "employer",
+      "balance"
+    ]
+  }).then(user =>{
     if(user)
     {
       res.json(user);
@@ -228,7 +273,19 @@ router.get('/users', function(req, res) {
       phone: req.query["queryPhone"]
     });
   }
-  var where_object = { where: Object.assign({}, ...where_params)}
+  var where_object = { where: Object.assign({}, ...where_params),
+    attributes: [
+      "email",
+      "firstName",
+      "lastName",
+      "phone",
+      "dob",
+      "gender",
+      "school",
+      "employer",
+      "balance"
+    ]
+  }
   User.findAll(where_object).then( user => {
   if(user) {
     res.json(user);
@@ -395,6 +452,46 @@ router.post('/polls/:poll_id/results', function(req, res) {
     })
 });
 
+router.post('/logout', function(req, res) {
+  res.status(501).json();
+});
+
+router.post('/login', function(req, res) {
+  User.findOne( { where: { email: req.body["email"] } } ).then(function(user){
+    if(user.verifyPassword(req.body["password"])){
+      res.json(
+        {
+          token: jwt.sign(
+            {
+              user_id: user['id'],
+              iat: Math.floor(new Date() / 1000)
+            },
+            SUPER_SECRET_JWT_KEY
+          )
+        }
+      )
+    }
+  })
+});
+
+app.use(function (req, res, next) {
+  if(req.url.endsWith("/login") || req.url.endsWith("/login/")){
+    next()
+  } else {
+    var token = req.headers.authorization.split(" ")[1];
+    if(token){
+      try {
+        var decoded = jwt.verify(token, SUPER_SECRET_JWT_KEY);
+        next()
+      } catch(err) {
+        console.log(err)
+        res.status(401).json({ message: "Unauthorized: JWT token not provided"});
+      }
+    } else {
+      res.status(401).json({ message: "Unauthorized: JWT token not provided"});
+    }
+  }
+})
 app.use('/v1', router);
 app.listen(3000);
 console.log('listening on port ' + 3000);
