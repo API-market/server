@@ -205,7 +205,19 @@ router.post('/users', function(req, res) {
 });
 
 router.get('/users/:id', function(req, res) {
-  User.findById(parseInt(req.params["id"])).then(user =>{
+  User.findById(parseInt(req.params["id"]), {
+    attributes: [
+      "email",
+      "firstName",
+      "lastName",
+      "phone",
+      "dob",
+      "gender",
+      "school",
+      "employer",
+      "balance"
+    ]
+  }).then(user =>{
     if(user)
     {
       res.json(user);
@@ -248,7 +260,19 @@ router.get('/users', function(req, res) {
       phone: req.query["queryPhone"]
     });
   }
-  var where_object = { where: Object.assign({}, ...where_params)}
+  var where_object = { where: Object.assign({}, ...where_params),
+    attributes: [
+      "email",
+      "firstName",
+      "lastName",
+      "phone",
+      "dob",
+      "gender",
+      "school",
+      "employer",
+      "balance"
+    ]
+  }
   User.findAll(where_object).then( user => {
   if(user) {
     res.json(user);
