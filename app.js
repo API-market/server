@@ -124,6 +124,19 @@ sequelize
     image: Sequelize.STRING
   });
 
+sequelize.sync().then(() => {
+  User.create({
+    "email" : "lovely@gmail.com",
+    "password": SEED_AUTH
+  }).then(user => {
+    console.log("seeded with user with id " + user["id"])
+  })
+  .catch(error => {
+    console.log("Error seeding:");
+    console.log(error);
+  })
+})
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
