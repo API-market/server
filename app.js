@@ -33,6 +33,7 @@ var jwt = require('jsonwebtoken');
 
 const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "secret_test";
 const SEED_AUTH = process.env.SUPER_SECRET_KEY || "test";
+const PORT = 8081;
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -63,7 +64,6 @@ sequelize
 
   const Poll = sequelize.define('poll', {
     question: Sequelize.STRING,
-    price: Sequelize.DOUBLE,
     price: { type: Sequelize.DOUBLE, defaultValue: 0 },
     participant_count: { type: Sequelize.INTEGER, defaultValue: 0 },
     answers: {
@@ -406,6 +406,11 @@ router.post('/polls/:poll_id', function(req, res) {
         .then(() => {
           Poll.findById(parseInt(req.params["poll_id"])).then(poll => {
             if(poll) {
+              const clientAnswer = parseInt(req.body["answer"]);
+              if ((poll["answers"].length <= clientAnswer) || (clientAnswer < 0)) {
+                  res.status(400).json({ error: "Invalid Input", message: "Answer choice specified is invalid."});
+                  return;
+              }
               Result
                 .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
                 .save()
@@ -501,5 +506,5 @@ app.use(function (req, res, next) {
   }
 })
 app.use('/v1', router);
-app.listen(3000);
-console.log('listening on port ' + 3000);
+app.listen(PORT);
+console.log('listening on port ' + PORT);
