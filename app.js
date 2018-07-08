@@ -28,6 +28,8 @@ var bodyParser = require('body-parser');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 
+const PORT = 8081;
+
 const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "test";
 const SEED_AUTH = process.env.SUPER_SECRET_KEY || "whatever";
 
@@ -497,5 +499,5 @@ app.use(function (req, res, next) {
   }
 })
 app.use('/v1', router);
-app.listen(8081);
-console.log('listening on port ' + 8081);
+app.listen(PORT);
+console.log('listening on port ' + PORT);
