@@ -52,6 +52,11 @@ const sequelize = new Sequelize('database', 'username', 'password', {
   storage: 'database.sqlite'
 });
 
+const removeEmpty = (obj) => {
+  Object.keys(obj.dataValues).forEach((key) => (obj.dataValues[key] == null) && delete obj.dataValues[key]);
+  return obj;
+}
+
 sequelize
   .authenticate()
   .then(() => {
