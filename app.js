@@ -128,15 +128,21 @@ sequelize
   });
 
 sequelize.sync().then(() => {
-  User.create({
-    "email" : "admin@lumeos.io",
-    "password": SEED_AUTH
-  }).then(user => {
-    console.log("seeded with user with id " + user["id"])
-  })
-  .catch(error => {
-    console.log("Error seeding:");
-    console.log(error);
+  User.findOne( { where: { email: "admin@lumeos.io" } } ).then(user => {
+    if(user){
+      console.log("User with id " + user["id"] + " already exists")
+    } else {
+      User.create({
+        "email" : "admin@lumeos.io",
+        "password": SEED_AUTH
+      }).then(user => {
+        console.log("seeded with user with id " + user["id"])
+      })
+      .catch(error => {
+        console.log("Error seeding:");
+        console.log(error);
+      })
+    }
   })
 })
 
