@@ -25,13 +25,15 @@
 const express = require('express');
 const app = express();
 var bodyParser = require('body-parser');
+app.use(bodyParser.json({limit: '5mb'}));
+app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
+
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 
+const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "secret_test";
+const SEED_AUTH = process.env.SUPER_SECRET_KEY || "test";
 const PORT = 8081;
-
-const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "test";
-const SEED_AUTH = process.env.SUPER_SECRET_KEY || "whatever";
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -82,7 +84,7 @@ sequelize
         return this.setDataValue('tags', JSON.stringify(val));
       }
     },
-    creator: Sequelize.INTEGER
+    creator_id: Sequelize.INTEGER
   })
   const Result = sequelize.define('result', {
     poll_id: Sequelize.INTEGER,
@@ -127,7 +129,7 @@ sequelize
 
 sequelize.sync().then(() => {
   User.create({
-    "email" : "lovely@gmail.com",
+    "email" : "admin@lumeos.io",
     "password": SEED_AUTH
   }).then(user => {
     console.log("seeded with user with id " + user["id"])
@@ -154,6 +156,7 @@ router.post('/profile_images/', function(req, res) {
             res.json({ user_id: req.body["user_id"] });
           })
           .catch(error => {
+            console.log("error: " + error); 
             res.status(400).json({ error: "Bad Request", message: "Could not create image with " + JSON.stringify(req.body)})
           })
         });
@@ -213,6 +216,7 @@ router.post('/users', function(req, res) {
         res.json({ user_id: user["id"] });
       })
       .catch(error => {
+        console.log("error: " + error);
         res.status(400).json({ error: "Bad Request", message: "Could not create user with " + JSON.stringify(req.body)})
       })
     });
@@ -350,7 +354,8 @@ router.get('/polls/:id', function(req, res) {
       "answers",
       "tags",
       "participant_count",
-      "price"
+      "price",
+      "creator_id"
     ]
   }).then(poll =>{
     if(poll) {
@@ -365,7 +370,7 @@ router.get('/polls', function(req, res) {
   var where_params = [];
   if(req.query["queryCreator"]){
     where_params.push({
-      creator: req.query["queryCreator"]
+      creator_id: req.query["queryCreator"]
     });
   }
   if(req.query["queryQuestion"]){
@@ -379,7 +384,7 @@ router.get('/polls', function(req, res) {
     });
   }
   var where_object = { where: Object.assign({}, ...where_params)}
-  where_object.attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator"];
+  where_object.attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id"];
   Poll.findAll(where_object).then( poll => {
   if(poll) {
     res.json(poll);
@@ -464,7 +469,7 @@ router.post('/logout', function(req, res) {
 
 router.post('/login', function(req, res) {
   User.findOne( { where: { email: req.body["email"] } } ).then(function(user){
-    if(user.verifyPassword(req.body["password"])){
+    if(user && user.verifyPassword(req.body["password"])){
       res.json(
         {
           token: jwt.sign(
@@ -476,6 +481,8 @@ router.post('/login', function(req, res) {
           )
         }
       )
+    } else {
+      res.status(404).json({ error: "Not Found", message: "User not found or password is incorrect."})
     }
   })
 });
