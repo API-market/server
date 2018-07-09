@@ -459,19 +459,27 @@ router.post('/polls/:poll_id', function(req, res) {
                   res.status(400).json({ error: "Invalid Input", message: "Answer choice specified is invalid."});
                   return;
               }
-              Result
-                .build({ poll_id: poll["id"], answer: req.body["answer"], user_id: parseInt(req.body["user_id"])})
-                .save()
-                .then(result => {
-                  poll.increment('participant_count')
-                  res.status(204).json();
-                })
-                .catch(error => {
-                  console.log(error);
-                })
-              } else {
-                res.status(404).json({ error: "Not Found", message: "Poll not found"})
-              }
+              Result.findOrCreate({
+                where: {
+                  poll_id: parseInt(poll["id"]),
+                  user_id: parseInt(req.body["user_id"])
+                }
+              }).spread((result, created) => {
+                if(created){
+                  result.update( { answer: req.body["answer"] } ).then( resultNext => {
+                    poll.increment('participant_count');
+                    res.status(204).json();
+                  }).catch(error => {
+                    result.destroy();
+                    console.log(error);
+                  })
+                } else {
+                  res.status(400).json({ error: "Bad Request", message: "User already voted in this poll"})
+                }
+              })
+            } else {
+              res.status(404).json({ error: "Not Found", message: "Poll not found"})
+            }
           })
         })
     }
