@@ -52,6 +52,11 @@ const sequelize = new Sequelize('database', 'username', 'password', {
   storage: 'database.sqlite'
 });
 
+const removeEmpty = (obj) => {
+  Object.keys(obj.dataValues).forEach((key) => (obj.dataValues[key] == null) && delete obj.dataValues[key]);
+  return obj;
+}
+
 sequelize
   .authenticate()
   .then(() => {
@@ -179,7 +184,7 @@ router.get('/profile_images/:id', function(req, res) {
   ProfileImage.findOne({ where: {user_id: parseInt(req.params["id"])} }).then(profileImage => {
     if(profileImage)
     {
-      res.json(profileImage);
+      res.json(removeEmpty(profileImage));
     }
     else {
       res.status(404).json({ error: "Not Found", message: "Profile image not found"})
@@ -244,7 +249,7 @@ router.get('/users/:id', function(req, res) {
   }).then(user =>{
     if(user)
     {
-      res.json(user);
+      res.json(removeEmpty(user));
     }
     else {
       res.status(404).json({ error: "Not Found", message: "User not found"})
@@ -299,7 +304,7 @@ router.get('/users', function(req, res) {
   }
   User.findAll(where_object).then( user => {
   if(user) {
-    res.json(user);
+    res.json(removeEmpty(user));
   }
   else
   {
@@ -365,7 +370,7 @@ router.get('/polls/:id', function(req, res) {
     ]
   }).then(poll =>{
     if(poll) {
-      res.json(poll);
+      res.json(removeEmpty(poll));
     } else {
       res.status(404).json({ error: "Not Found", message: "Poll not found"})
     }
@@ -393,7 +398,7 @@ router.get('/polls', function(req, res) {
   where_object.attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id"];
   Poll.findAll(where_object).then( poll => {
   if(poll) {
-    res.json(poll);
+    res.json(removeEmpty(poll));
   }
   else
   {
@@ -459,11 +464,11 @@ router.post('/polls/:poll_id/results', function(req, res) {
           temp.forEach( element => {
             answers[element[0]] = element[1];
           })
-          res.json({
+          res.json(removeEmpty({
             poll_id: poll["id"],
             question: poll["question"],
             answers: answers
-          });
+          }));
         })
       })
     })
