@@ -383,19 +383,42 @@ router.get('/polls', function(req, res) {
       tags: {[Op.like]: "%" + req.query["queryTag"] + "%"}
     });
   }
-  var where_object = { where: Object.assign({}, ...where_params)}
-  where_object.attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id"];
-  Poll.findAll(where_object).then( poll => {
-  if(poll) {
-    res.json(poll);
-  }
-  else
-  {
-    res.status(404).json({ error: "Not Found", message: "Poll not found"})
-  }
-  }).catch(error => {
+  var where_object = {};
+  where_attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id"];
+  if(req.query["queryParticipant"]){
+    Result.findAll({ where: { user_id: parseInt(req.query["queryParticipant"])}, attributes: ["poll_id"]}).then( result =>{
+      if(!Array.isArray(result) || !result.length) {
+        res.status(404).json({ error: "Not Found", message: "Poll not found"})
+      } else {
+        where_params.push({
+          id: {[Op.or]: result.map(x => x.dataValues["poll_id"]) }
+        });
+        where_object = { where: Object.assign({}, ...where_params)}
+        where_object.attributes = where_attributes;
+        Poll.findAll(where_object).then( poll => {
+          if(poll) {
+            res.json(removeEmpty(poll));
+          } else {
+            res.status(404).json({ error: "Not Found", message: "Poll not found"})
+          }
+        })
+      }
+    })
+  } else {
+    where_object = { where: Object.assign({}, ...where_params)}
+    where_object.attributes = where_attributes;
+    Poll.findAll(where_object).then( poll => {
+      if(poll) {
+        res.json(removeEmpty(poll));
+      }
+      else
+      {
+        res.status(404).json({ error: "Not Found", message: "Poll not found"})
+      }
+    }).catch(error => {
       res.status(404).json({ error: "Not Found", message: "poll table doesn't exist"})
-  });
+    });
+  }
 });
 
 router.post('/polls/:poll_id', function(req, res) {
