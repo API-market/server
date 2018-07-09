@@ -52,6 +52,25 @@ const sequelize = new Sequelize('database', 'username', 'password', {
   storage: 'database.sqlite'
 });
 
+
+
+const removeEmptyObj = (obj) => {
+  if(obj)
+    Object.keys(obj.dataValues).forEach((key) => (obj.dataValues[key] == null) && delete obj.dataValues[key]);
+  return obj;
+}
+const removeEmpty = (obj) => {
+
+  if(Array.isArray(obj)){
+    obj.forEach( element => {
+      element = removeEmptyObj(element);
+    })
+  } else {
+    return removeEmptyObj(obj);
+  }
+  return obj;
+}
+
 sequelize
   .authenticate()
   .then(() => {
@@ -128,15 +147,21 @@ sequelize
   });
 
 sequelize.sync().then(() => {
-  User.create({
-    "email" : "admin@lumeos.io",
-    "password": SEED_AUTH
-  }).then(user => {
-    console.log("seeded with user with id " + user["id"])
-  })
-  .catch(error => {
-    console.log("Error seeding:");
-    console.log(error);
+  User.findOne( { where: { email: "admin@lumeos.io" } } ).then(user => {
+    if(user){
+      console.log("User with id " + user["id"] + " already exists")
+    } else {
+      User.create({
+        "email" : "admin@lumeos.io",
+        "password": SEED_AUTH
+      }).then(user => {
+        console.log("seeded with user with id " + user["id"])
+      })
+      .catch(error => {
+        console.log("Error seeding:");
+        console.log(error);
+      })
+    }
   })
 })
 
@@ -173,7 +198,7 @@ router.get('/profile_images/:id', function(req, res) {
   ProfileImage.findOne({ where: {user_id: parseInt(req.params["id"])} }).then(profileImage => {
     if(profileImage)
     {
-      res.json(profileImage);
+      res.json(removeEmpty(profileImage));
     }
     else {
       res.status(404).json({ error: "Not Found", message: "Profile image not found"})
@@ -238,7 +263,7 @@ router.get('/users/:id', function(req, res) {
   }).then(user =>{
     if(user)
     {
-      res.json(user);
+      res.json(removeEmpty(user));
     }
     else {
       res.status(404).json({ error: "Not Found", message: "User not found"})
@@ -293,7 +318,7 @@ router.get('/users', function(req, res) {
   }
   User.findAll(where_object).then( user => {
   if(user) {
-    res.json(user);
+    res.json(removeEmpty(user));
   }
   else
   {
@@ -359,7 +384,7 @@ router.get('/polls/:id', function(req, res) {
     ]
   }).then(poll =>{
     if(poll) {
-      res.json(poll);
+      res.json(removeEmpty(poll));
     } else {
       res.status(404).json({ error: "Not Found", message: "Poll not found"})
     }
@@ -476,11 +501,11 @@ router.post('/polls/:poll_id/results', function(req, res) {
           temp.forEach( element => {
             answers[element[0]] = element[1];
           })
-          res.json({
+          res.json(removeEmpty({
             poll_id: poll["id"],
             question: poll["question"],
             answers: answers
-          });
+          }));
         })
       })
     })
