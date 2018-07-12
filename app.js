@@ -380,7 +380,8 @@ router.get('/polls/:id', function(req, res) {
       "tags",
       "participant_count",
       "price",
-      "creator_id"
+      "creator_id",
+      "createdAt"
     ]
   }).then(poll =>{
     if(poll) {
@@ -409,7 +410,7 @@ router.get('/polls', function(req, res) {
     });
   }
   var where_object = {};
-  where_attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id"];
+  where_attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id", "createdAt"];
   if(req.query["queryParticipant"]){
     Result.findAll({ where: { user_id: parseInt(req.query["queryParticipant"])}, attributes: ["poll_id"]}).then( result =>{
       if(!Array.isArray(result) || !result.length) {
