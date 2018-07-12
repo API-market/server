@@ -21,7 +21,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 //  IN THE SOFTWARE.
 //
-
+var fs = require('fs');
 const express = require('express');
 const app = express();
 const cors = require('cors');
@@ -554,8 +554,16 @@ router.post('/login', function(req, res) {
   })
 });
 
+router.get('/faqs', function(req, res) {
+  var contents = fs.readFileSync('faq.json', 'utf8');
+  res.set('Content-Type', 'application/json').status(200).send(contents);
+});
+
 app.use(function (req, res, next) {
-  if(req.url.endsWith("/login") || req.url.endsWith("/login/")){
+  if(req.url.endsWith("/login")
+  || req.url.endsWith("/login/")
+  || req.url.endsWith("/faqs")
+  || req.url.endsWith("/faqs/")){
     next()
   } else {
     var token = req.headers.authorization.split(" ")[1];
