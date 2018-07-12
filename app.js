@@ -24,9 +24,19 @@
 
 const express = require('express');
 const app = express();
+const cors = require('cors');
+
 var bodyParser = require('body-parser');
 app.use(bodyParser.json({limit: '5mb'}));
 app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
+app.use(cors());
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
