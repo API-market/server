@@ -527,9 +527,6 @@ router.post('/polls/:poll_id/results', function(req, res) {
 
             User.findById(parseInt(req.body['user_id'])).then( user => {
                 if(user){
-                    if (user["balance"] < poll["price"]) {
-                        res.status(404).json({ error: "Bad request", message: "Not enough assets to buy a poll."})
-                    }
                     Transaction.findOrCreate({
                         where: {
                             poll_id: parseInt(poll["id"]),
@@ -537,6 +534,11 @@ router.post('/polls/:poll_id/results', function(req, res) {
                         }
                     }).spread((transaction, created) => {
                         if(created) {
+                            // have to check here, because its ok for user to see poll after he bough it, and have zero balance
+                            if (user["balance"] < poll["price"]) {
+                                res.status(404).json({ error: "Bad request", message: "Not enough assets to buy a poll."})
+                                return;
+                            }
                             user.decrement("balance", { by: poll["price"] } );
                             // TODO: In blockchain we will be sending amount to reserve account.
                         }
