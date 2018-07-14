@@ -65,8 +65,9 @@ const sequelize = new Sequelize('database', 'username', 'password', {
 
 
 const removeEmptyObj = (obj) => {
-  if(obj)
+  if(obj) {
     Object.keys(obj.dataValues).forEach((key) => (obj.dataValues[key] == null) && delete obj.dataValues[key]);
+  }
   return obj;
 }
 const removeEmpty = (obj) => {
@@ -142,7 +143,7 @@ sequelize
     gender: Sequelize.STRING,
     school: Sequelize.STRING,
     employer: Sequelize.STRING,
-    balance: Sequelize.STRING
+    balance: { type: Sequelize.DOUBLE, defaultValue: 10 }
   });
   User.prototype.verifyPassword = function(password) {
     return bcrypt.compareSync(password, this.password);
@@ -154,6 +155,12 @@ sequelize
         primaryKey: true
     },
     image: Sequelize.STRING
+  });
+
+  const Transaction = sequelize.define('transaction', {
+    poll_id: Sequelize.INTEGER,
+    user_id: Sequelize.INTEGER,
+    amount: Sequelize.DOUBLE 
   });
 
 sequelize.sync().then(() => {
@@ -479,6 +486,7 @@ router.post('/polls/:poll_id', function(req, res) {
                 if(created){
                   result.update( { answer: req.body["answer"] } ).then( resultNext => {
                     poll.increment('participant_count');
+                    poll.increment('price', { by: 0.01 })
                     res.status(204).json();
                   }).catch(error => {
                     result.destroy();
@@ -516,16 +524,44 @@ router.post('/polls/:poll_id/results', function(req, res) {
             temp[parseInt(element["answer"])] = [temp[parseInt(element["answer"])][0],temp[parseInt(element["answer"])][1] + 1];
           })
         }).then(() => {
-          var answers = {};
-          temp.forEach( element => {
-            answers[element[0]] = element[1];
-          })
-          res.json(removeEmpty({
-            poll_id: poll["id"],
-            question: poll["question"],
-            answers: answers
-          }));
-        })
+
+            User.findById(parseInt(req.body['user_id'])).then( user => {
+                if(user){
+                    Transaction.findOrCreate({
+                        where: {
+                            poll_id: parseInt(poll["id"]),
+                            user_id: parseInt(req.body["user_id"])
+                        }
+                    }).spread((transaction, created) => {
+                        if(created) {
+                            // have to check here, because its ok for user to see poll after he bough it, and have zero balance
+                            if (user["balance"] < poll["price"]) {
+                                res.status(404).json({ error: "Bad request", message: "Not enough assets to buy a poll."})
+                                return;
+                            }
+                            user.decrement("balance", { by: poll["price"] } );
+                            // TODO: In blockchain we will be sending amount to reserve account.
+                        }
+                        
+                        // if building this fails, its fine, user not goint to charged for subsequent requirests
+                        var answers = {};
+                        temp.forEach( element => {
+                          answers[element[0]] = element[1];
+                        })
+
+                        res.json({
+                                        poll_id: poll["id"],
+                                        question: poll["question"],
+                                        answers: answers
+                                  });
+
+                    }) // Transaction
+                } else {
+                    res.status(404).json({ error: "Not Found", message: "User not found"})
+                }
+            }); // User
+
+        }) // Poll
       })
     })
 });
