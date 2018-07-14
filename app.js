@@ -322,6 +322,7 @@ router.get('/users', function(req, res) {
   }
   var where_object = { where: Object.assign({}, ...where_params),
     attributes: [
+      "id",
       "email",
       "firstName",
       "lastName",
