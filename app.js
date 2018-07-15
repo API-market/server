@@ -44,6 +44,7 @@ var jwt = require('jsonwebtoken');
 const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "secret_test";
 const SEED_AUTH = process.env.SUPER_SECRET_KEY || "test";
 const PORT = 8081;
+const VERSION = 1;
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -80,6 +81,10 @@ const removeEmpty = (obj) => {
   }
   return obj;
 };
+
+const populateCreatorImage = (sequelizeObj) => {
+    return sequelizeObj.dataValues["creator_image"] = "/v" + VERSION + "/profile_images/" + sequelizeObj["creator_id"];
+}
 
 sequelize
   .authenticate()
@@ -325,7 +330,7 @@ router.get('/users', function (req, res) {
   var where_object = {
     where: Object.assign({}, ...where_params),
     attributes: [
-      "id",
+      ["id", "user_id"],
       "email",
       "firstName",
       "lastName",
@@ -405,6 +410,8 @@ router.get('/polls/:id', function (req, res) {
     ]
   }).then(poll => {
     if (poll) {
+      // this is strange, but mobile is lazy.
+      poll = populateCreatorImage(poll);
       res.json(removeEmpty(poll));
     } else {
       res.status(404).json({error: "Not Found", message: "Poll not found"})
@@ -446,6 +453,10 @@ router.get('/polls', function (req, res) {
         where_object.attributes = where_attributes;
         Poll.findAll(where_object).then(poll => {
           if (poll) {
+            // this is strange, but mobile is lazy.
+            poll.forEach(function(element) {
+              element = populateCreatorImage(element);
+            });
             res.json(removeEmpty(poll));
           } else {
             res.status(404).json({error: "Not Found", message: "Poll not found"})
@@ -458,6 +469,9 @@ router.get('/polls', function (req, res) {
     where_object.attributes = where_attributes;
     Poll.findAll(where_object).then(poll => {
       if (poll) {
+        poll.forEach(function(element) {
+          element = populateCreatorImage(element);
+        });
         res.json(removeEmpty(poll));
       }
       else {
@@ -579,6 +593,7 @@ router.post('/login', function (req, res) {
     if (user && user.verifyPassword(req.body["password"])) {
       res.json(
         {
+          user_id : user['id'],
           token: jwt.sign(
             {
               user_id: user['id'],
@@ -620,6 +635,6 @@ app.use(function (req, res, next) {
     }
   }
 });
-app.use('/v1', router);
+app.use('/v' + VERSION, router);
 app.listen(PORT);
 console.log('listening on port ' + PORT);
