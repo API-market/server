@@ -1,0 +1,487 @@
+{
+	"info": {
+		"_postman_id": "18b1ee43-fad7-4a44-b43f-44930ec0a28b",
+		"name": "Simple Test",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create first user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "bc5531f9-49b3-4c08-8561-fedcd71db922",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status is OK (200)\"] = responseCode.code === 200",
+							"",
+							"pm.test(\"user id \", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.user_id).to.equal(2)",
+							"});",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"firstName\" : \"Robert\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester7@lumeos.io\",\r\n  \"phone\" : \"1234\",\r\n  \"dob\" : \"19850423\",\r\n  \"gender\" : \"male/female/other\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State Universtiy\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testing\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/users",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"users"
+					]
+				},
+				"description": "Creates the first user and checks user id is 1"
+			},
+			"response": []
+		},
+		{
+			"name": "Validate first user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "781b0e69-d4f1-4528-b305-c9dfac582944",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status is ok\"] = responseCode.code === 200",
+							"",
+							"tests[\"Email field is present\"] = responseBody.has(\"email\");",
+							"tests[\"firstName field is present\"] = responseBody.has(\"firstName\");",
+							"tests[\"lastName field is present\"] = responseBody.has(\"lastName\");",
+							"tests[\"DOB field is present\"] = responseBody.has(\"dob\");",
+							"tests[\"Gender field is present\"] = responseBody.has(\"gender\");",
+							"tests[\"School field is present\"] = responseBody.has(\"school\");",
+							"tests[\"Employer field is present\"] = responseBody.has(\"employer\");",
+							"",
+							"pm.test(\"check fields not null\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.email).to.not.equal(\"\");",
+							"    pm.expect(jsonData.firstName).to.not.eql(\"\");",
+							"    pm.expect(jsonData.lastName).to.not.eql(\"\");",
+							"    pm.expect(jsonData.phone).to.not.eql(\"\");",
+							"    pm.expect(jsonData.dob).to.not.eql(\"\");",
+							"    pm.expect(jsonData.gender).to.not.eql(\"\");",
+							"    pm.expect(jsonData.school).to.not.eql(\"\");",
+							"    pm.expect(jsonData.employer).to.not.eql(\"\");",
+							"});",
+							"",
+							"// TODO: more accurate schema validation of email, DOB, phone etc.",
+							"",
+							"var schema = {",
+							"    \"type\" : \"object\",",
+							"    \"properties\" : {",
+							"              \"email\": {\"type\" : \"string\" } ,",
+							"              \"firstName\" : {\"type\" : \"string\" } ,",
+							"              \"lastName\" : {\"type\" : \"string\" } ,",
+							"              \"phone\" : {\"type\" : \"string\" } ,",
+							"              \"dob\" : {\"type\" : \"string\" } ,",
+							"              \"gender\" : {\"type\" : \"string\" } ,",
+							"              \"school\" : {\"type\" : \"string\" } ,",
+							"              \"employer\" : {\"type\" : \"string\" } ",
+							"        },",
+							"   // \"required\": [ \"email\", \"firstName\", \"lastName\", \"phone\", \"dob\", \"gender\",\"school\",\"employer\"]",
+							"};",
+							"",
+							"pm.test('Schema is valid', function() {",
+							"  var jsonData = pm.response.json();",
+							"  pm.expect(tv4.validate(jsonData, schema)).to.be.true;",
+							"});",
+							"",
+							"console.log(tv4.error);  ",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "62bef184-6be7-4c86-ae7e-8c469b6a4e57",
+						"type": "text/javascript",
+						"exec": [
+							"// TODO: set JWT in environment after log in, so can be used in the test automatically ",
+							"",
+							"// pm.environment.set(\"admin_email\", \"admin@lumeos.io\");",
+							"// pm.environment.set(\"admin_pw\", \"test\");",
+							"",
+							"// pm.sendRequest({",
+							"//     url: 'localhost:8081/v1/login',",
+							"//     method: 'POST',",
+							"//     header: {",
+							"//         'content-type': 'application/json',",
+							"//     },",
+							"//     body: {",
+							"//         mode: 'raw',",
+							"//         raw: JSON.stringify({ email: pm.environment.get(\"admin_email\"), password: pm.environment.get(\"admin_pw\") })",
+							"//     }",
+							"// }, function (err, res) {",
+							"//     pm.environment.set(\"authorization\", \"Bearer \" + res.json().token);",
+							"// });",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\r\n  \"email\" : \"admin@lumeos.io\",\r\n  \"password\" : \"test\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/users/2",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"users",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check admin exists",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "d8f63ea0-1a4f-436a-a25f-b0c763618ced",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status is ok\"] = responseCode.code === 200",
+							"",
+							"",
+							"pm.test(\"check fields not null\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.email).to.equal(\"admin@lumeos.io\");",
+							"});",
+							"",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "a415ab9f-4350-4e97-80ab-47dbb805391f",
+						"type": "text/javascript",
+						"exec": [
+							"// pm.environment.set(\"admin_email\", \"admin@lumeos.io\");",
+							"// pm.environment.set(\"admin_pw\", \"test\");",
+							"",
+							"// pm.sendRequest({",
+							"//     url: 'localhost:8081/v1/login',",
+							"//     method: 'POST',",
+							"//     header: {",
+							"//         'content-type': 'application/json',",
+							"//     },",
+							"//     body: {",
+							"//         mode: 'raw',",
+							"//         raw: JSON.stringify({ email: pm.environment.get(\"admin_email\"), password: pm.environment.get(\"admin_pw\") })",
+							"//     }",
+							"// }, function (err, res) {",
+							"//     pm.environment.set(\"authorization\", \"Bearer \" + res.json().token);",
+							"// });"
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\r\n  \"email\" : \"admin@lumeos.io\",\r\n  \"password\" : \"test\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/users/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"users",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Poll not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ae1bbfe7-e7c6-4543-b5a0-6460e4cb464e",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status is Not Found (404)\"] = responseCode.code === 404",
+							"",
+							"",
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"validate poll id\", function () {",
+							"    pm.expect(jsonData.error).to.eql(\"Not Found\");",
+							"    pm.expect(jsonData.message).to.eql(\"Poll not found\");",
+							"})",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "83bdf683-b340-43a4-a6e8-43cd034cd4c1",
+						"type": "text/javascript",
+						"exec": [
+							"// pm.environment.set(\"admin_email\", \"admin@lumeos.io\");",
+							"// pm.environment.set(\"admin_pw\", \"test\");",
+							"",
+							"// pm.sendRequest({",
+							"//     url: 'localhost:8081/v1/login',",
+							"//     method: 'POST',",
+							"//     header: {",
+							"//         'content-type': 'application/json',",
+							"//     },",
+							"//     body: {",
+							"//         mode: 'raw',",
+							"//         raw: JSON.stringify({ email: pm.environment.get(\"admin_email\"), password: pm.environment.get(\"admin_pw\") })",
+							"//     }",
+							"// }, function (err, res) {",
+							"//     pm.environment.set(\"authorization\", \"Bearer \" + res.json().token);",
+							"// });",
+							"",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\r\n  \"email\" : \"admin@lumeos.io\",\r\n  \"password\" : \"test\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/polls/0",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"polls",
+						"0"
+					]
+				},
+				"description": "Poll with id 0 doesn't exist"
+			},
+			"response": []
+		},
+		{
+			"name": "User not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ecab9812-67eb-409e-b451-80fad820066c",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status is Not Found (404)\"] = responseCode.code === 404",
+							"",
+							"",
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"validate user id\", function () {",
+							"    pm.expect(jsonData.error).to.eql(\"Not Found\");",
+							"    pm.expect(jsonData.message).to.eql(\"User not found\");",
+							"})",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "83bdf683-b340-43a4-a6e8-43cd034cd4c1",
+						"type": "text/javascript",
+						"exec": [
+							"// pm.environment.set(\"admin_email\", \"admin@lumeos.io\");",
+							"// pm.environment.set(\"admin_pw\", \"test\");",
+							"",
+							"// pm.sendRequest({",
+							"//     url: 'localhost:8081/v1/login',",
+							"//     method: 'POST',",
+							"//     header: {",
+							"//         'content-type': 'application/json',",
+							"//     },",
+							"//     body: {",
+							"//         mode: 'raw',",
+							"//         raw: JSON.stringify({ email: pm.environment.get(\"admin_email\"), password: pm.environment.get(\"admin_pw\") })",
+							"//     }",
+							"// }, function (err, res) {",
+							"//     pm.environment.set(\"authorization\", \"Bearer \" + res.json().token);",
+							"// });",
+							"",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\r\n  \"email\" : \"admin@lumeos.io\",\r\n  \"password\" : \"test\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/users/0",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"users",
+						"0"
+					]
+				},
+				"description": "User Id 0 doesn't exist"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "6d7a84a1-026a-4804-90a2-62fb6deeb53c",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "42913e52-0492-44d5-8898-9574122c4006",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

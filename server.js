@@ -45,6 +45,7 @@ const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "secret_test";
 const SEED_AUTH = process.env.SUPER_SECRET_KEY || "test";
 const PORT = 8081;
 const VERSION = 1;
+const SQLITE_FILENAME = process.env.SQLITE_FILENAME || "database.sqlite";
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -60,7 +61,7 @@ const sequelize = new Sequelize('database', 'username', 'password', {
     idle: 10000
   },
 
-  storage: 'database.sqlite'
+  storage: SQLITE_FILENAME 
 });
 
 
@@ -636,5 +637,7 @@ app.use(function (req, res, next) {
   }
 });
 app.use('/v' + VERSION, router);
-app.listen(PORT);
+const server = app.listen(PORT);
 console.log('listening on port ' + PORT);
+
+module.exports = server;
