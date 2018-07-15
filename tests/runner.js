@@ -5,6 +5,7 @@ const fs = require('fs');
 const SQLITE_FILENAME = process.env.SQLITE_FILENAME;
 
 describe('loading express', function () {
+  this.timeout(20000);
   var server;
   beforeEach(function () {
     if (fs.existsSync(SQLITE_FILENAME)) {
