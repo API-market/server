@@ -16,7 +16,8 @@
     "express": "^4.16.3",
     "express-jwt": "^5.3.1",
     "sequelize": "^4.38.0",
-    "sqlite3": "^4.0.1"
+    "sqlite3": "^4.0.1",
+    "pg" : "^7.4.3"
   },
   "devDependencies": {
     "newman": "^3.10.0",
