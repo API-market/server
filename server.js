@@ -52,6 +52,7 @@ const Op = Sequelize.Op;
 
 const makeSequelize = function () {
   if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
+    console.log("Connecting with: " + process.env.LUMEOS_SERVER_DB);
     return new Sequelize(process.env.LUMEOS_SERVER_DB);
   } else if (process.env.ENV_PRODUCTION) {
     throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
