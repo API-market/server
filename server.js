@@ -53,7 +53,15 @@ const Op = Sequelize.Op;
 const makeSequelize = function () {
   if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
     console.log("Connecting with: " + process.env.LUMEOS_SERVER_DB);
-    return new Sequelize(process.env.LUMEOS_SERVER_DB);
+    return new Sequelize(process.env.LUMEOS_SERVER_DB, {
+        operatorsAliases: false,
+        pool: {
+          max: 5,
+          min: 0,
+          acquire: 30000,
+          idle: 10000
+        }
+    });
   } else if (process.env.ENV_PRODUCTION) {
     throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
   }
@@ -61,8 +69,8 @@ const makeSequelize = function () {
   return new Sequelize('database', 'username', 'password', {
     host: 'localhost',
     dialect: 'sqlite',
-    operatorsAliases: false,
 
+    operatorsAliases: false,
     pool: {
       max: 5,
       min: 0,
