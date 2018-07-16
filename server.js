@@ -50,30 +50,30 @@ const SQLITE_FILENAME = process.env.SQLITE_FILENAME || "database.sqlite";
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
-const makeSequelize = function() {
-    if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
-        return new Sequelize(process.env.LUMEOS_SERVER_DB);
-    } else if (process.env.ENV_PRODUCTION) {
-        throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
-    }
+const makeSequelize = function () {
+  if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
+    return new Sequelize(process.env.LUMEOS_SERVER_DB);
+  } else if (process.env.ENV_PRODUCTION) {
+    throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
+  }
 
-    return new Sequelize('database', 'username', 'password', {
-          host: 'localhost',
-          dialect: 'sqlite',
-          operatorsAliases: false,
+  return new Sequelize('database', 'username', 'password', {
+    host: 'localhost',
+    dialect: 'sqlite',
+    operatorsAliases: false,
 
-          pool: {
-            max: 5,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-          },
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
 
-          storage: SQLITE_FILENAME 
-        });
+    storage: SQLITE_FILENAME
+  });
 }
 
-const sequelize = makeSequelize(); 
+const sequelize = makeSequelize();
 
 const removeEmptyObj = (obj) => {
   if (obj) {
@@ -94,7 +94,7 @@ const removeEmpty = (obj) => {
 };
 
 const populateCreatorImage = (sequelizeObj) => {
-    return sequelizeObj.dataValues["creator_image"] = "/v" + VERSION + "/profile_images/" + sequelizeObj["creator_id"];
+  return sequelizeObj.dataValues["creator_image"] = "/v" + VERSION + "/profile_images/" + sequelizeObj["creator_id"];
 }
 
 sequelize
@@ -465,7 +465,7 @@ router.get('/polls', function (req, res) {
         Poll.findAll(where_object).then(poll => {
           if (poll) {
             // this is strange, but mobile is lazy.
-            poll.forEach(function(element) {
+            poll.forEach(function (element) {
               element = populateCreatorImage(element);
             });
             res.json(removeEmpty(poll));
@@ -480,7 +480,7 @@ router.get('/polls', function (req, res) {
     where_object.attributes = where_attributes;
     Poll.findAll(where_object).then(poll => {
       if (poll) {
-        poll.forEach(function(element) {
+        poll.forEach(function (element) {
           element = populateCreatorImage(element);
         });
         res.json(removeEmpty(poll));
@@ -604,7 +604,7 @@ router.post('/login', function (req, res) {
     if (user && user.verifyPassword(req.body["password"])) {
       res.json(
         {
-          user_id : user['id'],
+          user_id: user['id'],
           token: jwt.sign(
             {
               user_id: user['id'],
