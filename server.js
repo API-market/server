@@ -49,21 +49,31 @@ const SQLITE_FILENAME = process.env.SQLITE_FILENAME || "database.sqlite";
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const sequelize = new Sequelize('database', 'username', 'password', {
-  host: 'localhost',
-  dialect: 'sqlite',
-  operatorsAliases: false,
 
-  pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
-  },
+const makeSequelize = function() {
+    if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
+        return new Sequelize(process.env.LUMEOS_SERVER_DB);
+    } else if (process.env.ENV_PRODUCTION) {
+        throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
+    }
 
-  storage: SQLITE_FILENAME 
-});
+    return new Sequelize('database', 'username', 'password', {
+          host: 'localhost',
+          dialect: 'sqlite',
+          operatorsAliases: false,
 
+          pool: {
+            max: 5,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+          },
+
+          storage: SQLITE_FILENAME 
+        });
+}
+
+const sequelize = makeSequelize(); 
 
 const removeEmptyObj = (obj) => {
   if (obj) {
