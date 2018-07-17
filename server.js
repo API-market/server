@@ -138,8 +138,13 @@ const Poll = sequelize.define('poll', {
       return this.setDataValue('tags', JSON.stringify(val));
     }
   },
-  creator_id: Sequelize.INTEGER
+  creator_id : {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+  }
 });
+
+// Result keeps track of user answering to a poll
 const Result = sequelize.define('result', {
   poll_id: Sequelize.INTEGER,
   answer: Sequelize.STRING,
@@ -443,7 +448,25 @@ router.get('/polls/:id', function (req, res) {
     if (poll) {
       // this is strange, but mobile is lazy.
       populateCreatorImage(poll);
-      res.json(removeEmpty(poll));
+
+      if (req.query["isAnswered"]) {
+        poll.dataValues["is_answered"] = 0;
+        Result.findOne({where: {user_id: parseInt(req.query["isAnswered"]),
+                                poll_id: parseInt(req.params["id"])}, 
+                                attributes: ["poll_id"]
+                               }).then(result => {
+          if (result) {
+            poll.dataValues["is_answered"] = 1;
+          } 
+          res.json(removeEmpty(poll));
+        }).catch(error => {
+          console.log("I guess this is a first vote ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
+          console.log(error);
+          res.json(removeEmpty(poll));
+        });
+      } else { 
+        res.json(removeEmpty(poll));
+      }
     } else {
       res.status(404).json({error: "Not Found", message: "Poll not found"})
     }
