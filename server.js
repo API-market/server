@@ -147,6 +147,12 @@ const Result = sequelize.define('result', {
 });
 
 const User = sequelize.define('user', {
+  username : {
+    type: Sequelize.STRING,
+    allowNull: false,
+    unique: true
+  },
+  eos: Sequelize.STRING,
   firstName: Sequelize.STRING,
   lastName: Sequelize.STRING,
   email: {
@@ -193,6 +199,7 @@ sequelize.sync().then(() => {
       console.log("User with id " + user["id"] + " already exists")
     } else {
       User.create({
+        "username": "admin",
         "email": "admin@lumeos.io",
         "password": SEED_AUTH
       }).then(user => {
@@ -296,6 +303,8 @@ router.get('/users/:id', function (req, res) {
   User.findById(parseInt(req.params["id"]), {
     attributes: [
       "email",
+      "username",
+      "eos",
       "firstName",
       "lastName",
       "phone",
@@ -352,6 +361,8 @@ router.get('/users', function (req, res) {
     attributes: [
       ["id", "user_id"],
       "email",
+      "username",
+      "eos",
       "firstName",
       "lastName",
       "phone",
