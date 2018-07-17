@@ -431,7 +431,7 @@ router.get('/polls/:id', function (req, res) {
   }).then(poll => {
     if (poll) {
       // this is strange, but mobile is lazy.
-      poll = populateCreatorImage(poll);
+      populateCreatorImage(poll);
       res.json(removeEmpty(poll));
     } else {
       res.status(404).json({error: "Not Found", message: "Poll not found"})
@@ -475,7 +475,7 @@ router.get('/polls', function (req, res) {
           if (poll) {
             // this is strange, but mobile is lazy.
             poll.forEach(function (element) {
-              element = populateCreatorImage(element);
+              populateCreatorImage(element);
             });
             res.json(removeEmpty(poll));
           } else {
@@ -490,7 +490,7 @@ router.get('/polls', function (req, res) {
     Poll.findAll(where_object).then(poll => {
       if (poll) {
         poll.forEach(function (element) {
-          element = populateCreatorImage(element);
+          populateCreatorImage(element);
         });
         res.json(removeEmpty(poll));
       }
