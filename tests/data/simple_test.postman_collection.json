@@ -56,7 +56,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"firstName\" : \"Robert\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester7@lumeos.io\",\r\n  \"phone\" : \"1234\",\r\n  \"dob\" : \"19850423\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testing\"\r\n}"
+					"raw": "{\r\n  \"username\" : \"superman\",\r\n  \"eos\" : \"123321\",\r\n  \"firstName\" : \"Robert\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester7@lumeos.io\",\r\n  \"phone\" : \"1234\",\r\n  \"dob\" : \"19850423\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testing\"\r\n}"
 				},
 				"url": {
 					"raw": "localhost:8081/v1/users",
@@ -79,7 +79,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "67c1b17b-ba0f-45c6-8ecc-aaddfb4852cb",
+						"id": "c5e8059e-abd2-4b82-b457-5749fa9a568d",
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status is ok\"] = responseCode.code === 200",
@@ -91,6 +91,8 @@
 							"tests[\"Gender field is present\"] = responseBody.has(\"gender\");",
 							"tests[\"School field is present\"] = responseBody.has(\"school\");",
 							"tests[\"Employer field is present\"] = responseBody.has(\"employer\");",
+							"tests[\"Username field is present\"] = responseBody.has(\"username\");",
+							"tests[\"Eos field is present\"] = responseBody.has(\"eos\");",
 							"",
 							"pm.test(\"check fields not null\", function () {",
 							"    var jsonData = pm.response.json();",
@@ -116,6 +118,8 @@
 							"    pm.expect(jsonData.school).to.eql(\"Lol What State University\");",
 							"    pm.expect(jsonData.employer).to.eql(\"Uncle Sam\");",
 							"    pm.expect(jsonData.balance).to.eql(10);",
+							"    pm.expect(jsonData.username).to.eql(\"superman\");",
+							"    pm.expect(jsonData.eos).to.eql(\"123321\");",
 							"});",
 							"",
 							"// TODO: more accurate schema validation of email, DOB, phone etc.",
@@ -123,6 +127,8 @@
 							"var schema = {",
 							"    \"type\" : \"object\",",
 							"    \"properties\" : {",
+							"              \"username\": {\"type\" : \"string\" } ,",
+							"              \"eos\": {\"type\" : \"string\" } ,",
 							"              \"email\": {\"type\" : \"string\" } ,",
 							"              \"firstName\" : {\"type\" : \"string\" } ,",
 							"              \"lastName\" : {\"type\" : \"string\" } ,",
