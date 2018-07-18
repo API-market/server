@@ -54,13 +54,13 @@ const makeSequelize = function () {
   if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
     console.log("Connecting with: " + process.env.LUMEOS_SERVER_DB);
     return new Sequelize(process.env.LUMEOS_SERVER_DB, {
-        operatorsAliases: false,
-        pool: {
-          max: 5,
-          min: 0,
-          acquire: 30000,
-          idle: 10000
-        }
+      operatorsAliases: false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+      }
     });
   } else if (process.env.ENV_PRODUCTION) {
     throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
@@ -138,7 +138,7 @@ const Poll = sequelize.define('poll', {
       return this.setDataValue('tags', JSON.stringify(val));
     }
   },
-  creator_id : {
+  creator_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
   }
@@ -152,7 +152,7 @@ const Result = sequelize.define('result', {
 });
 
 const User = sequelize.define('user', {
-  username : {
+  username: {
     type: Sequelize.STRING,
     allowNull: false,
     unique: true
@@ -451,20 +451,23 @@ router.get('/polls/:id', function (req, res) {
 
       if (req.query["isAnswered"]) {
         poll.dataValues["is_answered"] = 0;
-        Result.findOne({where: {user_id: parseInt(req.query["isAnswered"]),
-                                poll_id: parseInt(req.params["id"])}, 
-                                attributes: ["poll_id"]
-                               }).then(result => {
+        Result.findOne({
+          where: {
+            user_id: parseInt(req.query["isAnswered"]),
+            poll_id: parseInt(req.params["id"])
+          },
+          attributes: ["poll_id"]
+        }).then(result => {
           if (result) {
             poll.dataValues["is_answered"] = 1;
-          } 
+          }
           res.json(removeEmpty(poll));
         }).catch(error => {
           console.log("I guess this is a first vote ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
           console.log(error);
           res.json(removeEmpty(poll));
         });
-      } else { 
+      } else {
         res.json(removeEmpty(poll));
       }
     } else {
