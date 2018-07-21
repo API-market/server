@@ -23,7 +23,7 @@
 //
 var fs = require('fs');
 const express = require('express');
-const { check, validationResult } = require('express-validator/check');
+const {check, validationResult} = require('express-validator/check');
 const app = express();
 const cors = require('cors');
 
@@ -219,12 +219,12 @@ app.use(bodyParser.json());
 var router = express.Router();
 
 router.post('/profile_images/', [
-                                    check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
-                                    check("image").isBase64().withMessage("Field 'image' must be in base64 format."),
-                                ], (req, res) => {
+  check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
+  check("image").isBase64().withMessage("Field 'image' must be in base64 format."),
+], (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ errors: errors.array() });
+    return res.status(422).json({errors: errors.array()});
   }
   User.findById(parseInt(req.body["user_id"])).then(user => {
     if (user) {
@@ -290,22 +290,22 @@ router.delete('/profile_images/:id', function (req, res) {
 });
 
 router.post('/users', [
-                        check("firstName").not().isEmpty().trim().escape().withMessage("Field 'firstName' cannot be empty"),
-                        check("lastName").not().isEmpty().trim().escape().withMessage("Field 'lastName' cannot be empty"),
-                        check("email").isEmail().normalizeEmail(),
-                        check("phone").optional().isMobilePhone("any"),
-                        check("dob").isISO8601().withMessage("Invalid 'dob' specified, ISO8601 required"),
-                        check("gender").optional().isIn(["male", "female", "other"]),
-                        check("school").optional().trim().escape(),
-                        check("employer").optional().trim().escape(),
-                        check('password', 'The password must be 8+ chars long and contain a number')
-                            .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
-                            .isLength({ min: 8 })
-                            .matches(/\d/)
-    ], (req, res) => {
+  check("firstName").not().isEmpty().trim().escape().withMessage("Field 'firstName' cannot be empty"),
+  check("lastName").not().isEmpty().trim().escape().withMessage("Field 'lastName' cannot be empty"),
+  check("email").isEmail().normalizeEmail(),
+  check("phone").optional().isMobilePhone("any"),
+  check("dob").isISO8601().withMessage("Invalid 'dob' specified, ISO8601 required"),
+  check("gender").optional().isIn(["male", "female", "other"]),
+  check("school").optional().trim().escape(),
+  check("employer").optional().trim().escape(),
+  check('password', 'The password must be 8+ chars long and contain a number')
+    .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+    .isLength({min: 8})
+    .matches(/\d/)
+], (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ errors: errors.array() });
+    return res.status(422).json({errors: errors.array()});
   }
   sequelize.sync()
     .then(() => {
@@ -432,29 +432,29 @@ router.delete('/users/:id', function (req, res) {
 });
 
 router.post('/polls', [
-                        check("question").not().isEmpty().trim().escape().withMessage("Field 'question' cannot be empty"),
-                        check("answers").isArray().withMessage("Field 'answers' must be an array."),
-                        check("tags").optional().isArray().withMessage("Field 'tags' must be an array."),
-                        check("creator_id").isInt().withMessage("Field 'creator_id' must be an int."),
-                      ], 
-(req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({ errors: errors.array() });
-  }
-  sequelize.sync()
-    .then(() => {
-      Poll
-        .build(req.body)
-        .save()
-        .then(poll => {
-          res.json({poll_id: poll["id"]});
-        })
-        .catch(error => {
-          console.log(error);
-        })
-    })
-});
+    check("question").not().isEmpty().trim().escape().withMessage("Field 'question' cannot be empty"),
+    check("answers").isArray().withMessage("Field 'answers' must be an array."),
+    check("tags").optional().isArray().withMessage("Field 'tags' must be an array."),
+    check("creator_id").isInt().withMessage("Field 'creator_id' must be an int."),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({errors: errors.array()});
+    }
+    sequelize.sync()
+      .then(() => {
+        Poll
+          .build(req.body)
+          .save()
+          .then(poll => {
+            res.json({poll_id: poll["id"]});
+          })
+          .catch(error => {
+            console.log(error);
+          })
+      })
+  });
 
 router.get('/polls/:id', function (req, res) {
   Poll.find({
