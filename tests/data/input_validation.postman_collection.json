@@ -1,0 +1,504 @@
+{
+	"info": {
+		"_postman_id": "391dc86f-7c6f-4dfb-89c9-5a3afb816988",
+		"name": "input_validation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create poll with empty question",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "5934875b-bee6-46a2-93a9-ad769eaa0871",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"422 Unprocessable Entity\"] = responseCode.code === 422",
+							"",
+							"pm.test(\"error return back.\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.errors[0].param).to.equal(\"question\");",
+							"    pm.expect(jsonData.errors[0].msg).to.equal(\"Field 'question' cannot be empty\");",
+							"});"
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"question\" : \"\",\r\n\t\"answers\" : [\"Girls\", \"Squirrels\"],\r\n\t\"tags\" : [\"lol\", \"what\"],\r\n\t\"creator_id\" : 1\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/polls",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"polls"
+					]
+				},
+				"description": "Create first poll and check poll_id = 1"
+			},
+			"response": []
+		},
+		{
+			"name": "Create poll with no answers",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1c890dc5-dabe-4a18-8329-2fa4c20149df",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"422 Unprocessable Entity\"] = responseCode.code === 422",
+							"",
+							"pm.test(\"error return back.\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.errors[0].param).to.equal(\"answers\");",
+							"    pm.expect(jsonData.errors[0].msg).to.equal(\"Field 'answers' must be an array.\");",
+							"});"
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"question\" : \"Who runs the world\",\r\n\t\"tags\" : [\"lol\", \"what\"],\r\n\t\"creator_id\" : 2\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/polls",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"polls"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create poll with non-array answers",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "36d431cb-b576-48c1-8342-43e1c9ef9262",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"422 Unprocessable Entity\"] = responseCode.code === 422",
+							"",
+							"pm.test(\"error return back.\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.errors[0].param).to.equal(\"answers\");",
+							"    pm.expect(jsonData.errors[0].msg).to.equal(\"Field 'answers' must be an array.\");",
+							"});",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"question\" : \"Who?\",\r\n\t\"answers\" : \"Squirrels\",\r\n\t\"tags\" : [\"lol\", \"what\"],\r\n\t\"creator_id\" : 1\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/polls",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"polls"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create profile image with non base64 format",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "19ff517d-fba6-4ab1-a9e0-bff4546c4098",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"422 Unprocessable Entity\"] = responseCode.code === 422",
+							"",
+							"pm.test(\"error return back.\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.errors[0].param).to.equal(\"image\");",
+							"    pm.expect(jsonData.errors[0].msg).to.equal(\"Field 'image' must be in base64 format.\");",
+							"});",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"user_id\" : 1,\r\n\t\"image\" : \"123\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/profile_images/",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"profile_images",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create invalid user with invalid dob",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c2b1681e-c1b3-4f64-bfe0-8c6348ce0d0a",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"422 Unprocessable Entity\"] = responseCode.code === 422",
+							"",
+							"pm.test(\"error return back\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.errors[0].param).to.equal(\"dob\");",
+							"    pm.expect(jsonData.errors[0].msg).to.equal(\"Invalid 'dob' specified, ISO8601 required\");",
+							"});",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"eos\" : \"123321\",\r\n  \"firstName\" : \"D\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester1@lumeos.io\",\r\n  \"phone\" : \"112\",\r\n  \"dob\" : \"198502\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testingg1\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/users",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create invalid user with invalid email",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "738b38f6-ed6a-4aa5-8c89-07c8aae82d2e",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"422 Unprocessable Entity\"] = responseCode.code === 422",
+							"",
+							"pm.test(\"error return back\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.errors[0].param).to.equal(\"email\");",
+							"    pm.expect(jsonData.errors[0].msg).to.equal(\"Invalid value\");",
+							"});",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"eos\" : \"123321\",\r\n  \"firstName\" : \"D\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester1@lumeo\",\r\n  \"phone\" : \"112\",\r\n  \"dob\" : \"19850201\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testingg1\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/users",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create invalid user with invalid password",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "8c8c09d7-fed4-459c-809e-a08d7908ad99",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"422 Unprocessable Entity\"] = responseCode.code === 422",
+							"",
+							"pm.test(\"error return back\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.errors[0].param).to.equal(\"password\");",
+							"    pm.expect(jsonData.errors[0].msg).to.equal(\"The password must be 8+ chars long and contain a number\");",
+							"});",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"eos\" : \"123321\",\r\n  \"firstName\" : \"D\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester1@lumeos.io\",\r\n  \"phone\" : \"112\",\r\n  \"dob\" : \"19850201\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testingrg\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/users",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"users"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "f41b6704-a661-4a40-8e40-56fa817d7354",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "e41ff1a1-9693-4086-8ef1-50a198e8bf10",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
