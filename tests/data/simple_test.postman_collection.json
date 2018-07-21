@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ee151fc1-803d-4800-b20f-b82658d8ea92",
+		"_postman_id": "652522ae-45a3-4442-ba4b-9c35fe543fc5",
 		"name": "simple_test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -56,7 +56,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"username\" : \"superman\",\r\n  \"eos\" : \"123321\",\r\n  \"firstName\" : \"Robert\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester7@lumeos.io\",\r\n  \"phone\" : \"1234\",\r\n  \"dob\" : \"19850423\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testing\"\r\n}"
+					"raw": "{\r\n  \"eos\" : \"123321\",\r\n  \"firstName\" : \"Robert\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester7@lumeos.io\",\r\n  \"phone\" : \"1234\",\r\n  \"dob\" : \"19850423\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testing1\"\r\n}"
 				},
 				"url": {
 					"raw": "localhost:8081/v1/users",
@@ -79,7 +79,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "c5e8059e-abd2-4b82-b457-5749fa9a568d",
+						"id": "f4f672a5-1821-4c29-b747-a24412d8cc97",
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status is ok\"] = responseCode.code === 200",
@@ -91,7 +91,6 @@
 							"tests[\"Gender field is present\"] = responseBody.has(\"gender\");",
 							"tests[\"School field is present\"] = responseBody.has(\"school\");",
 							"tests[\"Employer field is present\"] = responseBody.has(\"employer\");",
-							"tests[\"Username field is present\"] = responseBody.has(\"username\");",
 							"tests[\"Eos field is present\"] = responseBody.has(\"eos\");",
 							"",
 							"pm.test(\"check fields not null\", function () {",
@@ -118,7 +117,6 @@
 							"    pm.expect(jsonData.school).to.eql(\"Lol What State University\");",
 							"    pm.expect(jsonData.employer).to.eql(\"Uncle Sam\");",
 							"    pm.expect(jsonData.balance).to.eql(10);",
-							"    pm.expect(jsonData.username).to.eql(\"superman\");",
 							"    pm.expect(jsonData.eos).to.eql(\"123321\");",
 							"});",
 							"",
@@ -127,7 +125,6 @@
 							"var schema = {",
 							"    \"type\" : \"object\",",
 							"    \"properties\" : {",
-							"              \"username\": {\"type\" : \"string\" } ,",
 							"              \"eos\": {\"type\" : \"string\" } ,",
 							"              \"email\": {\"type\" : \"string\" } ,",
 							"              \"firstName\" : {\"type\" : \"string\" } ,",
@@ -1484,6 +1481,146 @@
 					"path": [
 						"v1",
 						"users",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create profile image",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "6b22f144-bf2c-4e8c-9be4-8239b9d1c0fc",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"200 OK\"] = responseCode.code === 200",
+							"",
+							"pm.test(\"Validated user_id returned\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.user_id).to.equal(1)",
+							"});",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"user_id\" : 1,\r\n\t\"image\" : \"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/profile_images/",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"profile_images",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get profile image",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "8a935e7a-042a-43bd-b3e8-54e7fdea35e8",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"200 OK\"] = responseCode.code === 200",
+							"",
+							"tests[\"createdAt field is present\"] = responseBody.has(\"createdAt\");",
+							"tests[\"updatedAt field is present\"] = responseBody.has(\"updatedAt\");",
+							"",
+							"pm.test(\"Validate image\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.user_id).to.equal(1);",
+							"    pm.expect(jsonData.image).to.equal(\"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\");",
+							"});",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"user_id\" : 1,\r\n\t\"image\" : \"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/profile_images/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"profile_images",
 						"1"
 					]
 				}

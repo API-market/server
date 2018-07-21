@@ -25,4 +25,10 @@ describe('loading express', function () {
                   reporters: ['cli']
       }, process.exit);
   });
+  it('input_validation', function simpleTest(done) {
+      newman.run({
+              collection: 'tests/data/input_validation.postman_collection.json',
+                  reporters: ['cli']
+      }, process.exit);
+  });
 });
