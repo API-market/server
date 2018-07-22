@@ -17,8 +17,9 @@
     "express-jwt": "^5.3.1",
     "sequelize": "^4.38.0",
     "sqlite3": "^4.0.1",
-    "pg" : "^7.4.3",
-    "express-validator" : "^5.2.0"
+    "pg": "^7.4.3",
+    "express-validator": "^5.2.0",
+    "nodemailer": ""
   },
   "devDependencies": {
     "newman": "^3.10.0",
