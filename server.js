@@ -32,7 +32,7 @@ var transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'team@lumeos.io',
-    pass: ''
+    pass: process.env.LUMEOS_EMAIL_PASSWORD,
   }
 });
 
