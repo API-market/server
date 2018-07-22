@@ -183,8 +183,33 @@ const User = sequelize.define('user', {
   gender: Sequelize.STRING,
   school: Sequelize.STRING,
   employer: Sequelize.STRING,
-  balance: {type: Sequelize.DOUBLE, defaultValue: 10}
+  balance: {type: Sequelize.DOUBLE, defaultValue: 10},
+  followee_count: {type: Sequelize.INTEGER, defaultValue: 0},
+  follower_count: {type: Sequelize.INTEGER, defaultValue: 0}
 });
+
+const STANDARD_USER_ATTR = [
+  "email",
+  "eos",
+  "firstName",
+  "lastName",
+  "phone",
+  "dob",
+  "gender",
+  "school",
+  "employer",
+  "balance",
+  "follower_count",
+  "followee_count"
+];
+
+// Relationship between follower and followee 
+// Could not come up with better name :)
+const Followship = sequelize.define('followship', {
+  follower_id: Sequelize.INTEGER,
+  followee_id: Sequelize.INTEGER
+});
+
 User.prototype.verifyPassword = function (password) {
   return bcrypt.compareSync(password, this.password);
 };
@@ -226,6 +251,111 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 var router = express.Router();
+
+// make follower follow followee
+router.post('/follow', function (req, res) {
+  const followee_id = parseInt(req.body["followee_id"]);
+  const follower_id = parseInt(req.body["follower_id"]);
+  User.findById(followee_id).then(followee => {
+    if (followee) {
+      sequelize.sync()
+        .then(() => {
+          User.findById(follower_id).then(follower => {
+            if (follower) {
+              Followship.findOrCreate({
+                where: {
+                  follower_id: follower_id,
+                  followee_id: followee_id
+                }
+              }).spread((result, created) => {
+                if (created) {
+                  // We don't want to query Followship every time we want to know the count,
+                  // so lets just update variables.
+                  followee.increment("follower_count");
+                  follower.increment("followee_count");
+                  res.status(204).json();
+                } else {
+                  res.status(400).json({
+                    error: "Bad Request",
+                    message: "Follower_id: " + follower_id + " already follows, folowee_id: " + followee_id
+                  });
+                }
+              })
+            } else {
+              res.status(404).json({error: "Not Found", message: "Follower with id " + follower_id + " not found"});
+            }
+          })
+        })
+    }
+    else {
+      res.status(404).json({error: "Not Found", message: "Followee with id " + followee_id + " not found"});
+    }
+  }).catch(error => {
+    res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
+  });
+});
+
+// get followers for user_id
+router.get('/followers/:user_id', function (req, res) {
+  const user_id = parseInt(req.params["user_id"]);
+  User.findById(user_id).then(user => {
+    if (user) {
+      sequelize.sync()
+        .then(() => {
+          Followship.findAll({
+            where: {followee_id: user_id},
+            attributes: ["follower_id"]
+          }).then(result => {
+            if (!Array.isArray(result) || !result.length) {
+              result = [];
+              return res.json([]);
+            }
+            User.findAll({
+              where: {id: {[Op.in]: result.map(x => x.dataValues["follower_id"])}},
+              attributes: STANDARD_USER_ATTR
+            }).then(followers => {
+              res.json(removeEmpty(followers));
+            });
+          }) // followshipt.findAll
+        })
+    } else {
+      res.status(404).json({error: "Not Found", message: "User with id " + user_id + " not found"});
+    }
+  }).catch(error => {
+    res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
+  });
+});
+
+// get followee for user_id
+router.get('/followees/:user_id', function (req, res) {
+  const user_id = parseInt(req.params["user_id"]);
+  User.findById(user_id).then(user => {
+    if (user) {
+      sequelize.sync()
+        .then(() => {
+          Followship.findAll({
+            where: {follower_id: user_id},
+            attributes: ["followee_id"]
+          }).then(result => {
+            if (!Array.isArray(result) || !result.length) {
+              result = [];
+              return res.json([]);
+            }
+            User.findAll({
+              where: {id: {[Op.in]: result.map(x => x.dataValues["followee_id"])}},
+              attributes: STANDARD_USER_ATTR
+            }).then(followers => {
+              res.json(removeEmpty(followers));
+            });
+          }) // followshipt.findAll
+        })
+    } else {
+      res.status(404).json({error: "Not Found", message: "User with id " + user_id + " not found"});
+    }
+  }).catch(error => {
+    res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
+  });
+});
 
 router.post('/profile_images/', [
   check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
@@ -311,18 +441,18 @@ router.post('/contact_us', [
   }
 
   var mailOptions = {
-      from: 'team@lumeos.io',
-      to: 'team@lumeos.io',
-      subject: 'Server: Contact Us!',
-      text: req.body['message']
+    from: 'team@lumeos.io',
+    to: 'team@lumeos.io',
+    subject: 'Server: Contact Us!',
+    text: req.body['message']
   };
 
-  transporter.sendMail(mailOptions, function(error, info){
-      if (error) {
-        console.log(error);
-      } else {
-        console.log('Email sent: ' + info.response);
-      }
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
+    }
   });
 
   res.status(204).json();
@@ -364,18 +494,7 @@ router.post('/users', [
 
 router.get('/users/:id', function (req, res) {
   User.findById(parseInt(req.params["id"]), {
-    attributes: [
-      "email",
-      "eos",
-      "firstName",
-      "lastName",
-      "phone",
-      "dob",
-      "gender",
-      "school",
-      "employer",
-      "balance"
-    ]
+    attributes: STANDARD_USER_ATTR
   }).then(user => {
     if (user) {
       res.json(removeEmpty(user));
@@ -431,7 +550,9 @@ router.get('/users', function (req, res) {
       "gender",
       "school",
       "employer",
-      "balance"
+      "balance",
+      "follower_count",
+      "followee_count"
     ]
   };
   User.findAll(where_object).then(user => {
