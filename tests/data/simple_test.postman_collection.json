@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "652522ae-45a3-4442-ba4b-9c35fe543fc5",
+		"_postman_id": "5524dcfa-3309-4101-9d24-3a1065f390ca",
 		"name": "simple_test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1322,6 +1322,212 @@
 						{
 							"key": "isAnswered",
 							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "queryFeatured=1 polls",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "06043def-2819-467f-b5a2-b9b9eb90b851",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status is Ok (200)\"] = responseCode.code === 200",
+							"",
+							"",
+							"const jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Test field values\", function () {",
+							"    const index = 0;",
+							"    pm.expect(jsonData[index].answers[0]).to.equal(\"Girls\");",
+							"    pm.expect(jsonData[index].answers[1]).to.equal(\"Squirrels\");",
+							"    pm.expect(jsonData[index].tags[0]).to.equal(\"lol\");",
+							"    pm.expect(jsonData[index].tags[1]).to.equal(\"what\");",
+							"    pm.expect(jsonData[index].poll_id).to.equal(1);",
+							"    pm.expect(jsonData[index].question).to.equal(\"Who runs the world\");",
+							"    pm.expect(jsonData[index].participant_count).to.equal(1);",
+							"    pm.expect(jsonData[index].price).to.equal(0.01);",
+							"    pm.expect(jsonData[index].creator_id).to.equal(2);",
+							"    pm.expect(jsonData[index].creator_image).to.equal(\"/v1/profile_images/2\");",
+							"});",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "83bdf683-b340-43a4-a6e8-43cd034cd4c1",
+						"type": "text/javascript",
+						"exec": [
+							"// pm.environment.set(\"admin_email\", \"admin@lumeos.io\");",
+							"// pm.environment.set(\"admin_pw\", \"test\");",
+							"",
+							"// pm.sendRequest({",
+							"//     url: 'localhost:8081/v1/login',",
+							"//     method: 'POST',",
+							"//     header: {",
+							"//         'content-type': 'application/json',",
+							"//     },",
+							"//     body: {",
+							"//         mode: 'raw',",
+							"//         raw: JSON.stringify({ email: pm.environment.get(\"admin_email\"), password: pm.environment.get(\"admin_pw\") })",
+							"//     }",
+							"// }, function (err, res) {",
+							"//     pm.environment.set(\"authorization\", \"Bearer \" + res.json().token);",
+							"// });",
+							"",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\r\n  \"email\" : \"admin@lumeos.io\",\r\n  \"password\" : \"test\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/polls/?queryFeatured=1",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"polls",
+						""
+					],
+					"query": [
+						{
+							"key": "queryFeatured",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "queryFeatured=2 polls",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "5cd515b4-620b-4392-9f7b-5a4cd6e5dd8a",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status is Ok (200)\"] = responseCode.code === 200",
+							"",
+							"",
+							"const jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Test field values\", function () {",
+							"    const index = 0;",
+							"    pm.expect(jsonData[index].answers[0]).to.equal(\"Power\");",
+							"    pm.expect(jsonData[index].answers[1]).to.equal(\"Sex\");",
+							"    pm.expect(jsonData[index].tags[0]).to.equal(\"Daniel\");",
+							"    pm.expect(jsonData[index].tags[1]).to.equal(\"Carnegie\");",
+							"    pm.expect(jsonData[index].poll_id).to.equal(2);",
+							"    pm.expect(jsonData[index].question).to.equal(\"What is the meaning of life?\");",
+							"    pm.expect(jsonData[index].participant_count).to.equal(0);",
+							"    pm.expect(jsonData[index].price).to.equal(0);",
+							"    pm.expect(jsonData[index].creator_id).to.equal(1);",
+							"    pm.expect(jsonData[index].creator_image).to.equal(\"/v1/profile_images/1\");",
+							"});",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "83bdf683-b340-43a4-a6e8-43cd034cd4c1",
+						"type": "text/javascript",
+						"exec": [
+							"// pm.environment.set(\"admin_email\", \"admin@lumeos.io\");",
+							"// pm.environment.set(\"admin_pw\", \"test\");",
+							"",
+							"// pm.sendRequest({",
+							"//     url: 'localhost:8081/v1/login',",
+							"//     method: 'POST',",
+							"//     header: {",
+							"//         'content-type': 'application/json',",
+							"//     },",
+							"//     body: {",
+							"//         mode: 'raw',",
+							"//         raw: JSON.stringify({ email: pm.environment.get(\"admin_email\"), password: pm.environment.get(\"admin_pw\") })",
+							"//     }",
+							"// }, function (err, res) {",
+							"//     pm.environment.set(\"authorization\", \"Bearer \" + res.json().token);",
+							"// });",
+							"",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\r\n  \"email\" : \"admin@lumeos.io\",\r\n  \"password\" : \"test\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/polls/?queryFeatured=2",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"polls",
+						""
+					],
+					"query": [
+						{
+							"key": "queryFeatured",
+							"value": "2"
 						}
 					]
 				}
