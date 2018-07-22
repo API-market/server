@@ -27,6 +27,15 @@ const {check, validationResult} = require('express-validator/check');
 const app = express();
 const cors = require('cors');
 
+const nodemailer = require('nodemailer');
+var transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'team@lumeos.io',
+    pass: process.env.LUMEOS_EMAIL_PASSWORD,
+  }
+});
+
 var bodyParser = require('body-parser');
 app.use(bodyParser.json({limit: '5mb'}));
 app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
@@ -287,6 +296,36 @@ router.delete('/profile_images/:id', function (req, res) {
       res.status(404).json({error: "Not Found", message: "Profile Image not found"})
     }
   });
+});
+
+
+// This is very weird end point, ideally client should just send an email, but long story
+router.post('/contact_us', [
+  check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
+  check("message").not().isEmpty().trim().escape().withMessage("Field 'message' cannot be empty"),
+
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({errors: errors.array()});
+  }
+
+  var mailOptions = {
+      from: 'team@lumeos.io',
+      to: 'team@lumeos.io',
+      subject: 'Server: Contact Us!',
+      text: req.body['message']
+  };
+
+  transporter.sendMail(mailOptions, function(error, info){
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+  });
+
+  res.status(204).json();
 });
 
 router.post('/users', [
