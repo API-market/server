@@ -558,24 +558,22 @@ router.get('/polls', function (req, res) {
         });
 
         if (req.query["queryFeatured"]) {
-            // We will query all polls user participated, and exclude it from the final list.
-            const featuredId = parseInt(req.query["queryFeatured"]);
-            Result.findAll({
-              where: {user_id: parseInt(featuredId)},
-              attributes: ["poll_id"]
-            }).then(result => {
-                if (!Array.isArray(result) || !result.length) {
-                    console.log("EMPTY");
-                    result = [];
-                }
-                console.log("WHAT");
-                result = new Set(result.map(x => x.dataValues["poll_id"]));
-                poll = poll.filter(element => !result.has(element.dataValues["poll_id"]) && 
-                    (featuredId != element.dataValues["creator_id"]));
-                res.json(removeEmpty(poll));
-            })
-        } else {
+          // We will query all polls user participated, and exclude it from the final list.
+          const featuredId = parseInt(req.query["queryFeatured"]);
+          Result.findAll({
+            where: {user_id: parseInt(featuredId)},
+            attributes: ["poll_id"]
+          }).then(result => {
+            if (!Array.isArray(result) || !result.length) {
+              result = [];
+            }
+            result = new Set(result.map(x => x.dataValues["poll_id"]));
+            poll = poll.filter(element => !result.has(element.dataValues["poll_id"]) &&
+              (featuredId != element.dataValues["creator_id"]));
             res.json(removeEmpty(poll));
+          })
+        } else {
+          res.json(removeEmpty(poll));
         }
       }
       else {
