@@ -83,7 +83,7 @@ const ProfileImage = sequelize.define('profile_image', {
     type: Sequelize.INTEGER,
     primaryKey: true
   },
-  image: Sequelize.STRING
+  image: Sequelize.TEXT
 });
 
 const Transaction = sequelize.define('transaction', {
