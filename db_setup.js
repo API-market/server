@@ -27,48 +27,48 @@ const SQLITE_FILENAME = process.env.SQLITE_FILENAME || "database.sqlite";
 const Sequelize = require('sequelize');
 
 const makeSequelize = function () {
-    if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
-        console.log("Connecting with: " + process.env.LUMEOS_SERVER_DB);
-        return new Sequelize(process.env.LUMEOS_SERVER_DB, {
-            operatorsAliases: false,
-            pool: {
-                max: 5,
-                min: 0,
-                acquire: 30000,
-                idle: 10000
-            }
-        });
-    } else if (process.env.ENV_PRODUCTION) {
-        throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
-    }
-
-    return new Sequelize('database', 'username', 'password', {
-        host: 'localhost',
-        dialect: 'sqlite',
-
-        operatorsAliases: false,
-        pool: {
-            max: 5,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-        },
-
-        storage: SQLITE_FILENAME
+  if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
+    console.log("Connecting with: " + process.env.LUMEOS_SERVER_DB);
+    return new Sequelize(process.env.LUMEOS_SERVER_DB, {
+      operatorsAliases: false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+      }
     });
+  } else if (process.env.ENV_PRODUCTION) {
+    throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
+  }
+
+  return new Sequelize('database', 'username', 'password', {
+    host: 'localhost',
+    dialect: 'sqlite',
+
+    operatorsAliases: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
+
+    storage: SQLITE_FILENAME
+  });
 }
 
 const sequelize = makeSequelize();
 
 sequelize
-    .authenticate()
-    .then(() => {
-        console.log('Connection has been established successfully.');
-    })
-    .catch(err => {
-        console.error('Unable to connect to the database:', err);
-    });
+  .authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
 
 module.exports = {
-    dbInstance: sequelize
+  dbInstance: sequelize
 }

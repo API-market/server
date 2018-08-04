@@ -28,47 +28,47 @@ const {check, validationResult} = require('express-validator/check');
 const nodemailer = require('nodemailer');
 
 var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'team@lumeos.io',
-        pass: process.env.LUMEOS_EMAIL_PASSWORD,
-    }
+  service: 'gmail',
+  auth: {
+    user: 'team@lumeos.io',
+    pass: process.env.LUMEOS_EMAIL_PASSWORD,
+  }
 });
 var basicRouter = express.Router();
 
 // This is very weird end point, ideally client should just send an email, but long story
 basicRouter.post('/contact_us', [
-    check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
-    check("message").not().isEmpty().trim().escape().withMessage("Field 'message' cannot be empty"),
+  check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
+  check("message").not().isEmpty().trim().escape().withMessage("Field 'message' cannot be empty"),
 
 ], (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(422).json({errors: errors.array()});
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({errors: errors.array()});
+  }
+
+  var mailOptions = {
+    from: 'team@lumeos.io',
+    to: 'team@lumeos.io',
+    subject: 'Server: Contact Us!',
+    text: req.body['message']
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
     }
+  });
 
-    var mailOptions = {
-        from: 'team@lumeos.io',
-        to: 'team@lumeos.io',
-        subject: 'Server: Contact Us!',
-        text: req.body['message']
-    };
-
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log('Email sent: ' + info.response);
-        }
-    });
-
-    res.status(204).json();
+  res.status(204).json();
 });
 
 
 basicRouter.get('/faqs', function (req, res) {
-    var contents = fs.readFileSync('faq.json', 'utf8');
-    res.set('Content-Type', 'application/json').status(200).send(contents);
+  var contents = fs.readFileSync('faq.json', 'utf8');
+  res.set('Content-Type', 'application/json').status(200).send(contents);
 });
 
 
