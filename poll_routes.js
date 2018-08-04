@@ -109,6 +109,24 @@ pollRouter.get('/polls/:id', function (req, res) {
           console.log(error);
           res.json(removeEmpty(poll));
         });
+      } else if (req.query["isBought"]) {
+        poll.dataValues["is_bought"] = 0;
+        Transaction.findOne({
+          where: {
+            user_id: parseInt(req.query["isBought"]),
+            poll_id: parseInt(req.params["id"])
+          },
+          attributes: ["poll_id"]
+        }).then(result => {
+          if (result) {
+            poll.dataValues["is_bought"] = 1;
+          }
+          res.json(removeEmpty(poll));
+        }).catch(error => {
+          console.log("I guess this is a first vote ever? user_id: " + req.query["isBought"] + ", poll_id: " + req.param["id"]);
+          console.log(error);
+          res.json(removeEmpty(poll));
+        });
       } else {
         res.json(removeEmpty(poll));
       }
