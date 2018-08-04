@@ -47,7 +47,7 @@ const populateCreatorImage = (sequelizeObj) => {
 var pollRouter = express.Router();
 
 pollRouter.post('/polls', [
-    check("question").not().isEmpty().trim().escape().withMessage("Field 'question' cannot be empty"),
+    check("question").not().isEmpty().trim().withMessage("Field 'question' cannot be empty"),
     check("answers").isArray().withMessage("Field 'answers' must be an array."),
     check("tags").optional().isArray().withMessage("Field 'tags' must be an array."),
     check("creator_id").isInt().withMessage("Field 'creator_id' must be an int."),
