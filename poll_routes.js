@@ -250,54 +250,60 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
     .then(() => {
       var pollId = parseInt(req.params["poll_id"]);
       Poll.findById(pollId).then(poll => {
-        var temp = [];
-        poll["answers"].forEach(element => {
-          temp.push([element, 0]);
-        });
-        Result.findAll({where: {poll_id: pollId}}).then(results => {
-          results.forEach(element => {
-            temp[parseInt(element["answer"])] = [temp[parseInt(element["answer"])][0], temp[parseInt(element["answer"])][1] + 1];
-          })
-        }).then(() => {
+        if (poll) {
+          var temp = [];
+          poll["answers"].forEach(element => {
+            temp.push([element, 0]);
+          });
+          Result.findAll({where: {poll_id: pollId}}).then(results => {
+            results.forEach(element => {
+              temp[parseInt(element["answer"])] = [temp[parseInt(element["answer"])][0], temp[parseInt(element["answer"])][1] + 1];
+            })
+          }).then(() => {
 
-          User.findById(parseInt(req.body['user_id'])).then(user => {
-            if (user) {
-              Transaction.findOrCreate({
-                where: {
-                  poll_id: parseInt(poll["id"]),
-                  user_id: parseInt(req.body["user_id"])
-                }
-              }).spread((transaction, created) => {
-                if (created) {
-                  // have to check here, because its ok for user to see poll after he bough it, and have zero balance
-                  if (user["balance"] < poll["price"]) {
-                    res.status(404).json({error: "Bad request", message: "Not enough assets to buy a poll."});
-                    return;
+            User.findById(parseInt(req.body['user_id'])).then(user => {
+              if (user) {
+                Transaction.findOrCreate({
+                  where: {
+                    poll_id: parseInt(poll["id"]),
+                    user_id: parseInt(req.body["user_id"])
                   }
-                  user.decrement("balance", {by: poll["price"]});
-                  // TODO: In blockchain we will be sending amount to reserve account.
-                }
+                }).spread((transaction, created) => {
+                  if (created) {
+                    // have to check here, because its ok for user to see poll after he bough it, and have zero balance
+                    if (user["balance"] < poll["price"]) {
+                      res.status(404).json({error: "Bad request", message: "Not enough assets to buy a poll."});
+                      return;
+                    }
+                    user.decrement("balance", {by: poll["price"]});
+                    // TODO: In blockchain we will be sending amount to reserve account.
+                  }
 
-                // if building this fails, its fine, user not goint to charged for subsequent requirests
-                var answers = {};
-                temp.forEach(element => {
-                  answers[element[0]] = element[1];
-                });
+                  // if building this fails, its fine, user not goint to charged for subsequent requirests
+                  var answers = {};
+                  temp.forEach(element => {
+                    answers[element[0]] = element[1];
+                  });
 
-                res.json({
-                  poll_id: poll["id"],
-                  question: poll["question"],
-                  answers: answers
-                });
+                  res.json({
+                    poll_id: poll["id"],
+                    question: poll["question"],
+                    answers: answers
+                  });
 
-              }) // Transaction
-            } else {
-              res.status(404).json({error: "Not Found", message: "User not found"})
-            }
-          }); // User
+                }) // Transaction
+              } else {
+                res.status(404).json({error: "Not Found", message: "User not found"})
+              }
+            }); // User
 
-        }) // Poll
-      })
+          }) // Poll
+        } else { // if poll
+          res.status(404).json({error: "Not Found", message: "Poll not found"})
+        }
+      }).catch(error => {
+        res.status(404).json({error: "Not Found", message: "Poll table doesn't exist"})
+      });
     })
 });
 

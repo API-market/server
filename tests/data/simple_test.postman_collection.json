@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5524dcfa-3309-4101-9d24-3a1065f390ca",
+		"_postman_id": "8378a9f5-8b16-4af4-8253-0602d2ef69e9",
 		"name": "simple_test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1828,6 +1828,77 @@
 						"v1",
 						"profile_images",
 						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buy Poll/Get result of non-existent poll",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "0b619f40-33f3-4441-ab15-13468cd99916",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"404 Not Found\"] = responseCode.code === 404",
+							"",
+							"const jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Test fields returned\", function () {",
+							"    pm.expect(jsonData.error).to.equal(\"Not Found\");",
+							"    pm.expect(jsonData.message).to.equal(\"Poll not found\");",
+							"});",
+							"",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6d397378-0dca-4696-b2a7-50d10e206e43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJpYXQiOjE1MzExMDgyNzd9.Cueh9jtZLBA5MPz7xcLMr1cV9dNLTEas8Xx1Nxa6IIg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"user_id\" : 1\r\n}"
+				},
+				"url": {
+					"raw": "localhost:8081/v1/polls/100/results",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"polls",
+						"100",
+						"results"
 					]
 				}
 			},
