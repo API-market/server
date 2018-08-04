@@ -1,11 +1,12 @@
 {
 	"info": {
-		"_postman_id": "8378a9f5-8b16-4af4-8253-0602d2ef69e9",
+		"_postman_id": "7c98bd54-02e7-49bb-a056-e342fa1432d1",
 		"name": "simple_test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
+			"_postman_id": "1573fe7d-eeb8-4b36-a495-8ef2f299e795",
 			"name": "Create first user",
 			"event": [
 				{
@@ -74,6 +75,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "d81d12f4-3969-451e-ae61-470aff911afb",
 			"name": "Validate first user",
 			"event": [
 				{
@@ -216,6 +218,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "12332eb9-a3ab-4f4b-893a-d8fb2703205c",
 			"name": "Check admin exists",
 			"event": [
 				{
@@ -302,6 +305,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "e5a68e9d-8d1f-4433-9ad7-46ee007c8431",
 			"name": "Poll not found",
 			"event": [
 				{
@@ -391,6 +395,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "0162c158-0004-487c-9965-e7a1d651e4ce",
 			"name": "User not found",
 			"event": [
 				{
@@ -480,6 +485,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "6254c338-2d9e-4e0e-9cbd-fb7267717ad7",
 			"name": "Create poll 1",
 			"event": [
 				{
@@ -548,6 +554,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "a6949134-0f32-4435-90c9-5a01b406cc15",
 			"name": "Create poll 2",
 			"event": [
 				{
@@ -616,6 +623,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "7e6d2554-2be2-4155-875e-e17783e6db85",
 			"name": "List All Polls",
 			"event": [
 				{
@@ -734,6 +742,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "3b7c3c5f-6fdd-46c2-9664-5df5529523d8",
 			"name": "List polls queryCreator",
 			"event": [
 				{
@@ -843,6 +852,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "bcb3bdbc-4ffc-4665-bed0-c8dd63588c3f",
 			"name": "Answer poll",
 			"event": [
 				{
@@ -906,6 +916,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "4b989582-47d7-4f45-890c-632adff2e396",
 			"name": "List All Polls, one answered",
 			"event": [
 				{
@@ -1027,6 +1038,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "46081346-1490-417c-a6e0-155356f6ce1b",
 			"name": "Query specific poll",
 			"event": [
 				{
@@ -1123,6 +1135,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "ae54ac5e-a5e1-436c-bdca-69dca59adbba",
 			"name": "Query specific poll with isAnswered ",
 			"event": [
 				{
@@ -1226,6 +1239,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "ba562075-9a52-434f-a72e-9afcee5c794b",
 			"name": "Query specific poll with isAnswered, for unrelated user",
 			"event": [
 				{
@@ -1329,6 +1343,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "0753fb2a-8713-493c-a7e8-0bead58d62ad",
 			"name": "queryFeatured=1 polls",
 			"event": [
 				{
@@ -1432,6 +1447,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "617b03ed-d848-450b-aba7-d32b4cd2b123",
 			"name": "queryFeatured=2 polls",
 			"event": [
 				{
@@ -1535,6 +1551,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "1eb774b0-98f5-4061-b396-d5f49f3b870b",
 			"name": "Buy Poll/Get result",
 			"event": [
 				{
@@ -1609,6 +1626,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "a4de8471-8d41-4e94-8b27-80d8ede04c03",
 			"name": "Check buyers balance",
 			"event": [
 				{
@@ -1694,6 +1712,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "c22e3af7-ea85-4fad-b171-b542c935541e",
 			"name": "Create profile image",
 			"event": [
 				{
@@ -1762,6 +1781,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "e3f46b40-ac7f-470a-89b2-fbb4cd1d5ab8",
 			"name": "Get profile image",
 			"event": [
 				{
@@ -1834,6 +1854,7 @@
 			"response": []
 		},
 		{
+			"_postman_id": "e893699b-ad9a-4672-a3a3-6b4d35033c29",
 			"name": "Buy Poll/Get result of non-existent poll",
 			"event": [
 				{
