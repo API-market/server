@@ -7,6 +7,10 @@
     "start": "node server.js",
     "test": "SQLITE_FILENAME=$(pwd)/test_database.sqlite mocha tests/runner.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lumeos/server.git"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
