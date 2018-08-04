@@ -184,7 +184,7 @@ pollRouter.get('/polls', function (req, res) {
             }
             result = new Set(result.map(x => x.dataValues["poll_id"]));
             poll = poll.filter(element => !result.has(element.dataValues["poll_id"]) &&
-              (featuredId != element.dataValues["creator_id"]));
+              (featuredId !== element.dataValues["creator_id"]));
             res.json(removeEmpty(poll));
           })
         } else {
@@ -200,7 +200,14 @@ pollRouter.get('/polls', function (req, res) {
   }
 });
 
-pollRouter.post('/polls/:poll_id', function (req, res) {
+pollRouter.post('/polls/:poll_id', [
+  check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
+  check("answer").isInt().withMessage("Field 'answer' must be an int.")
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({errors: errors.array()});
+  }
   User.findById(parseInt(req.body["user_id"])).then(user => {
     if (user) {
       sequelize.sync()
