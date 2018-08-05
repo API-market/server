@@ -32,6 +32,9 @@ const dbObjects = require("./db_setup.js");
 const sequelize = dbObjects.dbInstance;
 
 const db_entities = require("./db_entities.js");
+
+const jwt = require('jsonwebtoken');
+
 var User = db_entities.User;
 var ProfileImage = db_entities.ProfileImage;
 
