@@ -36,13 +36,10 @@ var User = db_entities.User;
 var Poll = db_entities.Poll;
 var Result = db_entities.Result;
 var Transaction = db_entities.Transaction;
+const getProfileImage = db_entities.getProfileImage;
 
 var util = require("./utilities.js");
 const removeEmpty = util.removeEmpty;
-
-const populateCreatorImage = (sequelizeObj) => {
-  return sequelizeObj.dataValues["creator_image"] = "/v" + require("./server_info.js").VERSION + "/profile_images/" + sequelizeObj["creator_id"];
-}
 
 var pollRouter = express.Router();
 
@@ -88,8 +85,8 @@ pollRouter.get('/polls/:id', function (req, res) {
     ]
   }).then(poll => {
     if (poll) {
-      // this is strange, but mobile is lazy.
-      populateCreatorImage(poll);
+      getProfileImage(poll["creator_id"]).then(result => {
+        poll.dataValues["creator_image"] = result;
 
       if (req.query["isAnswered"]) {
         poll.dataValues["is_answered"] = 0;
@@ -128,8 +125,9 @@ pollRouter.get('/polls/:id', function (req, res) {
           res.json(removeEmpty(poll));
         });
       } else {
-        res.json(removeEmpty(poll));
+          res.json(removeEmpty(poll));
       }
+      });
     } else {
       res.status(404).json({error: "Not Found", message: "Poll not found"})
     }
@@ -170,11 +168,10 @@ pollRouter.get('/polls', function (req, res) {
         where_object.attributes = where_attributes;
         Poll.findAll(where_object).then(poll => {
           if (poll) {
-            // this is strange, but mobile is lazy.
-            poll.forEach(function (element) {
-              populateCreatorImage(element);
+            Promise.all(poll.map(x => getProfileImage(x["creator_id"]))).then(result => {
+                poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
+                res.json(removeEmpty(poll));
             });
-            res.json(removeEmpty(poll));
           } else {
             res.status(404).json({error: "Not Found", message: "Poll not found"})
           }
@@ -186,10 +183,8 @@ pollRouter.get('/polls', function (req, res) {
     where_object.attributes = where_attributes;
     Poll.findAll(where_object).then(poll => {
       if (poll) {
-        poll.forEach(function (element) {
-          populateCreatorImage(element);
-        });
-
+        Promise.all(poll.map(x => getProfileImage(x["creator_id"]))).then(result => {
+            poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
         if (req.query["queryFeatured"]) {
           // We will query all polls user participated, and exclude it from the final list.
           const featuredId = parseInt(req.query["queryFeatured"]);
@@ -208,12 +203,13 @@ pollRouter.get('/polls', function (req, res) {
         } else {
           res.json(removeEmpty(poll));
         }
+        });
       }
       else {
         res.status(404).json({error: "Not Found", message: "Poll not found"})
       }
     }).catch(error => {
-      res.status(404).json({error: "Not Found", message: "poll table doesn't exist"})
+      res.status(404).json({error: "Not Found", message: "poll table doesn't exist: " + error})
     });
   }
 });

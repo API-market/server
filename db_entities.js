@@ -5,6 +5,29 @@ const sequelize = dbObjects.dbInstance;
 
 var bcrypt = require('bcrypt');
 
+const AWS = require('aws-sdk');
+AWS.config.update({
+        accessKeyId: process.env.ACCESS_KEY,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY,
+        region: 'us-west-2'
+        });
+const s3 = new AWS.S3();
+const lumeosS3Bucket = new AWS.S3( { params: {Bucket: 'lumeos'} } );
+
+const getProfileImage = function(user_id) {
+      // TODO: check if profile_image is set
+      const urlParams = {
+        Key: "profile_images" + user_id,
+      };
+      var p = new Promise(function(resolve,reject) {
+           lumeosS3Bucket.getSignedUrl('getObject', urlParams, (err, url) =>
+           {   if (err) { reject(err); }
+               else { resolve(url); }
+           });
+      }).catch((err) => console.error(err));
+      return p;
+    };
+
 const User = sequelize.define('user', {
   eos: Sequelize.STRING,
   firstName: Sequelize.STRING,
@@ -83,7 +106,25 @@ const ProfileImage = sequelize.define('profile_image', {
     type: Sequelize.INTEGER,
     primaryKey: true
   },
-  image: Sequelize.TEXT
+  image: {
+    type: Sequelize.VIRTUAL,
+    set: function (val) {
+      const data = {
+        Key: "profile_images" + this.getDataValue('user_id'),
+        Body: val,
+        ContentEncoding: 'base64',
+        ContentType: 'image/png'
+      };
+      lumeosS3Bucket.putObject(data, function(err, data){
+          if (err) {
+            console.log(err);
+            console.log('Error uploading data: ', data);
+          } else {
+            console.log('succesfully uploaded the image!');
+          }
+      });
+    }
+  },
 });
 
 const Transaction = sequelize.define('transaction', {
@@ -98,5 +139,6 @@ module.exports = {
   Result: Result,
   Followship: Followship,
   ProfileImage: ProfileImage,
-  Transaction: Transaction
+  Transaction: Transaction,
+  getProfileImage : getProfileImage
 }

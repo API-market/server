@@ -37,6 +37,7 @@ const jwt = require('jsonwebtoken');
 
 var User = db_entities.User;
 var ProfileImage = db_entities.ProfileImage;
+const getProfileImage = db_entities.getProfileImage;
 
 var util = require("./utilities.js");
 const removeEmpty = util.removeEmpty;
@@ -119,11 +120,15 @@ userRouter.post('/users', [
 });
 
 userRouter.get('/users/:id', function (req, res) {
-  User.findById(parseInt(req.params["id"]), {
+  const userId = parseInt(req.params["id"]);
+  User.findById(userId, {
     attributes: STANDARD_USER_ATTR
   }).then(user => {
     if (user) {
-      res.json(removeEmpty(user));
+      getProfileImage(userId).then(result => {
+        user.dataValues["profile_image"] = result;
+        res.json(removeEmpty(user));
+      });
     }
     else {
       res.status(404).json({error: "Not Found", message: "User not found"})
@@ -181,9 +186,12 @@ userRouter.get('/users', function (req, res) {
       "followee_count"
     ]
   };
-  User.findAll(where_object).then(user => {
-    if (user) {
-      res.json(removeEmpty(user));
+  User.findAll(where_object).then(users => {
+    if (users) {
+      Promise.all(users.map(x => getProfileImage(users["user_id"]))).then(result => {
+          users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
+          res.json(removeEmpty(users));
+      });
     }
     else {
       res.status(404).json({error: "Not Found", message: "User not found"})
@@ -333,9 +341,13 @@ userRouter.post('/profile_images/', [
 });
 
 userRouter.get('/profile_images/:id', function (req, res) {
-  ProfileImage.findOne({where: {user_id: parseInt(req.params["id"])}}).then(profileImage => {
+  const userId = parseInt(req.params["id"]);
+  ProfileImage.findOne({where: {user_id: userId}}).then(profileImage => {
     if (profileImage) {
-      res.json(removeEmpty(profileImage));
+      getProfileImage(userId).then(result => {
+        profileImage.dataValues["image"] = result;
+        res.json(removeEmpty(profileImage));
+      });
     }
     else {
       res.status(404).json({error: "Not Found", message: "Profile image not found"})

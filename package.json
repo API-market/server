@@ -23,7 +23,8 @@
     "sqlite3": "^4.0.1",
     "pg": "^7.4.3",
     "express-validator": "^5.2.0",
-    "nodemailer": ""
+    "nodemailer": "",
+    "aws-sdk": ""
   },
   "devDependencies": {
     "newman": "^3.10.0",
