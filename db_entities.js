@@ -4,6 +4,7 @@ const dbObjects = require("./db_setup");
 const sequelize = dbObjects.dbInstance;
 
 var bcrypt = require('bcrypt');
+const atob = require('atob');
 
 const AWS = require('aws-sdk');
 AWS.config.update({
@@ -27,6 +28,15 @@ const getProfileImage = function(user_id) {
       }).catch((err) => console.error(err));
       return p;
     };
+
+function imageFromBase64(dataURI) {
+     var binary = atob(dataURI);
+     var array = [];
+   for (var i = 0; i < binary.length; i++) {
+      array.push(binary.charCodeAt(i));
+   }
+   return Buffer.from(new Uint8Array(array));
+}
 
 const User = sequelize.define('user', {
   eos: Sequelize.STRING,
@@ -111,8 +121,7 @@ const ProfileImage = sequelize.define('profile_image', {
     set: function (val) {
       const data = {
         Key: "profile_images" + this.getDataValue('user_id'),
-        Body: val,
-        ContentEncoding: 'base64',
+        Body: imageFromBase64(val),
         ContentType: 'image/png'
       };
       lumeosS3Bucket.putObject(data, function(err, data){

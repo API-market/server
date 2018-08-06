@@ -35,8 +35,9 @@ const db_entities = require("./db_entities.js");
 
 const jwt = require('jsonwebtoken');
 
-var User = db_entities.User;
-var ProfileImage = db_entities.ProfileImage;
+const User = db_entities.User;
+const ProfileImage = db_entities.ProfileImage;
+const Followship = db_entities.Followship;
 const getProfileImage = db_entities.getProfileImage;
 
 var util = require("./utilities.js");

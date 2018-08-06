@@ -24,7 +24,8 @@
     "pg": "^7.4.3",
     "express-validator": "^5.2.0",
     "nodemailer": "",
-    "aws-sdk": ""
+    "aws-sdk": "",
+    "atob": "^2.1.1"
   },
   "devDependencies": {
     "newman": "^3.10.0",
