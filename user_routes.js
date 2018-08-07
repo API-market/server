@@ -189,7 +189,7 @@ userRouter.get('/users', function (req, res) {
   };
   User.findAll(where_object).then(users => {
     if (users) {
-      Promise.all(users.map(x => getProfileImage(users["user_id"]))).then(result => {
+      Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
           users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
           res.json(removeEmpty(users));
       });

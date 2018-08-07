@@ -15,20 +15,6 @@ AWS.config.update({
 const s3 = new AWS.S3();
 const lumeosS3Bucket = new AWS.S3( { params: {Bucket: 'lumeos'} } );
 
-const getProfileImage = function(user_id) {
-      // TODO: check if profile_image is set
-      const urlParams = {
-        Key: "profile_images" + user_id,
-      };
-      var p = new Promise(function(resolve,reject) {
-           lumeosS3Bucket.getSignedUrl('getObject', urlParams, (err, url) =>
-           {   if (err) { reject(err); }
-               else { resolve(url); }
-           });
-      }).catch((err) => console.error(err));
-      return p;
-    };
-
 function imageFromBase64(dataURI) {
      var binary = atob(dataURI);
      var array = [];
@@ -141,6 +127,21 @@ const Transaction = sequelize.define('transaction', {
   user_id: Sequelize.INTEGER,
   amount: Sequelize.DOUBLE
 });
+
+const getProfileImage = function(user_id) {
+      // TODO: check if profile_image is set
+      const urlParams = {
+        Key: "profile_images" + user_id,
+      };
+      var p = new Promise(function(resolve,reject) {
+           lumeosS3Bucket.getSignedUrl('getObject', urlParams, (err, url) =>
+           {   if (err) { reject(err); }
+               else { resolve(url); }
+           });
+      }).catch((err) => console.error(err));
+      return p;
+    };
+
 
 module.exports = {
   User: User,
