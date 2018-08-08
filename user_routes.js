@@ -309,7 +309,10 @@ userRouter.get('/followers/:user_id', function (req, res) {
               where: {id: {[Op.in]: result.map(x => x.dataValues["follower_id"])}},
               attributes: STANDARD_USER_ATTR
             }).then(followers => {
-              res.json(removeEmpty(followers));
+              Promise.all(followers.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
+                  followers.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
+                  res.json(removeEmpty(followers));
+              });
             });
           }) // followshipt.findAll
         })
@@ -339,8 +342,11 @@ userRouter.get('/followees/:user_id', function (req, res) {
             User.findAll({
               where: {id: {[Op.in]: result.map(x => x.dataValues["followee_id"])}},
               attributes: STANDARD_USER_ATTR
-            }).then(followers => {
-              res.json(removeEmpty(followers));
+            }).then(followees => {
+              Promise.all(followees.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
+                  followees.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
+                  res.json(removeEmpty(followees));
+              });
             });
           }) // followshipt.findAll
         })
