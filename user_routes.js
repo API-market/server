@@ -44,6 +44,7 @@ var util = require("./utilities.js");
 const removeEmpty = util.removeEmpty;
 
 const STANDARD_USER_ATTR = [
+  ["id", "user_id"],
   "email",
   "eos",
   "firstName",
@@ -120,18 +121,61 @@ userRouter.post('/users', [
     });
 });
 
+const addProfileImage = function(res, user) {
+  const userId = user.dataValues["user_id"];
+  getProfileImage(userId).then(result => {
+    user.dataValues["profile_image"] = result;
+    res.json(removeEmpty(user));
+  });
+}
+
 userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
   User.findById(userId, {
     attributes: STANDARD_USER_ATTR
   }).then(user => {
     if (user) {
-      getProfileImage(userId).then(result => {
-        user.dataValues["profile_image"] = result;
-        res.json(removeEmpty(user));
-      });
-    }
-    else {
+
+      if (req.query["isFollowerOf"]) {
+        user.dataValues["is_follower"] = 0;
+        Followship.findOne({
+          where: {
+            follower_id: userId,
+            followee_id: parseInt(req.query["isFollowerOf"]),
+          },
+          attributes: ["follower_id"]
+        }).then(result => {
+          if (result) {
+            user.dataValues["is_follower"] = 1;
+          }
+          addProfileImage(res, user);
+        }).catch(error => {
+          console.log("I guess this is a first follow ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
+          console.log(error);
+          res.json(removeEmpty(poll));
+        });
+      } else if (req.query["isFolloweeOf"]) {
+        user.dataValues["is_followee"] = 0;
+        Followship.findOne({
+          where: {
+            follower_id: parseInt(req.query["isFolloweeOf"]),
+            followee_id: userId,
+          },
+          attributes: ["followee_id"]
+        }).then(result => {
+          if (result) {
+            user.dataValues["is_followee"] = 1;
+          }
+          addProfileImage(res, user);
+        }).catch(error => {
+          console.log("I guess this is a first follow ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
+          console.log(error);
+          res.json(removeEmpty(poll));
+        });
+      } else {
+        addProfileImage(res, user);
+      }
+    } else {
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
   }).catch(error => {
