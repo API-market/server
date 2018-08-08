@@ -290,6 +290,23 @@ userRouter.post('/follow', function (req, res) {
   });
 });
 
+userRouter.delete('/follow', function (req, res) {
+  const followee_id = parseInt(req.body["followee_id"]);
+  const follower_id = parseInt(req.body["follower_id"]);
+  Followship.destroy({
+                where: {
+                  follower_id: follower_id,
+                  followee_id: followee_id
+                }}
+  ).then(result => {
+    if (result) {
+      res.status(202).json();
+    } else {
+      res.status(404).json({error: "Not Found", message: "Followship not found"})
+    }
+  });
+});
+
 // get followers for user_id
 userRouter.get('/followers/:user_id', function (req, res) {
   const user_id = parseInt(req.params["user_id"]);
