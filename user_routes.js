@@ -150,7 +150,7 @@ userRouter.get('/users/:id', function (req, res) {
           }
           addProfileImage(res, user);
         }).catch(error => {
-          console.log("I guess this is a first follow ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
+          console.log("I guess this is a first follow ever? user_id: " + req.query["isFollowerOf"] + ", poll_id: " + req.param["id"]);
           console.log(error);
           res.json(removeEmpty(poll));
         });
@@ -168,7 +168,7 @@ userRouter.get('/users/:id', function (req, res) {
           }
           addProfileImage(res, user);
         }).catch(error => {
-          console.log("I guess this is a first follow ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
+          console.log("I guess this is a first follow ever? user_id: " + req.query["isFolloweeOf"] + ", poll_id: " + req.param["id"]);
           console.log(error);
           res.json(removeEmpty(poll));
         });
