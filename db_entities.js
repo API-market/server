@@ -51,6 +51,15 @@ const User = sequelize.define('user', {
   follower_count: {type: Sequelize.INTEGER, defaultValue: 0}
 });
 
+const Address = sequelize.define('address', {
+  street: Sequelize.STRING,
+  city: Sequelize.STRING,
+  region: Sequelize.STRING,
+  postalCode: Sequelize.STRING,
+});
+
+User.Address = User.belongsTo(Address, { as: 'address', constraints: false });
+
 User.prototype.verifyPassword = function (password) {
   return bcrypt.compareSync(password, this.password);
 };

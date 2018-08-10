@@ -1,12 +1,12 @@
 {
 	"info": {
-		"_postman_id": "7c98bd54-02e7-49bb-a056-e342fa1432d1",
+		"_postman_id": "20a6702f-e492-4f01-9c1d-2a845a390e63",
 		"name": "simple_test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"_postman_id": "1573fe7d-eeb8-4b36-a495-8ef2f299e795",
+			"_postman_id": "8d5a9081-1a2b-42fc-867b-e3cab18a1372",
 			"name": "Create first user",
 			"event": [
 				{
@@ -57,7 +57,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"eos\" : \"123321\",\r\n  \"firstName\" : \"Robert\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester7@lumeos.io\",\r\n  \"phone\" : \"1234\",\r\n  \"dob\" : \"19850423\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n      \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testing1\"\r\n}"
+					"raw": "{\r\n  \"eos\" : \"123321\",\r\n  \"firstName\" : \"Robert\",\r\n  \"lastName\" : \"De Niro\",\r\n  \"email\" : \"tester7@lumeos.io\",\r\n  \"phone\" : \"1234\",\r\n  \"dob\" : \"19850423\",\r\n  \"gender\" : \"male\",\r\n  \"address\" : {\r\n    \"city\" : \"Brooklyn\",\r\n    \"region\" : \"NY\",\r\n    \"postalCode\" : \"11235\",\r\n    \"street\" : \"123 Lol What Street Apt. 2B\"\r\n  },\r\n  \"school\" : \"Lol What State University\",\r\n  \"employer\" : \"Uncle Sam\",\r\n  \"password\" : \"testing1\"\r\n}"
 				},
 				"url": {
 					"raw": "localhost:8081/v1/users",
@@ -75,13 +75,13 @@
 			"response": []
 		},
 		{
-			"_postman_id": "d81d12f4-3969-451e-ae61-470aff911afb",
+			"_postman_id": "51b52e6d-2402-4aa1-a7b0-a1310079d180",
 			"name": "Validate first user",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "f4f672a5-1821-4c29-b747-a24412d8cc97",
+						"id": "64d10c41-9a64-4d4b-9da7-65bd19e5f073",
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status is ok\"] = responseCode.code === 200",
@@ -120,6 +120,10 @@
 							"    pm.expect(jsonData.employer).to.eql(\"Uncle Sam\");",
 							"    pm.expect(jsonData.balance).to.eql(10);",
 							"    pm.expect(jsonData.eos).to.eql(\"123321\");",
+							"    pm.expect(jsonData.address.street).to.eql(\"123 Lol What Street Apt. 2B\");",
+							"    pm.expect(jsonData.address.city).to.eql(\"Brooklyn\");",
+							"    pm.expect(jsonData.address.region).to.eql(\"NY\");",
+							"    pm.expect(jsonData.address.postalCode).to.eql(\"11235\");",
 							"});",
 							"",
 							"// TODO: more accurate schema validation of email, DOB, phone etc.",
@@ -203,7 +207,7 @@
 					"raw": "{\r\n\r\n  \"email\" : \"admin@lumeos.io\",\r\n  \"password\" : \"test\"\r\n}"
 				},
 				"url": {
-					"raw": "localhost:8081/v1/users/2",
+					"raw": "localhost:8081/v1/users/2/",
 					"host": [
 						"localhost"
 					],
@@ -211,14 +215,15 @@
 					"path": [
 						"v1",
 						"users",
-						"2"
+						"2",
+						""
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"_postman_id": "12332eb9-a3ab-4f4b-893a-d8fb2703205c",
+			"_postman_id": "aefecb7f-4aaa-4528-be0b-d9ae0e3d4b3d",
 			"name": "Check admin exists",
 			"event": [
 				{
@@ -305,7 +310,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "e5a68e9d-8d1f-4433-9ad7-46ee007c8431",
+			"_postman_id": "e1beb96c-9493-4f97-bfd8-5efb7b28a5f1",
 			"name": "Poll not found",
 			"event": [
 				{
@@ -395,7 +400,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "0162c158-0004-487c-9965-e7a1d651e4ce",
+			"_postman_id": "2ddd2013-b295-49e8-bd92-f8860eb05f13",
 			"name": "User not found",
 			"event": [
 				{
@@ -485,7 +490,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "6254c338-2d9e-4e0e-9cbd-fb7267717ad7",
+			"_postman_id": "dc6e83f2-f456-4124-b5e0-672668f3b2c7",
 			"name": "Create poll 1",
 			"event": [
 				{
@@ -554,7 +559,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "a6949134-0f32-4435-90c9-5a01b406cc15",
+			"_postman_id": "de931836-03fd-4afd-8a91-bac46b49de5a",
 			"name": "Create poll 2",
 			"event": [
 				{
@@ -623,7 +628,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "7e6d2554-2be2-4155-875e-e17783e6db85",
+			"_postman_id": "f7f03f09-216e-4353-accb-e45a5313b7af",
 			"name": "List All Polls",
 			"event": [
 				{
@@ -742,7 +747,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "3b7c3c5f-6fdd-46c2-9664-5df5529523d8",
+			"_postman_id": "9e91cba2-c7f8-445b-82e2-b47200085f25",
 			"name": "List polls queryCreator",
 			"event": [
 				{
@@ -852,7 +857,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "bcb3bdbc-4ffc-4665-bed0-c8dd63588c3f",
+			"_postman_id": "4c5120c6-09b9-4d70-9ad8-f78d17e6b444",
 			"name": "Answer poll",
 			"event": [
 				{
@@ -916,7 +921,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "4b989582-47d7-4f45-890c-632adff2e396",
+			"_postman_id": "ddfc0f0b-4165-4f19-a94b-5f0809e975cb",
 			"name": "List All Polls, one answered",
 			"event": [
 				{
@@ -1038,7 +1043,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "46081346-1490-417c-a6e0-155356f6ce1b",
+			"_postman_id": "0102cc49-2b80-4bd0-ab00-eb86beafab57",
 			"name": "Query specific poll",
 			"event": [
 				{
@@ -1135,7 +1140,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "ae54ac5e-a5e1-436c-bdca-69dca59adbba",
+			"_postman_id": "81a2c361-2f57-414b-b2f7-5e44c814d3cd",
 			"name": "Query specific poll with isAnswered ",
 			"event": [
 				{
@@ -1239,7 +1244,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "ba562075-9a52-434f-a72e-9afcee5c794b",
+			"_postman_id": "48f8bfac-631b-44c1-ab70-381225dd5155",
 			"name": "Query specific poll with isAnswered, for unrelated user",
 			"event": [
 				{
@@ -1343,7 +1348,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "0753fb2a-8713-493c-a7e8-0bead58d62ad",
+			"_postman_id": "9874481d-cb4d-466e-939d-457c03249105",
 			"name": "queryFeatured=1 polls",
 			"event": [
 				{
@@ -1447,7 +1452,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "617b03ed-d848-450b-aba7-d32b4cd2b123",
+			"_postman_id": "ed087ee9-40e1-45c0-9356-0db6f38371f3",
 			"name": "queryFeatured=2 polls",
 			"event": [
 				{
@@ -1551,7 +1556,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "1eb774b0-98f5-4061-b396-d5f49f3b870b",
+			"_postman_id": "1c76f7fc-4a1b-453b-9d41-d71156154c78",
 			"name": "Buy Poll/Get result",
 			"event": [
 				{
@@ -1626,7 +1631,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "a4de8471-8d41-4e94-8b27-80d8ede04c03",
+			"_postman_id": "bebcd7ad-a92b-4ba7-b286-de6a3aa7997b",
 			"name": "Check buyers balance",
 			"event": [
 				{
@@ -1712,7 +1717,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "c22e3af7-ea85-4fad-b171-b542c935541e",
+			"_postman_id": "9ee51761-e5ae-4000-82b9-dbfe0219777d",
 			"name": "Create profile image",
 			"event": [
 				{
@@ -1781,7 +1786,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "e3f46b40-ac7f-470a-89b2-fbb4cd1d5ab8",
+			"_postman_id": "aae6935f-a814-4b4a-b4b4-ebffde2db416",
 			"name": "Get profile image",
 			"event": [
 				{
@@ -1854,7 +1859,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "e893699b-ad9a-4672-a3a3-6b4d35033c29",
+			"_postman_id": "f64e2d9a-c883-408d-91a3-b3bb575cf96d",
 			"name": "Buy Poll/Get result of non-existent poll",
 			"event": [
 				{
