@@ -36,6 +36,7 @@ const db_entities = require("./db_entities.js");
 const jwt = require('jsonwebtoken');
 
 const User = db_entities.User;
+const Address = db_entities.Address;
 const ProfileImage = db_entities.ProfileImage;
 const Followship = db_entities.Followship;
 const getProfileImage = db_entities.getProfileImage;
@@ -107,7 +108,11 @@ userRouter.post('/users', [
   }
   sequelize.sync()
     .then(() => {
-      User.create(req.body)
+      console.log(req.body);
+      User.create(req.body, {
+  include: [{
+    association: User.Address }]
+})
         .then(user => {
           res.json({user_id: user["id"]});
         })
@@ -132,10 +137,12 @@ const addProfileImage = function(res, user) {
 userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
   User.findById(userId, {
-    attributes: STANDARD_USER_ATTR
+    attributes: STANDARD_USER_ATTR,
+    include: [
+    { association: User.Address, as: 'address'}
+    ],
   }).then(user => {
     if (user) {
-
       if (req.query["isFollowerOf"]) {
         user.dataValues["is_follower"] = 0;
         Followship.findOne({
@@ -176,9 +183,11 @@ userRouter.get('/users/:id', function (req, res) {
         addProfileImage(res, user);
       }
     } else {
+      console.log("error: " + error);
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
   }).catch(error => {
+    console.log("error: " + error);
     res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
   });
 });
@@ -215,21 +224,7 @@ userRouter.get('/users', function (req, res) {
   }
   var where_object = {
     where: Object.assign({}, ...where_params),
-    attributes: [
-      ["id", "user_id"],
-      "email",
-      "eos",
-      "firstName",
-      "lastName",
-      "phone",
-      "dob",
-      "gender",
-      "school",
-      "employer",
-      "balance",
-      "follower_count",
-      "followee_count"
-    ]
+    attributes: STANDARD_USER_ATTR
   };
   User.findAll(where_object).then(users => {
     if (users) {
@@ -300,6 +295,8 @@ userRouter.delete('/follow', function (req, res) {
                 }}
   ).then(result => {
     if (result) {
+      User.findById(followee_id).then(followee => { if (followee) { followee.decrement("follower_count"); }});
+      User.findById(follower_id).then(follower => { if (follower) { follower.decrement("followee_count"); }});
       res.status(202).json();
     } else {
       res.status(404).json({error: "Not Found", message: "Followship not found"})
@@ -453,9 +450,11 @@ userRouter.delete('/profile_images/:id', function (req, res) {
 userRouter.put('/users/:id', function (req, res) {
   User.findById(parseInt(req.params['id'])).then(user => {
     if (user) {
+        console.log("user: " + user);
       user.update(req.body).then(() => {
         res.status(204).json();
       }).catch(error => {
+        console.log("failed user: " + user);
         console.log(error);
       })
     } else {
