@@ -43,6 +43,24 @@ const removeEmpty = util.removeEmpty;
 
 var pollRouter = express.Router();
 
+// I am sure there is more clever way of doing this
+function updatePollPrice(poll) {
+    const participantCount = poll['participant_count'] + 1;
+    let newPrice = 0;
+    if (participantCount >= 1000) {
+        newPrice = 1000;
+    } else if (participantCount >= 250) {
+        newPrice = 250;
+    } else if (participantCount >= 100) {
+        newPrice = 100;
+    } else if (participantCount >= 50) {
+        newPrice = 50;
+    } else if (participantCount >= 10) {
+        newPrice = 10;
+    }
+    poll.update({price: newPrice });
+}
+
 pollRouter.post('/polls', [
     check("question").not().isEmpty().trim().withMessage("Field 'question' cannot be empty"),
     check("answers").isArray().withMessage("Field 'answers' must be an array."),
@@ -242,7 +260,7 @@ pollRouter.post('/polls/:poll_id', [
                 if (created) {
                   result.update({answer: req.body["answer"]}).then(resultNext => {
                     poll.increment('participant_count');
-                    poll.increment('price', {by: 0.01});
+                    updatePollPrice(poll);
                     res.status(204).json();
                   }).catch(error => {
                     result.destroy();
