@@ -260,7 +260,7 @@ pollRouter.post('/polls/:poll_id', [
                 if (created) {
                   result.update({answer: req.body["answer"]}).then(resultNext => {
                     poll.increment('participant_count');
-                    updatePollPrice(poll);
+                    //updatePollPrice(poll); // TODO: Uncomment once we decide to charge people
                     res.status(204).json();
                   }).catch(error => {
                     result.destroy();
@@ -315,6 +315,15 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                       return;
                     }
                     user.decrement("balance", {by: poll["price"]});
+
+                    Result.findAll({
+                      where: {poll_id: parseInt(poll["id"])},
+                      attributes: ["user_id"]
+                    }).then(users => {
+                        users = users.map(x => x.dataValues["user_id"]);
+                        const DEFAULT_LUME = 5; // this is random number, for first week launch
+                        User.increment('balance', { by: DEFAULT_LUME, where: { id: {[Op.in] : users} } });
+                    })
                     // TODO: In blockchain we will be sending amount to reserve account.
                   }
 
