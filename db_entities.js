@@ -50,7 +50,8 @@ const User = sequelize.define('user', {
   employer: Sequelize.STRING,
   balance: {type: Sequelize.DOUBLE, defaultValue: 500},
   followee_count: {type: Sequelize.INTEGER, defaultValue: 0},
-  follower_count: {type: Sequelize.INTEGER, defaultValue: 0}
+  follower_count: {type: Sequelize.INTEGER, defaultValue: 0},
+  answer_count: {type: Sequelize.INTEGER, defaultValue: 0}
 });
 
 const Address = sequelize.define('address', {

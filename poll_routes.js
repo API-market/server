@@ -240,7 +240,8 @@ pollRouter.post('/polls/:poll_id', [
   if (!errors.isEmpty()) {
     return res.status(422).json({errors: errors.array()});
   }
-  User.findById(parseInt(req.body["user_id"])).then(user => {
+  const userId = parseInt(req.body["user_id"]);
+  User.findById(userId).then(user => {
     if (user) {
       sequelize.sync()
         .then(() => {
@@ -254,12 +255,13 @@ pollRouter.post('/polls/:poll_id', [
               Result.findOrCreate({
                 where: {
                   poll_id: parseInt(poll["id"]),
-                  user_id: parseInt(req.body["user_id"])
+                  user_id: userId
                 }
               }).spread((result, created) => {
                 if (created) {
                   result.update({answer: req.body["answer"]}).then(resultNext => {
                     poll.increment('participant_count');
+                    User.increment({answer_count : 1, balance: 5}, { where: { id: userId } });
                     //updatePollPrice(poll); // TODO: Uncomment once we decide to charge people
                     res.status(204).json();
                   }).catch(error => {
@@ -316,6 +318,8 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                     }
                     user.decrement("balance", {by: poll["price"]});
 
+                    /* Thats how we actually should do it. Instead of giving for answers.
+                    leave for later
                     Result.findAll({
                       where: {poll_id: parseInt(poll["id"])},
                       attributes: ["user_id"]
@@ -324,6 +328,7 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                         const DEFAULT_LUME = 5; // this is random number, for first week launch
                         User.increment('balance', { by: DEFAULT_LUME, where: { id: {[Op.in] : users} } });
                     })
+                    */
                     // TODO: In blockchain we will be sending amount to reserve account.
                   }
 

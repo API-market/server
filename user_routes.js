@@ -57,7 +57,8 @@ const STANDARD_USER_ATTR = [
   "employer",
   "balance",
   "follower_count",
-  "followee_count"
+  "followee_count",
+  "answer_count"
 ];
 
 
