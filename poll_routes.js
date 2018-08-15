@@ -55,7 +55,7 @@ function updatePollPrice(poll) {
         newPrice = 100;
     } else if (participantCount >= 50) {
         newPrice = 50;
-    } else if (participantCount >= 10) {
+    } else if (participantCount >= 1) {
         newPrice = 10;
     }
     poll.update({price: newPrice });
