@@ -7,3 +7,4 @@ test_database.sqlite
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+export_credentials
