@@ -49,7 +49,7 @@ basicRouter.post('/contact_us', [
 
   var mailOptions = {
     from: 'team@lumeos.io',
-    to: 'team@lumeos.io',
+    to: 'zokir@lumeos.io',
     subject: 'Server: Contact Us!',
     text: req.body['message']
   };
