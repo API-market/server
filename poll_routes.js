@@ -158,6 +158,14 @@ pollRouter.get('/polls/:id', function (req, res) {
 
 pollRouter.get('/polls', function (req, res) {
   var where_params = [];
+  let orderParams = [];
+  let limit = 10e3;
+  if (req.query["orderBy"]) {
+      orderParams.push( [ sequelize.col(req.query["orderBy"]), 'DESC'] )
+  }
+  if (req.query["limit"]) {
+      limit = req.query["limit"];
+  }
   if (req.query["queryCreator"]) {
     where_params.push({
       creator_id: req.query["queryCreator"]
@@ -201,9 +209,9 @@ pollRouter.get('/polls', function (req, res) {
       }
     })
   } else {
-    where_object = {where: Object.assign({}, ...where_params)};
+    where_object = {where: Object.assign({}, ...where_params), order: orderParams, limit: limit};
     where_object.attributes = where_attributes;
-    Poll.findAll(where_object).then(poll => {
+    Poll.findAll( where_object ).then(poll => {
       if (poll) {
         Promise.all(poll.map(x => getProfileImage(x["creator_id"]))).then(result => {
             poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);

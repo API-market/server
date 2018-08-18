@@ -28,9 +28,9 @@ const {check, validationResult} = require('express-validator/check');
 const nodemailer = require('nodemailer');
 
 var transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: process.env.LUMEOS_EMAIL_SERVICE,
   auth: {
-    user: 'team@lumeos.io',
+    user: process.env.LUMEOS_EMAIL_SENDER,
     pass: process.env.LUMEOS_EMAIL_PASSWORD,
   }
 });
@@ -48,9 +48,9 @@ basicRouter.post('/contact_us', [
   }
 
   var mailOptions = {
-    from: 'team@lumeos.io',
-    to: 'zokir@lumeos.io',
-    subject: 'Server: Contact Us!',
+    from: process.env.LUMEOS_EMAIL_SENDER,
+    to: 'team@lumeos.io',
+    subject: 'Server: Contact Us!, user_id: ' + req.body["user_id"],
     text: req.body['message']
   };
 
