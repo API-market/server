@@ -41,6 +41,10 @@ const getProfileImage = db_entities.getProfileImage;
 var util = require("./utilities.js");
 const removeEmpty = util.removeEmpty;
 
+// in prod we use postgress, which requires iLike to case insensitive.
+// sqlite does not support iLike operator
+const likeOp = (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) ? Op.iLike : Op.like;
+
 var pollRouter = express.Router();
 
 // I am sure there is more clever way of doing this
@@ -161,12 +165,12 @@ pollRouter.get('/polls', function (req, res) {
   }
   if (req.query["queryQuestion"]) {
     where_params.push({
-      question: {[Op.like]: "%" + req.query["queryQuestion"] + "%"}
+      question: {[likeOp]: "%" + req.query["queryQuestion"] + "%"}
     });
   }
   if (req.query["queryTag"]) {
     where_params.push({
-      tags: {[Op.like]: "%" + req.query["queryTag"] + "%"}
+      tags: {[likeOp]: "%" + req.query["queryTag"] + "%"}
     });
   }
   var where_object = {};
