@@ -194,6 +194,14 @@ userRouter.get('/users/:id', function (req, res) {
 });
 
 userRouter.get('/users', function (req, res) {
+  let orderParams = [];
+  let limit = 10e3;
+  if (req.query["orderBy"]) {
+      orderParams.push( [ sequelize.col(req.query["orderBy"]), 'DESC'] )
+  }
+  if (req.query["limit"]) {
+      limit = req.query["limit"];
+  }
   var where_params = [];
   if (req.query["queryName"]) {
     where_params.push({
@@ -225,6 +233,8 @@ userRouter.get('/users', function (req, res) {
   }
   var where_object = {
     where: Object.assign({}, ...where_params),
+    order: orderParams,
+    limit: limit,
     attributes: STANDARD_USER_ATTR
   };
   User.findAll(where_object).then(users => {
