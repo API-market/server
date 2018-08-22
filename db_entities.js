@@ -115,7 +115,7 @@ const ProfileImage = sequelize.define('profile_image', {
     primaryKey: true
   },
   image: {
-    type: Sequelize.VIRTUAL,
+    type: Sequelize.STRING,
     set: function (val) {
       const data = {
         Key: profile_images_key + this.getDataValue('user_id'),
@@ -140,15 +140,22 @@ const Transaction = sequelize.define('transaction', {
   amount: Sequelize.DOUBLE
 });
 
+const DEFAULT_PROFILE_IMAGE = "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png";
 const getProfileImage = function(user_id) {
       // TODO: check if profile_image is set
       const urlParams = {
         Key: profile_images_key + user_id,
       };
       var p = new Promise(function(resolve,reject) {
-           lumeosS3Bucket.getSignedUrl('getObject', urlParams, (err, url) =>
-           {   if (err) { reject(err); }
-               else { resolve(url); }
+           ProfileImage.findOne({where: {user_id: user_id}, attributes : ["image"] }).then(function (image) {
+               if (image) {
+                   lumeosS3Bucket.getSignedUrl('getObject', urlParams, (err, url) =>
+                   {   if (err) { reject(err); }
+                       else { resolve(url); }
+                   });
+               } else {
+                    resolve(DEFAULT_PROFILE_IMAGE);
+               }
            });
       }).catch((err) => console.error(err));
       return p;
