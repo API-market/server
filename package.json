@@ -25,7 +25,8 @@
     "express-validator": "^5.2.0",
     "nodemailer": "",
     "aws-sdk": "",
-    "atob": "^2.1.1"
+    "atob": "^2.1.1",
+    "tinify" : ""
   },
   "devDependencies": {
     "newman": "^3.10.0",

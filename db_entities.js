@@ -19,6 +19,9 @@ const rekognition = new AWS.Rekognition();
 
 const profile_images_key = "profile_images_" + process.env.LUMEOS_ENV;
 
+var tinify = require("tinify");
+tinify.key = process.env.TINIFY_API_KEY;
+
 function imageFromBase64(dataURI) {
      var binary = atob(dataURI);
      var array = [];
@@ -133,9 +136,17 @@ const ProfileImage = sequelize.define('profile_image', {
             console.log(data);
         } else {
                 // Image is prob ok
+			  var imageBuffer = imageFromBase64(val);
+			  tinify.fromBuffer(imageBuffer).toBuffer(function(err, resultData) {
+				if (err) {
+					console.log("Could not compress image for user_id: " + this.getDataValue('user_id'));
+					// if compression fails, its not critical. We can upload.
+                } else {
+                    imageBuffer = resultData;
+                }
               const data = {
                 Key: profile_images_key + this.getDataValue('user_id'),
-                Body: imageFromBase64(val),
+                Body: imageBuffer,
                 ContentType: 'image/png'
               };
               lumeosS3Bucket.putObject(data, function(err, data){
@@ -146,6 +157,7 @@ const ProfileImage = sequelize.define('profile_image', {
                     console.log('succesfully uploaded the image!');
                   }
               });
+			  }.bind(this));
         }
       }.bind(this));
     }
@@ -160,7 +172,6 @@ const Transaction = sequelize.define('transaction', {
 
 const DEFAULT_PROFILE_IMAGE = "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png";
 const getProfileImage = function(user_id) {
-      // TODO: check if profile_image is set
       const urlParams = {
         Key: profile_images_key + user_id,
       };
