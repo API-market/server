@@ -15,6 +15,8 @@ AWS.config.update({
 const s3 = new AWS.S3();
 const lumeosS3Bucket = new AWS.S3( { params: {Bucket: 'lumeos'} } );
 
+const rekognition = new AWS.Rekognition();
+
 const profile_images_key = "profile_images_" + process.env.LUMEOS_ENV;
 
 function imageFromBase64(dataURI) {
@@ -117,19 +119,35 @@ const ProfileImage = sequelize.define('profile_image', {
   image: {
     type: Sequelize.STRING,
     set: function (val) {
-      const data = {
-        Key: profile_images_key + this.getDataValue('user_id'),
-        Body: imageFromBase64(val),
-        ContentType: 'image/png'
+
+      var params = {
+        Image: {
+          Bytes: new Buffer(val, 'base64')
+        },
+        MinConfidence: 50.0
       };
-      lumeosS3Bucket.putObject(data, function(err, data){
-          if (err) {
-            console.log(err);
-            console.log('Error uploading data: ', data);
-          } else {
-            console.log('succesfully uploaded the image!');
-          }
-      });
+      rekognition.detectModerationLabels(params, function(err, data) {
+        if (err) console.log(err, err.stack);
+        else if (data["ModerationLabels"].length > 0) {
+            console.log("bad image");
+            console.log(data);
+        } else {
+                // Image is prob ok
+              const data = {
+                Key: profile_images_key + this.getDataValue('user_id'),
+                Body: imageFromBase64(val),
+                ContentType: 'image/png'
+              };
+              lumeosS3Bucket.putObject(data, function(err, data){
+                  if (err) {
+                    console.log(err);
+                    console.log('Error uploading data: ', data);
+                  } else {
+                    console.log('succesfully uploaded the image!');
+                  }
+              });
+        }
+      }.bind(this));
     }
   },
 });
