@@ -111,9 +111,10 @@ userRouter.post('/users', [
     .then(() => {
       console.log(req.body);
       User.create(req.body, {
-  include: [{
-    association: User.Address }]
-})
+        include: [{
+          association: User.Address
+        }]
+      })
         .then(user => {
           res.json({user_id: user["id"]});
         })
@@ -127,7 +128,7 @@ userRouter.post('/users', [
     });
 });
 
-const addProfileImage = function(res, user) {
+const addProfileImage = function (res, user) {
   const userId = user.dataValues["user_id"];
   getProfileImage(userId).then(result => {
     user.dataValues["profile_image"] = result;
@@ -140,7 +141,7 @@ userRouter.get('/users/:id', function (req, res) {
   User.findById(userId, {
     attributes: STANDARD_USER_ATTR,
     include: [
-    { association: User.Address, as: 'address'}
+      {association: User.Address, as: 'address'}
     ],
   }).then(user => {
     if (user) {
@@ -197,10 +198,10 @@ userRouter.get('/users', function (req, res) {
   let orderParams = [];
   let limit = 10e3;
   if (req.query["orderBy"]) {
-      orderParams.push( [ sequelize.col(req.query["orderBy"]), 'DESC'] )
+    orderParams.push([sequelize.col(req.query["orderBy"]), 'DESC'])
   }
   if (req.query["limit"]) {
-      limit = req.query["limit"];
+    limit = req.query["limit"];
   }
   var where_params = [];
   if (req.query["queryName"]) {
@@ -240,8 +241,8 @@ userRouter.get('/users', function (req, res) {
   User.findAll(where_object).then(users => {
     if (users) {
       Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
-          users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-          res.json(removeEmpty(users));
+        users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
+        res.json(removeEmpty(users));
       });
     }
     else {
@@ -300,14 +301,23 @@ userRouter.delete('/follow', function (req, res) {
   const followee_id = parseInt(req.body["followee_id"]);
   const follower_id = parseInt(req.body["follower_id"]);
   Followship.destroy({
-                where: {
-                  follower_id: follower_id,
-                  followee_id: followee_id
-                }}
+      where: {
+        follower_id: follower_id,
+        followee_id: followee_id
+      }
+    }
   ).then(result => {
     if (result) {
-      User.findById(followee_id).then(followee => { if (followee) { followee.decrement("follower_count"); }});
-      User.findById(follower_id).then(follower => { if (follower) { follower.decrement("followee_count"); }});
+      User.findById(followee_id).then(followee => {
+        if (followee) {
+          followee.decrement("follower_count");
+        }
+      });
+      User.findById(follower_id).then(follower => {
+        if (follower) {
+          follower.decrement("followee_count");
+        }
+      });
       res.status(202).json();
     } else {
       res.status(404).json({error: "Not Found", message: "Followship not found"})
@@ -335,8 +345,8 @@ userRouter.get('/followers/:user_id', function (req, res) {
               attributes: STANDARD_USER_ATTR
             }).then(followers => {
               Promise.all(followers.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
-                  followers.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-                  res.json(removeEmpty(followers));
+                followers.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
+                res.json(removeEmpty(followers));
               });
             });
           }) // followshipt.findAll
@@ -369,8 +379,8 @@ userRouter.get('/followees/:user_id', function (req, res) {
               attributes: STANDARD_USER_ATTR
             }).then(followees => {
               Promise.all(followees.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
-                  followees.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-                  res.json(removeEmpty(followees));
+                followees.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
+                res.json(removeEmpty(followees));
               });
             });
           }) // followshipt.findAll
@@ -461,7 +471,7 @@ userRouter.delete('/profile_images/:id', function (req, res) {
 userRouter.put('/users/:id', function (req, res) {
   User.findById(parseInt(req.params['id'])).then(user => {
     if (user) {
-        console.log("user: " + user);
+      console.log("user: " + user);
       user.update(req.body).then(() => {
         res.status(204).json();
       }).catch(error => {

@@ -49,20 +49,20 @@ var pollRouter = express.Router();
 
 // I am sure there is more clever way of doing this
 function updatePollPrice(poll) {
-    const participantCount = poll['participant_count'] + 1;
-    let newPrice = 0;
-    if (participantCount >= 1000) {
-        newPrice = 1000;
-    } else if (participantCount >= 250) {
-        newPrice = 250;
-    } else if (participantCount >= 100) {
-        newPrice = 100;
-    } else if (participantCount >= 50) {
-        newPrice = 50;
-    } else if (participantCount >= 1) {
-        newPrice = 10;
-    }
-    poll.update({price: newPrice });
+  const participantCount = poll['participant_count'] + 1;
+  let newPrice = 0;
+  if (participantCount >= 1000) {
+    newPrice = 1000;
+  } else if (participantCount >= 250) {
+    newPrice = 250;
+  } else if (participantCount >= 100) {
+    newPrice = 100;
+  } else if (participantCount >= 50) {
+    newPrice = 50;
+  } else if (participantCount >= 1) {
+    newPrice = 10;
+  }
+  poll.update({price: newPrice});
 }
 
 pollRouter.post('/polls', [
@@ -110,45 +110,45 @@ pollRouter.get('/polls/:id', function (req, res) {
       getProfileImage(poll["creator_id"]).then(result => {
         poll.dataValues["creator_image"] = result;
 
-      if (req.query["isAnswered"]) {
-        poll.dataValues["is_answered"] = 0;
-        Result.findOne({
-          where: {
-            user_id: parseInt(req.query["isAnswered"]),
-            poll_id: parseInt(req.params["id"])
-          },
-          attributes: ["poll_id"]
-        }).then(result => {
-          if (result) {
-            poll.dataValues["is_answered"] = 1;
-          }
+        if (req.query["isAnswered"]) {
+          poll.dataValues["is_answered"] = 0;
+          Result.findOne({
+            where: {
+              user_id: parseInt(req.query["isAnswered"]),
+              poll_id: parseInt(req.params["id"])
+            },
+            attributes: ["poll_id"]
+          }).then(result => {
+            if (result) {
+              poll.dataValues["is_answered"] = 1;
+            }
+            res.json(removeEmpty(poll));
+          }).catch(error => {
+            console.log("I guess this is a first vote ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
+            console.log(error);
+            res.json(removeEmpty(poll));
+          });
+        } else if (req.query["isBought"]) {
+          poll.dataValues["is_bought"] = 0;
+          Transaction.findOne({
+            where: {
+              user_id: parseInt(req.query["isBought"]),
+              poll_id: parseInt(req.params["id"])
+            },
+            attributes: ["poll_id"]
+          }).then(result => {
+            if (result) {
+              poll.dataValues["is_bought"] = 1;
+            }
+            res.json(removeEmpty(poll));
+          }).catch(error => {
+            console.log("I guess this is a first vote ever? user_id: " + req.query["isBought"] + ", poll_id: " + req.param["id"]);
+            console.log(error);
+            res.json(removeEmpty(poll));
+          });
+        } else {
           res.json(removeEmpty(poll));
-        }).catch(error => {
-          console.log("I guess this is a first vote ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
-          console.log(error);
-          res.json(removeEmpty(poll));
-        });
-      } else if (req.query["isBought"]) {
-        poll.dataValues["is_bought"] = 0;
-        Transaction.findOne({
-          where: {
-            user_id: parseInt(req.query["isBought"]),
-            poll_id: parseInt(req.params["id"])
-          },
-          attributes: ["poll_id"]
-        }).then(result => {
-          if (result) {
-            poll.dataValues["is_bought"] = 1;
-          }
-          res.json(removeEmpty(poll));
-        }).catch(error => {
-          console.log("I guess this is a first vote ever? user_id: " + req.query["isBought"] + ", poll_id: " + req.param["id"]);
-          console.log(error);
-          res.json(removeEmpty(poll));
-        });
-      } else {
-          res.json(removeEmpty(poll));
-      }
+        }
       });
     } else {
       res.status(404).json({error: "Not Found", message: "Poll not found"})
@@ -161,10 +161,10 @@ pollRouter.get('/polls', function (req, res) {
   let orderParams = [];
   let limit = 10e3;
   if (req.query["orderBy"]) {
-      orderParams.push( [ sequelize.col(req.query["orderBy"]), 'DESC'] )
+    orderParams.push([sequelize.col(req.query["orderBy"]), 'DESC'])
   }
   if (req.query["limit"]) {
-      limit = req.query["limit"];
+    limit = req.query["limit"];
   }
   if (req.query["queryCreator"]) {
     where_params.push({
@@ -199,8 +199,8 @@ pollRouter.get('/polls', function (req, res) {
         Poll.findAll(where_object).then(poll => {
           if (poll) {
             Promise.all(poll.map(x => getProfileImage(x["creator_id"]))).then(result => {
-                poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
-                res.json(removeEmpty(poll));
+              poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
+              res.json(removeEmpty(poll));
             });
           } else {
             res.status(404).json({error: "Not Found", message: "Poll not found"})
@@ -211,28 +211,28 @@ pollRouter.get('/polls', function (req, res) {
   } else {
     where_object = {where: Object.assign({}, ...where_params), order: orderParams, limit: limit};
     where_object.attributes = where_attributes;
-    Poll.findAll( where_object ).then(poll => {
+    Poll.findAll(where_object).then(poll => {
       if (poll) {
         Promise.all(poll.map(x => getProfileImage(x["creator_id"]))).then(result => {
-            poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
-        if (req.query["queryFeatured"]) {
-          // We will query all polls user participated, and exclude it from the final list.
-          const featuredId = parseInt(req.query["queryFeatured"]);
-          Result.findAll({
-            where: {user_id: parseInt(featuredId)},
-            attributes: ["poll_id"]
-          }).then(result => {
-            if (!Array.isArray(result) || !result.length) {
-              result = [];
-            }
-            result = new Set(result.map(x => x.dataValues["poll_id"]));
-            poll = poll.filter(element => !result.has(element.dataValues["poll_id"]) &&
-              (featuredId !== element.dataValues["creator_id"]));
+          poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
+          if (req.query["queryFeatured"]) {
+            // We will query all polls user participated, and exclude it from the final list.
+            const featuredId = parseInt(req.query["queryFeatured"]);
+            Result.findAll({
+              where: {user_id: parseInt(featuredId)},
+              attributes: ["poll_id"]
+            }).then(result => {
+              if (!Array.isArray(result) || !result.length) {
+                result = [];
+              }
+              result = new Set(result.map(x => x.dataValues["poll_id"]));
+              poll = poll.filter(element => !result.has(element.dataValues["poll_id"]) &&
+                (featuredId !== element.dataValues["creator_id"]));
+              res.json(removeEmpty(poll));
+            })
+          } else {
             res.json(removeEmpty(poll));
-          })
-        } else {
-          res.json(removeEmpty(poll));
-        }
+          }
         });
       }
       else {
@@ -273,7 +273,7 @@ pollRouter.post('/polls/:poll_id', [
                 if (created) {
                   result.update({answer: req.body["answer"]}).then(resultNext => {
                     poll.increment('participant_count');
-                    User.increment({answer_count : 1, balance: 5}, { where: { id: userId } });
+                    User.increment({answer_count: 1, balance: 5}, {where: {id: userId}});
                     //updatePollPrice(poll); // TODO: Uncomment once we decide to charge people
                     res.status(204).json();
                   }).catch(error => {
