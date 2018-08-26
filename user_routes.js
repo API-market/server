@@ -109,7 +109,6 @@ userRouter.post('/users', [
   }
   sequelize.sync()
     .then(() => {
-      console.log(req.body);
       User.create(req.body, {
         include: [{
           association: User.Address
