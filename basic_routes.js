@@ -27,6 +27,9 @@ const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const nodemailer = require('nodemailer');
 
+const db_entities = require("./db_entities.js");
+const User = db_entities.User;
+
 var transporter = nodemailer.createTransport({
   service: process.env.LUMEOS_EMAIL_SERVICE,
   auth: {
@@ -47,19 +50,25 @@ basicRouter.post('/contact_us', [
     return res.status(422).json({errors: errors.array()});
   }
 
-  var mailOptions = {
-    from: process.env.LUMEOS_EMAIL_SENDER,
-    to: 'team@lumeos.io',
-    subject: 'Server: Contact Us!, user_id: ' + req.body["user_id"],
-    text: req.body['message']
-  };
+  const userId = req.body["user_id"];
+  User.findById(userId, {
+    attributes: ["firstName", "email"]
+  }).then(user => {
+      var mailOptions = {
+        from: process.env.LUMEOS_EMAIL_SENDER,
+        to: 'team@lumeos.io',
+        subject: 'Server: Contact Us!, email: ' + user["email"] + ", firstName: " + user["firstName"],
+        text: req.body['message']
+      };
 
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log('Email sent: ' + info.response);
-    }
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+
   });
 
   res.status(204).json();
