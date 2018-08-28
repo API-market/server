@@ -137,27 +137,32 @@ const ProfileImage = sequelize.define('profile_image', {
         } else {
           // Image is prob ok
           var imageBuffer = imageFromBase64(val);
-          tinify.fromBuffer(imageBuffer).toBuffer(function (err, resultData) {
-            if (err) {
-              console.log("Could not compress image for user_id: " + this.getDataValue('user_id'));
-              // if compression fails, its not critical. We can upload.
-            } else {
-              imageBuffer = resultData;
-            }
-            const data = {
-              Key: profile_images_key + this.getDataValue('user_id'),
-              Body: imageBuffer,
-              ContentType: 'image/png'
-            };
-            lumeosS3Bucket.putObject(data, function (err, data) {
+          tinify.fromBuffer(imageBuffer).resize({
+            method: "fit",
+            width: 150,
+            height: 150
+          })
+            .toBuffer(function (err, resultData) {
               if (err) {
-                console.log(err);
-                console.log('Error uploading data: ', data);
+                console.log("Could not compress image for user_id: " + this.getDataValue('user_id'));
+                // if compression fails, its not critical. We can upload.
               } else {
-                console.log('succesfully uploaded the image!');
+                imageBuffer = resultData;
               }
-            });
-          }.bind(this));
+              const data = {
+                Key: profile_images_key + this.getDataValue('user_id'),
+                Body: imageBuffer,
+                ContentType: 'image/png'
+              };
+              lumeosS3Bucket.putObject(data, function (err, data) {
+                if (err) {
+                  console.log(err);
+                  console.log('Error uploading data: ', data);
+                } else {
+                  console.log('succesfully uploaded the image!');
+                }
+              });
+            }.bind(this));
         }
       }.bind(this));
     }

@@ -213,23 +213,38 @@ pollRouter.get('/polls', function (req, res) {
     where_object.attributes = where_attributes;
     Poll.findAll(where_object).then(poll => {
       if (poll) {
+        // TODO: This is bad, we get profile images for all, and only then filter, invert.
         Promise.all(poll.map(x => getProfileImage(x["creator_id"]))).then(result => {
           poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
-          if (req.query["queryFeatured"]) {
-            // We will query all polls user participated, and exclude it from the final list.
-            const featuredId = parseInt(req.query["queryFeatured"]);
+
+          if (req.query["queryFeatured"] || req.query["isAnswered"]) {
+            const callerId = req.query["queryFeatured"] ? parseInt(req.query["queryFeatured"]) : parseInt(req.query["isAnswered"]);
             Result.findAll({
-              where: {user_id: parseInt(featuredId)},
+              where: {user_id: parseInt(callerId)},
               attributes: ["poll_id"]
-            }).then(result => {
-              if (!Array.isArray(result) || !result.length) {
-                result = [];
+            }).then(participated => {
+              if (!Array.isArray(participated) || !participated.length) {
+                participated = [];
               }
-              result = new Set(result.map(x => x.dataValues["poll_id"]));
-              poll = poll.filter(element => !result.has(element.dataValues["poll_id"]) &&
-                (featuredId !== element.dataValues["creator_id"]));
-              res.json(removeEmpty(poll));
-            })
+              participated = new Set(participated.map(x => x.dataValues["poll_id"]));
+              if (req.query["queryFeatured"]) {
+                // We queryed all polls user participated, and exclude it from the final list.
+                poll = poll.filter(element => !participated.has(element.dataValues["poll_id"]) &&
+                  (callerId !== element.dataValues["creator_id"]));
+                res.json(removeEmpty(poll));
+              } else {
+                poll = poll.filter(element => {
+                  if (participated.has(element.dataValues["poll_id"])) {
+                    element.dataValues["is_answered"] = 1;
+                  } else {
+                    element.dataValues["is_answered"] = 0;
+                  }
+
+                  return element;
+                });
+                res.json(removeEmpty(poll));
+              }
+            });
           } else {
             res.json(removeEmpty(poll));
           }
