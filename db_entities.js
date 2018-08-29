@@ -150,9 +150,10 @@ const ProfileImage = sequelize.define('profile_image', {
                 imageBuffer = resultData;
               }
               const data = {
-                Key: profile_images_key + this.getDataValue('user_id'),
+                Key: profile_images_key + this.getDataValue('user_id') + DEFAULT_IMAGE_FORMAT,
                 Body: imageBuffer,
-                ContentType: 'image/png'
+                ContentType: 'image/png',
+                ACL: 'public-read'
               };
               lumeosS3Bucket.putObject(data, function (err, data) {
                 if (err) {
@@ -176,13 +177,19 @@ const Transaction = sequelize.define('transaction', {
 });
 
 const DEFAULT_PROFILE_IMAGE = "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png";
+const DEFAULT_IMAGE_FORMAT = ".png"
 const getProfileImage = function (user_id) {
   const urlParams = {
-    Key: profile_images_key + user_id,
+    Key: profile_images_key + user_id + DEFAULT_IMAGE_FORMAT,
   };
   var p = new Promise(function (resolve, reject) {
     ProfileImage.findOne({where: {user_id: user_id}, attributes: ["image"]}).then(function (image) {
       if (image) {
+          // TODO: This is bad, we should generate secure urls, but mobile team complains about having problem processing it.
+          // Will need to bring this back once we take over/rewrie mobile
+        const S3_BUCKET_PATH = "https://s3-us-west-2.amazonaws.com/lumeos/"
+        resolve(S3_BUCKET_PATH + profile_images_key + user_id + DEFAULT_IMAGE_FORMAT);
+          /*
         lumeosS3Bucket.getSignedUrl('getObject', urlParams, (err, url) => {
           if (err) {
             reject(err);
@@ -191,6 +198,7 @@ const getProfileImage = function (user_id) {
             resolve(url);
           }
         });
+        */
       } else {
         resolve(DEFAULT_PROFILE_IMAGE);
       }
