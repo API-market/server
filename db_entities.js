@@ -10,10 +10,10 @@ const AWS = require('aws-sdk');
 AWS.config.update({
   accessKeyId: process.env.ACCESS_KEY,
   secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: 'us-west-2'
+  region: process.env.S3_REGION || "us-west-2"
 });
 const s3 = new AWS.S3();
-const lumeosS3Bucket = new AWS.S3({params: {Bucket: 'lumeos'}});
+const lumeosS3Bucket = new AWS.S3({params: {Bucket: process.env.S3_BUCKET_NAME || "lumeos"}});
 
 const rekognition = new AWS.Rekognition();
 
@@ -176,7 +176,7 @@ const Transaction = sequelize.define('transaction', {
   amount: Sequelize.DOUBLE
 });
 
-const DEFAULT_PROFILE_IMAGE = "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png";
+const DEFAULT_PROFILE_IMAGE = process.env.S3_DEFAULT_PROFILE_IMAGE || "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png";
 const DEFAULT_IMAGE_FORMAT = ".png"
 const getProfileImage = function (user_id) {
   const urlParams = {
@@ -187,7 +187,7 @@ const getProfileImage = function (user_id) {
       if (image) {
           // TODO: This is bad, we should generate secure urls, but mobile team complains about having problem processing it.
           // Will need to bring this back once we take over/rewrie mobile
-        const S3_BUCKET_PATH = "https://s3-us-west-2.amazonaws.com/lumeos/"
+        const S3_BUCKET_PATH = process.env.S3_BUCKET_PATH || "https://s3-us-west-2.amazonaws.com/lumeos/"
         resolve(S3_BUCKET_PATH + profile_images_key + user_id + DEFAULT_IMAGE_FORMAT);
           /*
         lumeosS3Bucket.getSignedUrl('getObject', urlParams, (err, url) => {

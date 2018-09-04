@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node bin/www",
+    "dev": "nodemon bin/www",
     "test": "SQLITE_FILENAME=$(pwd)/test_database.sqlite mocha tests/runner.js"
   },
   "repository": {
@@ -14,23 +15,25 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "atob": "^2.1.1",
+    "aws-sdk": "",
     "bcrypt": "^2.0.1",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
+    "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "express-jwt": "^5.3.1",
-    "sequelize": "^4.38.0",
-    "sqlite3": "^4.0.1",
-    "pg": "^7.4.3",
     "express-validator": "^5.2.0",
     "nodemailer": "",
-    "aws-sdk": "",
-    "atob": "^2.1.1",
-    "tinify" : ""
+    "pg": "^7.4.3",
+    "sequelize": "^4.38.0",
+    "sqlite3": "^4.0.1",
+    "tinify": ""
   },
   "devDependencies": {
-    "newman": "^3.10.0",
     "mocha": "^3.1.2",
+    "newman": "^3.10.0",
+    "nodemon": "^1.18.4",
     "supertest": ""
   }
 }
