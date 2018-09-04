@@ -80,18 +80,14 @@ app.use(function (req, res, next) {
     || req.url.endsWith("/faqs/")) {
     next()
   } else {
-    var token = req.headers.authorization.split(" ")[1];
-    if (token) {
       try {
-        var decoded = jwt.verify(token, SUPER_SECRET_JWT_KEY);
-        next()
+          var token = req.headers.authorization.split(' ')[1];
+          var decoded = jwt.verify(token, SUPER_SECRET_JWT_KEY);
+          next();
       } catch (err) {
-        console.log(err);
-        res.status(401).json({message: "Unauthorized: JWT token not provided"});
+          console.log(err);
+          res.status(401).json({message: 'Unauthorized: JWT token not provided'});
       }
-    } else {
-      res.status(401).json({message: "Unauthorized: JWT token not provided"});
-    }
   }
 });
 
