@@ -46,3 +46,7 @@ $ curl  -H "Authorization: Bearer some.hashed.token" localhost:3000/v1/users/1
 
 {"id":1,"email":"some@email.com"}
 ```
+# Run seed for project
+
+> Whilst project is running, if you need to manually run seed, you can type `run-seed` with a carriage return, and will be create data in DB.
+ 

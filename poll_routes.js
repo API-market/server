@@ -27,6 +27,7 @@ const {check, validationResult} = require('express-validator/check');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
+const {events} = require('lumeos_utils')
 
 const dbSetup = require("./db_setup.js");
 const sequelize = dbSetup.dbInstance;
@@ -289,6 +290,14 @@ pollRouter.post('/polls/:poll_id', [
                   result.update({answer: req.body["answer"]}).then(resultNext => {
                     poll.increment('participant_count');
                     User.increment({answer_count: 1, balance: 5}, {where: {id: userId}});
+                    /**
+                     * create notification
+                     */
+                    events.emit(events.constants.sendAnswerForPoll, {
+                        target_user_id: parseInt(poll.creator_id),
+                        from_user_id: parseInt(user.id),
+                        nickname: `${user.firstName} ${user.lastName}`
+                    });
                     //updatePollPrice(poll); // TODO: Uncomment once we decide to charge people
                     res.status(204).json();
                   }).catch(error => {
@@ -345,6 +354,14 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                     }
                     user.decrement("balance", {by: poll["price"]});
 
+                    /**
+                     * create notifications
+                     */
+                    events.emit(events.constants.sendResultForPoll, {
+                      target_user_id: poll.creator_id,
+                      from_user_id: user.id,
+                      nickname: `${user.firstName} ${user.lastName}`
+                    })
                     /* Thats how we actually should do it. Instead of giving for answers.
                     leave for later
                     Result.findAll({
