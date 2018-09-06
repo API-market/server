@@ -48,4 +48,5 @@ $ curl  -H "Authorization: Bearer some.hashed.token" localhost:3000/v1/users/1
 ```
 # Run seed for project
 
-> npm run seed-run
+> Whilst project is running, if you need to manually run seed, you can type `run-seed` with a carriage return, and will be create data in DB.
+> or npm run seed-run

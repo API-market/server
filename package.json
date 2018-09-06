@@ -7,7 +7,7 @@
     "start": "node bin/www",
     "dev": "nodemon bin/www",
     "test": "NODE_ENV=test SQLITE_FILENAME=$(pwd)/test_database.sqlite mocha tests/runner.js",
-    "seed-run": "node ./seed.js"
+    "seed-run": "node ./seed.js &"
   },
   "repository": {
     "type": "git",
