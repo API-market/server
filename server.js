@@ -37,48 +37,8 @@ serverInfo = require("./server_info.js");
 const VERSION = serverInfo.VERSION;
 const PORT = serverInfo.PORT;
 const SUPER_SECRET_JWT_KEY = serverInfo.SUPER_SECRET_JWT_KEY;
-const SEED_AUTH = serverInfo.SEED_AUTH;
 
-const dbSetup = require("./db_setup.js");
-const sequelize = dbSetup.dbInstance;
-
-const db_entities = require("./db_entities.js");
-const User = db_entities.User;
-
-const stdin = process.openStdin();
-stdin.addListener("data", function(d) {
-    switch (d.toString().trim()) {
-        case "run-seed": {
-            // seed admin user
-            runSeed();
-        }
-    }
-});
-function runSeed() {
-    sequelize.sync().then(() => {
-        User.findOne({where: {email: "admin@lumeos.io"}}).then(user => {
-            if (user) {
-                console.log("User with id " + user["id"] + " already exists")
-            } else {
-                User.create({
-                    "lastName": "Adminach",
-                    "firstName": "Admin",
-                    "email": "admin@lumeos.io",
-                    "password": SEED_AUTH
-                }).then(user => {
-                    console.log("seeded with user with id " + user["id"])
-                })
-                    .catch(error => {
-                        console.log("Error seeding:");
-                        console.log(error);
-                    })
-            }
-        })
-    });
-}
-if(!process.env.LUMEOS_SERVER_DB) {
-    runSeed();
-}
+require('./seed');
 
 app.use(function (req, res, next) {
   if (req.url.endsWith("/login")

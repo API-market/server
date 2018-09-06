@@ -293,10 +293,13 @@ pollRouter.post('/polls/:poll_id', [
                     /**
                      * create notification
                      */
-                    events.emit(events.constants.sendAnswerForPoll, {
-                        target_user_id: parseInt(poll.creator_id),
-                        from_user_id: parseInt(user.id),
-                        nickname: `${user.firstName} ${user.lastName}`
+                    User.findById(parseInt(poll.creator_id)).then((user) => {
+                        events.emit(events.constants.sendAnswerForPoll, {
+                            all_notifications: user.all_notifications,
+                            target_user_id: parseInt(poll.creator_id),
+                            from_user_id: parseInt(user.id),
+                            nickname: `${user.firstName} ${user.lastName}`
+                        });
                     });
                     //updatePollPrice(poll); // TODO: Uncomment once we decide to charge people
                     res.status(204).json();
@@ -318,6 +321,7 @@ pollRouter.post('/polls/:poll_id', [
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
   }).catch(error => {
+    console.log(error);
     res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
   });
 });
@@ -357,11 +361,14 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                     /**
                      * create notifications
                      */
-                    events.emit(events.constants.sendResultForPoll, {
-                      target_user_id: poll.creator_id,
-                      from_user_id: user.id,
-                      nickname: `${user.firstName} ${user.lastName}`
-                    })
+                    User.findById(parseInt(poll.creator_id)).then((user) => {
+                        events.emit(events.constants.sendResultForPoll, {
+                            all_notifications: user.all_notifications,
+                            target_user_id: poll.creator_id,
+                            from_user_id: user.id,
+                            nickname: `${user.firstName} ${user.lastName}`
+                        })
+                    });
                     /* Thats how we actually should do it. Instead of giving for answers.
                     leave for later
                     Result.findAll({

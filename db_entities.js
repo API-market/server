@@ -57,7 +57,8 @@ const User = sequelize.define('user', {
   balance: {type: Sequelize.DOUBLE, defaultValue: 500},
   followee_count: {type: Sequelize.INTEGER, defaultValue: 0},
   follower_count: {type: Sequelize.INTEGER, defaultValue: 0},
-  answer_count: {type: Sequelize.INTEGER, defaultValue: 0}
+  answer_count: {type: Sequelize.INTEGER, defaultValue: 0},
+  all_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
 });
 
 const Address = sequelize.define('address', {
