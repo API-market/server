@@ -25,6 +25,7 @@
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const {events} = require('lumeos_utils');
+const {omit} = require('lodash');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -63,6 +64,8 @@ const STANDARD_USER_ATTR = [
   "answer_count"
 ];
 
+const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
+
 
 var userRouter = express.Router();
 
@@ -80,26 +83,30 @@ userRouter.post('/login', [
   if (!errors.isEmpty()) {
       return res.status(422).json({errors: errors.array()});
   }
-  User.findOne({where: {email: req.body["email"]}}, {include: [{association: User.Tokens}]}).then(function (user) {
-    if (user && user.verifyPassword(req.body["password"])) {
+    User.findOne(
+        {where: {email: req.body['email']}},
+        {include: [{association: User.Tokens}]}
+    ).then(function (user) {
+        if (user && user.verifyPassword(req.body["password"])) {
         Tokens.upsert({
             user_id: user.id,
             token: req.body.token_phone,
             name: req.body.name_phone,
             platform: req.body.platform,
         }).then(() => {
-            res.json(
-                {
-                    user_id: user['id'],
-                    token: jwt.sign(
-                        {
-                            user_id: user['id'],
-                            iat: Math.floor(new Date() / 1000)
-                        },
-                        require("./server_info.js").SUPER_SECRET_JWT_KEY
-                    )
-                }
-            )
+            user = user.toJSON();
+            user = Object.assign({
+                user_id: user['id'],
+                token: jwt.sign(
+                    {
+                        user,
+                        user_id: user['id'],
+                        iat: Math.floor(new Date() / 1000)
+                    },
+                    require("./server_info.js").SUPER_SECRET_JWT_KEY
+                )
+            }, omit(user, EXCLUDE_USER_ATTR));
+            res.json(user)
         }).catch((err) => {
             return res.status(400).json({error: "Bad Request", message: err.message})
         })
@@ -142,7 +149,8 @@ userRouter.post('/users', [
         }]
       })
         .then(user => {
-          res.json({user_id: user["id"]});
+          user = Object.assign({user_id: user["id"]}, omit(user.toJSON(), EXCLUDE_USER_ATTR));
+          res.json(user);
         })
         .catch(error => {
           console.log("error: " + error);
