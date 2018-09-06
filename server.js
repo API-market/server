@@ -30,14 +30,6 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json({limit: '5mb'}));
 app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
 app.use(cors());
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(bodyParser.json());
-
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
 
 var jwt = require('jsonwebtoken');
 
@@ -53,39 +45,56 @@ const sequelize = dbSetup.dbInstance;
 const db_entities = require("./db_entities.js");
 const User = db_entities.User;
 
-// seed admin user
-sequelize.sync().then(() => {
-  User.findOne({where: {email: "admin@lumeos.io"}}).then(user => {
-    if (user) {
-      console.log("User with id " + user["id"] + " already exists")
-    } else {
-      User.create({
-        "email": "admin@lumeos.io",
-        "password": SEED_AUTH
-      }).then(user => {
-        console.log("seeded with user with id " + user["id"])
-      })
-        .catch(error => {
-          console.log("Error seeding:");
-          console.log(error);
-        })
+const stdin = process.openStdin();
+stdin.addListener("data", function(d) {
+    switch (d.toString().trim()) {
+        case "run-seed": {
+            // seed admin user
+            runSeed();
+        }
     }
-  })
 });
+function runSeed() {
+    sequelize.sync().then(() => {
+        User.findOne({where: {email: "admin@lumeos.io"}}).then(user => {
+            if (user) {
+                console.log("User with id " + user["id"] + " already exists")
+            } else {
+                User.create({
+                    "lastName": "Adminach",
+                    "firstName": "Admin",
+                    "email": "admin@lumeos.io",
+                    "password": SEED_AUTH
+                }).then(user => {
+                    console.log("seeded with user with id " + user["id"])
+                })
+                    .catch(error => {
+                        console.log("Error seeding:");
+                        console.log(error);
+                    })
+            }
+        })
+    });
+}
+if(!process.env.LUMEOS_SERVER_DB) {
+    runSeed();
+}
 
 app.use(function (req, res, next) {
   if (req.url.endsWith("/login")
+    || req.url.match(/\/users/)
+    || req.url.match(/\/push/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
     || req.url.endsWith("/faqs/")) {
     next()
   } else {
       try {
-          var token = req.headers.authorization.split(' ')[1];
-          var decoded = jwt.verify(token, SUPER_SECRET_JWT_KEY);
+          const token = req.headers.authorization.split(' ')[1];
+          const decoded = jwt.verify(token, SUPER_SECRET_JWT_KEY);
+          req.user = decoded;
           next();
       } catch (err) {
-          console.log(err);
           res.status(401).json({message: 'Unauthorized: JWT token not provided'});
       }
   }
@@ -94,10 +103,12 @@ app.use(function (req, res, next) {
 basicRoutes = require("./basic_routes.js");
 userRoutes = require("./user_routes.js");
 pollRoutes = require("./poll_routes.js");
+notificationsRoutes = require("./notifications_routes");
 
 app.use('/v' + VERSION, basicRoutes);
 app.use('/v' + VERSION, userRoutes);
 app.use('/v' + VERSION, pollRoutes);
+app.use('/v' + VERSION, notificationsRoutes);
 
 const server = app.listen(PORT);
 console.log('listening on port ' + PORT);

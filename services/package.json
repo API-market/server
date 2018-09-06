@@ -1,0 +1,4 @@
+{
+  "name": "lumeos_services",
+  "main": "./index.js"
+}

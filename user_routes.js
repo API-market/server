@@ -24,6 +24,7 @@
 
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
+const {events} = require('lumeos_utils');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -37,6 +38,7 @@ const jwt = require('jsonwebtoken');
 
 const User = db_entities.User;
 const Address = db_entities.Address;
+const Tokens = db_entities.Tokens;
 const ProfileImage = db_entities.ProfileImage;
 const Followship = db_entities.Followship;
 const getProfileImage = db_entities.getProfileImage;
@@ -64,24 +66,49 @@ const STANDARD_USER_ATTR = [
 
 var userRouter = express.Router();
 
-userRouter.post('/login', function (req, res) {
-  User.findOne({where: {email: req.body["email"]}}).then(function (user) {
+userRouter.post('/login', [
+    check("email").isEmail().normalizeEmail(),
+    check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
+    check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
+    check("name_phone").exists().isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
+    check('password', 'The password must be 8+ chars long and contain a number')
+        .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+        .isLength({min: 8})
+        .matches(/\d/)
+], function (req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+      return res.status(422).json({errors: errors.array()});
+  }
+  User.findOne({where: {email: req.body["email"]}}, {include: [{association: User.Tokens}]}).then(function (user) {
     if (user && user.verifyPassword(req.body["password"])) {
-      res.json(
-        {
-          user_id: user['id'],
-          token: jwt.sign(
-            {
-              user_id: user['id'],
-              iat: Math.floor(new Date() / 1000)
-            },
-            require("./server_info.js").SUPER_SECRET_JWT_KEY
-          )
-        }
-      )
+        Tokens.upsert({
+            user_id: user.id,
+            token: req.body.token_phone,
+            name: req.body.name_phone,
+            platform: req.body.platform,
+        }).then(() => {
+            res.json(
+                {
+                    user_id: user['id'],
+                    token: jwt.sign(
+                        {
+                            user_id: user['id'],
+                            iat: Math.floor(new Date() / 1000)
+                        },
+                        require("./server_info.js").SUPER_SECRET_JWT_KEY
+                    )
+                }
+            )
+        }).catch((err) => {
+            return res.status(400).json({error: "Bad Request", message: err.message})
+        })
     } else {
       res.status(404).json({error: "Not Found", message: "User not found or password is incorrect."})
     }
+  }).catch((err) => {
+    console.log(err);
+    res.status(500).json({error: "Error", message: "Some error."})
   })
 });
 
@@ -254,10 +281,21 @@ userRouter.get('/users', function (req, res) {
 
 
 // make follower follow followee
-userRouter.post('/follow', function (req, res) {
+userRouter.post('/follow', [
+    check("followee_id").exists().isInt().trim().escape().withMessage("Field 'followee_id' cannot be empty"),
+    check("follower_id").exists().isInt().trim().escape().withMessage("Field 'follower_id' cannot be empty")
+], function (req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+      return res.status(422).json({errors: errors.array()});
+  }
   const followee_id = parseInt(req.body["followee_id"]);
   const follower_id = parseInt(req.body["follower_id"]);
-  User.findById(followee_id).then(followee => {
+  User.findById(followee_id, {
+    include: [
+        {association: User.Tokens}
+    ]
+  }).then(followee => {
     if (followee) {
       sequelize.sync()
         .then(() => {
@@ -274,6 +312,16 @@ userRouter.post('/follow', function (req, res) {
                   // so lets just update variables.
                   followee.increment("follower_count");
                   follower.increment("followee_count");
+
+                  /**
+                   * create notification
+                   */
+                  events.emit(events.constants.sendFolloweeFromFollower, {
+                    target_user_id: followee.id,
+                    from_user_id: follower.id,
+                    nickname: `${follower.firstName} ${follower.lastName}`
+                  });
+
                   res.status(204).json();
                 } else {
                   res.status(400).json({

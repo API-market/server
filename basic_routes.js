@@ -26,6 +26,7 @@ var fs = require('fs');
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const nodemailer = require('nodemailer');
+const {pushService} = require('lumeos_services');
 
 const db_entities = require("./db_entities.js");
 const User = db_entities.User;
@@ -65,7 +66,8 @@ basicRouter.post('/contact_us', [
         if (error) {
           console.log(error);
         } else {
-          console.log('Email sent: ' + info.response);
+            User.increment({balance: 50}, {where: {id: userId}});
+            console.log('Email sent: ' + info.response);
         }
       });
 
@@ -78,6 +80,34 @@ basicRouter.post('/contact_us', [
 basicRouter.get('/faqs', function (req, res) {
   var contents = fs.readFileSync('faq.json', 'utf8');
   res.set('Content-Type', 'application/json').status(200).send(contents);
+});
+
+/**
+ * Send push ont mobile for testing
+ */
+basicRouter.get('/send/push', function (req, res) {
+    if (req.query.token && req.query.method) {
+        const token = req.query.token;
+        const mathod = req.query.method;
+        switch (mathod) {
+            case 'event:create-answer-for-poll': {
+                pushService.sendPolls(token, {nikname: 'Test test'});
+                return res.status(200).json({ok: true});
+            }
+            case 'event:send-result-for-poll': {
+                pushService.sendPollsResult(token, {nikname: 'Test test'});
+                return res.status(200).json({ok: true});
+            }
+            case 'event:send-followee-from-follower': {
+                pushService.sendFollow(token, {nikname: 'Test test'});
+                return res.status(200).json({ok: true});
+            }
+            default: {
+                return res.status(404).json({error: 'Not Found', message: 'Method not found.'});
+            }
+        }
+    }
+    res.status(404).json({error: 'Not Found', message: 'Send params.'});
 });
 
 

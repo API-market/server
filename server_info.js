@@ -25,7 +25,7 @@
 const VERSION_NUMBER = 1;
 const PORT = 8081;
 const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "secret_test";
-const SEED_AUTH = process.env.SUPER_SECRET_KEY || "test";
+const SEED_AUTH = process.env.SUPER_SECRET_KEY || "admintest";
 
 module.exports = {
   VERSION: VERSION_NUMBER,

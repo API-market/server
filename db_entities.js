@@ -12,7 +12,7 @@ AWS.config.update({
   secretAccessKey: process.env.SECRET_ACCESS_KEY,
   region: process.env.S3_REGION || "us-west-2"
 });
-const s3 = new AWS.S3();
+
 const lumeosS3Bucket = new AWS.S3({params: {Bucket: process.env.S3_BUCKET_NAME || "lumeos"}});
 
 const rekognition = new AWS.Rekognition();
@@ -49,6 +49,7 @@ const User = sequelize.define('user', {
     }
   },
   phone: Sequelize.STRING,
+  tag_line: Sequelize.STRING,
   dob: Sequelize.STRING,
   gender: Sequelize.STRING,
   school: Sequelize.STRING,
@@ -65,6 +66,19 @@ const Address = sequelize.define('address', {
   region: Sequelize.STRING,
   postalCode: Sequelize.STRING,
 });
+
+const Tokens = sequelize.define('tokens', {
+    user_id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true
+    },
+    name: {type: Sequelize.STRING},
+    token: {type: Sequelize.STRING, unique: true},
+    platform: {type: Sequelize.STRING},
+    active: {type: Sequelize.BOOLEAN, defaultValue: true},
+});
+
+User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
 
 User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
 
@@ -207,9 +221,17 @@ const getProfileImage = function (user_id) {
   return p;
 };
 
+const Notifications = sequelize.define('notifications', {
+    target_user_id: {type: Sequelize.INTEGER, allowNull: false},
+    from_user_id: {type: Sequelize.INTEGER, allowNull: false},
+    description: Sequelize.STRING,
+    type: Sequelize.STRING,
+});
 
 module.exports = {
   User: User,
+  Tokens: Tokens,
+  Notifications: Notifications,
   Poll: Poll,
   Result: Result,
   Followship: Followship,
