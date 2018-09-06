@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node bin/www",
     "dev": "nodemon bin/www",
-    "test": "NODE_ENV=test SQLITE_FILENAME=$(pwd)/test_database.sqlite mocha tests/runner.js"
+    "test": "NODE_ENV=test SQLITE_FILENAME=$(pwd)/test_database.sqlite mocha tests/runner.js",
+    "seed-run": "node ./seed.js"
   },
   "repository": {
     "type": "git",
@@ -15,8 +16,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lumeos_services": "file:./services",
-    "lumeos_utils": "file:./utils",
     "atob": "^2.1.1",
     "aws-sdk": "",
     "bcrypt": "^2.0.1",
@@ -27,9 +26,12 @@
     "express-jwt": "^5.3.1",
     "express-validator": "^5.2.0",
     "fcm-push": "^1.1.3",
+    "lumeos_services": "file:./services",
+    "lumeos_utils": "file:./utils",
     "nodemailer": "",
     "pg": "^7.4.3",
     "sequelize": "^4.38.0",
+    "sequelize-cli": "^4.1.1",
     "sqlite3": "^4.0.1",
     "tinify": ""
   },

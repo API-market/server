@@ -51,6 +51,7 @@ notificationsRouter
             }
             Notifications.destroy({
                 where:  {
+                    target_user_id: req.user.user_id,
                     id: req.params.notification_id
                 }
             }).then((data) => {

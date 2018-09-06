@@ -70,7 +70,7 @@ userRouter.post('/login', [
     check("email").isEmail().normalizeEmail(),
     check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
     check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
-    check("name_phone").exists().isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
+    check("name_phone").isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
     check('password', 'The password must be 8+ chars long and contain a number')
         .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
         .isLength({min: 8})
@@ -317,6 +317,7 @@ userRouter.post('/follow', [
                    * create notification
                    */
                   events.emit(events.constants.sendFolloweeFromFollower, {
+                    all_notifications: followee.all_notifications,
                     target_user_id: followee.id,
                     from_user_id: follower.id,
                     nickname: `${follower.firstName} ${follower.lastName}`
@@ -522,13 +523,16 @@ userRouter.put('/users/:id', function (req, res) {
       user.update(req.body).then(() => {
         res.status(204).json();
       }).catch(error => {
-        console.log("failed user: " + user);
         console.log(error);
+        res.status(400).json({error: "Bad Request", message: "Not valid data"})
       })
     } else {
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
-  });
+  }).catch((err) => {
+    console.log(err);
+    res.status(500).json({error: "Error", message: "Some error."})
+  })
 });
 
 userRouter.delete('/users/:id', function (req, res) {

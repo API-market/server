@@ -23,18 +23,20 @@ class Events extends EventEmitter {
         this.on(constants.sendFolloweeFromFollower, this.sendFolloweeFromFollower.bind(this));
     }
 
-    sendAnswerForPoll({nickname, target_user_id, from_user_id}) {
-        Notifications.create({
-            target_user_id,
-            from_user_id,
-            description: `"${nickname}" answered your question`,
-            type: constants.sendAnswerForPoll
-        }).then((data) => {
-            this.emit(this.constants.sendAnswerForPollCallback, data);
-        }).catch((err) => {
-            console.log(`[${constants.sendAnswerForPoll}]`, err);
-            this.emit(this.constants.sendAnswerForPollCallback, err);
-        });
+    sendAnswerForPoll({all_notifications, nickname, target_user_id, from_user_id}) {
+        if (all_notifications) {
+            Notifications.create({
+                target_user_id,
+                from_user_id,
+                description: `"${nickname}" answered your question`,
+                type: constants.sendAnswerForPoll
+            }).then((data) => {
+                this.emit(this.constants.sendAnswerForPollCallback, data);
+            }).catch((err) => {
+                console.log(`[${constants.sendAnswerForPoll}]`, err);
+                this.emit(this.constants.sendAnswerForPollCallback, err);
+            });
+        }
 
         //TODO on the future
         // tokens.map((item) => {
@@ -49,18 +51,20 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendResultForPoll({nickname, target_user_id, from_user_id}) {
-        Notifications.create({
-            target_user_id,
-            from_user_id,
-            description: `"${nickname}" purchased your poll results`,
-            type: constants.sendResultForPoll
-        }).then((data) => {
-            this.emit(this.constants.sendResultForPollCallback, data);
-        }).catch((err) => {
-            console.log(`[${constants.sendResultForPoll}]`, err);
-            this.emit(this.constants.sendResultForPollCallback, err);
-        });
+    sendResultForPoll({all_notifications, nickname, target_user_id, from_user_id}) {
+        if (all_notifications) {
+            Notifications.create({
+                target_user_id,
+                from_user_id,
+                description: `"${nickname}" purchased your poll results`,
+                type: constants.sendResultForPoll
+            }).then((data) => {
+                this.emit(this.constants.sendResultForPollCallback, data);
+            }).catch((err) => {
+                console.log(`[${constants.sendResultForPoll}]`, err);
+                this.emit(this.constants.sendResultForPollCallback, err);
+            });
+        }
         //TODO on the future
         // tokens.map((item) => {
         //     if (item.active) {
@@ -74,18 +78,20 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendFolloweeFromFollower({nickname, target_user_id, from_user_id}) {
-        Notifications.create({
-            target_user_id,
-            from_user_id,
-            description: `"${nickname}" is following you`,
-            type: constants.sendFolloweeFromFollower
-        }).then((data) => {
-            this.emit(this.constants.sendFolloweeFromFollowerCallback, data);
-        }).catch((err) => {
-            console.log(`[${constants.sendFolloweeFromFollower}]`, err);
-            this.emit(this.constants.sendFolloweeFromFollowerCallback, err);
-        });
+    sendFolloweeFromFollower({all_notifications, nickname, target_user_id, from_user_id}) {
+        if (all_notifications) {
+            Notifications.create({
+                target_user_id,
+                from_user_id,
+                description: `"${nickname}" is following you`,
+                type: constants.sendFolloweeFromFollower
+            }).then((data) => {
+                this.emit(this.constants.sendFolloweeFromFollowerCallback, data);
+            }).catch((err) => {
+                console.log(`[${constants.sendFolloweeFromFollower}]`, err);
+                this.emit(this.constants.sendFolloweeFromFollowerCallback, err);
+            });
+        }
 
         //TODO on the future
         // tokens.map((item) => {
