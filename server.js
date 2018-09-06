@@ -38,7 +38,19 @@ const VERSION = serverInfo.VERSION;
 const PORT = serverInfo.PORT;
 const SUPER_SECRET_JWT_KEY = serverInfo.SUPER_SECRET_JWT_KEY;
 
-require('./seed');
+const stdin = process.openStdin();
+stdin.addListener("data", function(d) {
+    switch (d.toString().trim()) {
+        case "run-seed": {
+            // seed admin user
+            require('./seed');
+        }
+    }
+});
+
+if(!process.env.LUMEOS_SERVER_DB) {
+    require('./seed');
+}
 
 app.use(function (req, res, next) {
   if (req.url.endsWith("/login")

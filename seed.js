@@ -5,32 +5,23 @@ const sequelize = dbSetup.dbInstance;
 const db_entities = require("./db_entities.js");
 const User = db_entities.User;
 
-
-function runSeed() {
-    sequelize.sync().then(() => {
-        User.findOne({where: {email: "admin@lumeos.io"}}).then(user => {
-            if (user) {
-                console.log("User with id " + user["id"] + " already exists")
-            } else {
-                User.create({
-                    "lastName": "Adminach",
-                    "firstName": "Admin",
-                    "email": "admin@lumeos.io",
-                    "password": SEED_AUTH
-                }).then(user => {
-                    console.log("seeded with user with id " + user["id"])
-                    if (!module.parent) {
-                        process.exit(0);
-                    }
+sequelize.sync().then(() => {
+    User.findOne({where: {email: "admin@lumeos.io"}}).then(user => {
+        if (user) {
+            console.log("User with id " + user["id"] + " already exists")
+        } else {
+            User.create({
+                "lastName": "Adminach",
+                "firstName": "Admin",
+                "email": "admin@lumeos.io",
+                "password": SEED_AUTH
+            }).then(user => {
+                console.log("seeded with user with id " + user["id"])
+            })
+                .catch(error => {
+                    console.log("Error seeding:");
+                    console.log(error);
                 })
-                    .catch(error => {
-                        console.log("Error seeding:");
-                        console.log(error);
-                    })
-            }
-        })
-    });
-}
-if (!process.env.LUMEOS_SERVER_DB) {
-    runSeed();
-}
+        }
+    })
+});
