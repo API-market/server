@@ -104,17 +104,18 @@ userRouter.post('/login', [
                 token: req.body.token_phone,
                 name: req.body.name_phone,
                 platform: req.body.platform,
-            }).then(() => {
-                const dataUser = {
-                    user_id: user['id'],
-                    token: getToken(user)
-                };
-                Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
-                addProfileImage(res, user, EXCLUDE_USER_ATTR);
-        }).catch((err) => {
+            }).then((data) => {
+            console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+          }).catch((err) => {
             console.log(err, '<<<');
-            return res.status(400).json({error: "Bad Request", message: err.message})
-        })
+            // return res.status(400).json({error: "Bad Request", message: err.message})
+          })
+            const dataUser = {
+                user_id: user['id'],
+                token: getToken(user)
+            };
+            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+            addProfileImage(res, user, EXCLUDE_USER_ATTR);
     } else {
       res.status(404).json({error: "Not Found", message: "User not found or password is incorrect."})
     }
