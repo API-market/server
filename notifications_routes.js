@@ -19,6 +19,7 @@ notificationsRouter
             where: {
                 target_user_id: parseInt(req.user.user_id)
             },
+            order: [['id', 'DESC']],
             attributes: [
                 'id',
                 'from_user_id',
