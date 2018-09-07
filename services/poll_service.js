@@ -20,9 +20,9 @@ class PollService {
                                                 AND poll.participant_count = 0)`), 'participant_not_answered']
             ])
         }).then(poll => {
-            poll = poll.map((e) => {
+            poll.map((e) => {
                 const {token: to, participant_not_answered: count} = e.toJSON();
-                // events.emit(events.constants.sendNotAnswersPoll, {to, count})
+                events.emit(events.constants.sendNotAnswersPoll, {to, count})
             });
 
         }).catch(error => {

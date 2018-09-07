@@ -66,7 +66,6 @@ basicRouter.post('/contact_us', [
         if (error) {
           console.log(error);
         } else {
-            User.increment({balance: 50}, {where: {id: userId}});
             console.log('Email sent: ' + info.response);
         }
       });
