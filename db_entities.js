@@ -228,6 +228,7 @@ const Notifications = sequelize.define('notifications', {
     description: Sequelize.STRING,
     type: Sequelize.STRING,
 });
+Notifications.belongsTo(User, {foreignKey: 'target_user_id', join: 'inner'});
 
 module.exports = {
   User: User,

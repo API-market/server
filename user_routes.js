@@ -69,6 +69,17 @@ const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
 
 var userRouter = express.Router();
 
+const getToken = (user) => {
+    return jwt.sign(
+        {
+            user: user.toJSON(),
+            user_id: user['id'],
+            iat: Math.floor(new Date() / 1000)
+        },
+        require('./server_info.js').SUPER_SECRET_JWT_KEY
+    )
+}
+
 userRouter.post('/login', [
     check("email").isEmail().normalizeEmail(),
     check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
@@ -87,26 +98,19 @@ userRouter.post('/login', [
         {where: {email: req.body['email']}},
         {include: [{association: User.Tokens}]}
     ).then(function (user) {
-        if (user && user.verifyPassword(req.body["password"])) {
-        Tokens.upsert({
-            user_id: user.id,
-            token: req.body.token_phone,
-            name: req.body.name_phone,
-            platform: req.body.platform,
-        }).then(() => {
-            user = user.toJSON();
-            user = Object.assign({
-                user_id: user['id'],
-                token: jwt.sign(
-                    {
-                        user,
-                        user_id: user['id'],
-                        iat: Math.floor(new Date() / 1000)
-                    },
-                    require("./server_info.js").SUPER_SECRET_JWT_KEY
-                )
-            }, omit(user, EXCLUDE_USER_ATTR));
-            res.json(user)
+        if (user && user.verifyPassword(req.body['password'])) {
+            Tokens.upsert({
+                user_id: user.id,
+                token: req.body.token_phone,
+                name: req.body.name_phone,
+                platform: req.body.platform,
+            }).then(() => {
+                const dataUser = {
+                    user_id: user['id'],
+                    token: getToken(user)
+                };
+                Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+                addProfileImage(res, user, EXCLUDE_USER_ATTR);
         }).catch((err) => {
             return res.status(400).json({error: "Bad Request", message: err.message})
         })
@@ -149,8 +153,12 @@ userRouter.post('/users', [
         }]
       })
         .then(user => {
-          user = Object.assign({user_id: user["id"]}, omit(user.toJSON(), EXCLUDE_USER_ATTR));
-          res.json(user);
+            const dataUser = {
+                user_id: user['id'],
+                token: getToken(user)
+            };
+            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+            addProfileImage(res, user, EXCLUDE_USER_ATTR);
         })
         .catch(error => {
           console.log("error: " + error);
@@ -162,11 +170,15 @@ userRouter.post('/users', [
     });
 });
 
-const addProfileImage = function (res, user) {
+const addProfileImage = function (res, user, exclude) {
   const userId = user.dataValues["user_id"];
   getProfileImage(userId).then(result => {
     user.dataValues["profile_image"] = result;
-    res.json(removeEmpty(user));
+    user = removeEmpty(user);
+    if(exclude) {
+      user = omit(user.toJSON(), exclude)
+    }
+    res.json(user);
   });
 }
 
@@ -299,6 +311,13 @@ userRouter.post('/follow', [
   }
   const followee_id = parseInt(req.body["followee_id"]);
   const follower_id = parseInt(req.body["follower_id"]);
+
+  if (followee_id === follower_id) {
+    return res.status(400).json({
+        error: 'Bad Request',
+        message: 'You can\'t subscribe on yourself'
+    })
+  }
   User.findById(followee_id, {
     include: [
         {association: User.Tokens}
