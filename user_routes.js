@@ -61,7 +61,8 @@ const STANDARD_USER_ATTR = [
   "balance",
   "follower_count",
   "followee_count",
-  "answer_count"
+  "answer_count",
+  "all_notifications"
 ];
 
 const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
