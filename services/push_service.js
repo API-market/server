@@ -12,7 +12,7 @@ class PushService {
         //     throw new Error('Variable FIREBASE_SERVER_SECRET not exist');
         // }
         this.config = config;
-        // this.client = new FCM(process.env.FIREBASE_SERVER_SECRET, this.config);
+        this.client = new FCM(process.env.FIREBASE_SERVER_SECRET, this.config);
         this.message = {
             to: 'registration_token_or_topics',
             data: {
@@ -23,6 +23,7 @@ class PushService {
                 body: 'Body of your push notification'
             }
         };
+
     }
 
     /**
@@ -47,7 +48,7 @@ class PushService {
             this.client.send(Object.assign(this.message, {to})).then((data) => {
                 resolve(data);
             }).catch((err) => {
-                console.error('[push-service-error]', err);
+                console.error(`[push-service-error] token > ${to.to}`, err);
                 reject(new Error('Error send push notification'));
             });
         });
