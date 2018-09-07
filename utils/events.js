@@ -1,6 +1,6 @@
 const {EventEmitter} = require('events');
 const {Notifications} = require('../db_entities');
-// const {pushService} = require('lumeos_services');
+const {pushService} = require('lumeos_services');
 
 const constants = {
     sendAnswerForPoll: 'event:create-answer-for-poll',
@@ -9,6 +9,8 @@ const constants = {
     sendResultForPollCallback: 'event:send-result-for-poll-callback',
     sendFolloweeFromFollower: 'event:send-followee-from-follower',
     sendFolloweeFromFollowerCallback: 'event:send-followee-from-follower-callback',
+    sendNotAnswersPoll: 'event:send-not-answers-poll',
+    sendNotAnswersPollCallback: 'event:send-not-answers-poll-callback',
 };
 
 class Events extends EventEmitter {
@@ -21,6 +23,7 @@ class Events extends EventEmitter {
         this.on(constants.sendAnswerForPoll, this.sendAnswerForPoll.bind(this));
         this.on(constants.sendResultForPoll, this.sendResultForPoll.bind(this));
         this.on(constants.sendFolloweeFromFollower, this.sendFolloweeFromFollower.bind(this));
+        this.on(constants.sendNotAnswersPoll, this.sendNotAnswersPoll.bind(this));
     }
 
     sendAnswerForPoll({all_notifications, nickname, target_user_id, from_user_id}) {
@@ -104,6 +107,15 @@ class Events extends EventEmitter {
         //         });
         //     }
         // });
+    }
+
+    sendNotAnswersPoll(token, count) {
+        pushService.sendNotAnswersPoll(token, {count}).then((data) => {
+            this.emit(this.constants.sendNotAnswersPollCallback, data);
+        }).catch((err) => {
+            console.log(`[${constants.sendNotAnswersPollCallback}]`, err);
+            this.emit(this.constants.sendNotAnswersPollCallback, err);
+        });
     }
 }
 

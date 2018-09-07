@@ -204,7 +204,8 @@ pollRouter.get('/polls', function (req, res) {
               res.json(removeEmpty(poll));
             });
           } else {
-            res.status(404).json({error: "Not Found", message: "Poll not found"})
+            res.status(200).json([]);
+            // res.status(404).json({error: "Not Found", message: "Poll not found"})
           }
         })
       }
