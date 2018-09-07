@@ -190,7 +190,8 @@ pollRouter.get('/polls', function (req, res) {
       attributes: ["poll_id"]
     }).then(result => {
       if (!Array.isArray(result) || !result.length) {
-        res.status(404).json({error: "Not Found", message: "Poll not found"})
+          res.json(removeEmpty([]));
+          // res.status(404).json({error: "Not Found", message: "Poll not found"})
       } else {
         where_params.push({
           id: {[Op.or]: result.map(x => x.dataValues["poll_id"])}
