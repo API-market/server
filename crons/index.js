@@ -1,4 +1,5 @@
 const schedule = require('node-schedule');
+const {pollService} = require('lumeos_services');
 
 class CronJob {
 
@@ -12,6 +13,10 @@ class CronJob {
     }
 
     pushNotificationsJob() {
+        // console.log(, '<<');
+        // TODO uncoment
+        // pollService.getNotAnswersPull()
+        // pollService.getNotAnswersPull();
         // this.jobPush = schedule.scheduleJob(this.timePush, () => {
         //
         // });

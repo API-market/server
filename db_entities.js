@@ -114,6 +114,7 @@ const Poll = sequelize.define('poll', {
     allowNull: false,
   }
 });
+Tokens.belongsTo(Poll, {foreignKey: 'user_id'});
 
 // Result keeps track of user answering to a poll
 const Result = sequelize.define('result', {

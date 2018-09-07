@@ -111,7 +111,7 @@ class PushService {
      * @this {PushService}
      * @returns {Promise}
      */
-    sendNotAswersPoll(to, {count}, data) {
+    sendNotAnswersPoll(to, {count}, data) {
         return this.send(to, data, {
             title: 'Poll',
             body: `You have "${count}" not answer poll.`
