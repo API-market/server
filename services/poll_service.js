@@ -22,7 +22,9 @@ class PollService {
         }).then(poll => {
             poll.map((e) => {
                 const {token: to, participant_not_answered: count} = e.toJSON();
-                events.emit(events.constants.sendNotAnswersPoll, {to, count})
+                if (count > 0) {
+                    events.emit(events.constants.sendNotAnswersPoll, {to, count})
+                }
             });
 
         }).catch(error => {
