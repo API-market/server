@@ -112,6 +112,7 @@ userRouter.post('/login', [
                 Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
                 addProfileImage(res, user, EXCLUDE_USER_ATTR);
         }).catch((err) => {
+            console.log(err, '<<<');
             return res.status(400).json({error: "Bad Request", message: err.message})
         })
     } else {
