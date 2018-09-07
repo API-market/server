@@ -82,6 +82,11 @@ app.use('/v' + VERSION, userRoutes);
 app.use('/v' + VERSION, pollRoutes);
 app.use('/v' + VERSION, notificationsRoutes);
 
+/**
+ * Cron
+ */
+require('./crons');
+
 const server = app.listen(PORT);
 console.log('listening on port ' + PORT);
 

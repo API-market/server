@@ -1,9 +1,7 @@
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const util = require('./utilities.js');
-const db_entities = require('./db_entities.js');
-const Notifications = db_entities.Notifications;
-
+const {Notifications, User, getProfileImage} = require('./db_entities.js');
 
 const removeEmpty = util.removeEmpty;
 const notificationsRouter = express.Router();
@@ -27,12 +25,29 @@ notificationsRouter
                 'description',
                 'type',
                 'createdAt',
+            ],
+            include: [
+                {
+                    model: User,
+                    required: true,
+                    attributes: [['id', 'user_id'], 'firstName', 'lastName']
+                }
             ]
         }).then((notifications) => {
             if (notifications.length) {
-                return res.json(removeEmpty(notifications));
+                return Promise.all(notifications.map((notifications) => {
+                    return getProfileImage(notifications.user.get('user_id'))
+                        .then((image) => {
+                            notifications.user.dataValues['profile_image'] = image;
+                        });
+                })).then(() => {
+                    return res.json(removeEmpty(notifications));
+                }).catch((err) => {
+                    console.log(err);
+                    res.status(500).json({error: 'Error', message: 'Some error.'});
+                });
             }
-            res.status(404).json({error: 'Not Found', message: 'Notifications not found'});
+            res.status(404).json({error: 'Not Found', message: 'Notifications not found'})
         }).catch((err) => {
             console.log(err);
             res.status(500).json({error: 'Error', message: 'Some error.'});

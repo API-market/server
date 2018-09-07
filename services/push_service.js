@@ -65,7 +65,7 @@ class PushService {
     sendPolls(to, {nickname}, data) {
         return this.send(to, data, {
             title: 'Answered',
-            body: `"${nickname}" answered your question`
+            body: `"${nickname}" answered your question.`
         })
     }
 
@@ -82,7 +82,7 @@ class PushService {
     sendPollsResult(to, {nickname}, data) {
         return this.send(to, data, {
             title: 'Polls Result',
-            body: `"${nickname}" purchased your poll results`
+            body: `"${nickname}" purchased your poll results.`
         })
     }
 
@@ -98,7 +98,23 @@ class PushService {
     sendFollow(to, {nickname}, data) {
         return this.send(to, data, {
             title: 'Following',
-            body: `"${nickname}" is following you`
+            body: `"${nickname}" is following you.`
+        })
+    }
+
+    /**
+     * Cron notification for poll
+     *
+     * @param to
+     * @param nickname
+     * @param data
+     * @this {PushService}
+     * @returns {Promise}
+     */
+    sendNotAswersPoll(to, {count}, data) {
+        return this.send(to, data, {
+            title: 'Poll',
+            body: `You have "${count}" not answer poll.`
         })
     }
 }
