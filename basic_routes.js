@@ -28,7 +28,6 @@ const {check, validationResult} = require('express-validator/check');
 const nodemailer = require('nodemailer');
 const {PushService} = require('lumeos_services');
 const pushService = new PushService();
-console.log();
 
 const db_entities = require("./db_entities.js");
 const User = db_entities.User;
@@ -90,23 +89,27 @@ basicRouter.get('/send/push', function (req, res) {
     if (req.query.token && req.query.method) {
         const token = req.query.token;
         const mathod = req.query.method;
+        let data;
+        try {
+            data = JSON.parse(req.query.data)
+        } catch (e) {}
         switch (mathod) {
             case 'event:create-answer-for-poll': {
-                return pushService.sendPolls(token, {nickname: 'Test test'}).then(() => {
+                return pushService.sendPolls(token, {nickname: 'Test test'}, data).then(() => {
                     return res.status(200).json({ok: true});
                 }).catch((err) => {
                     return res.status(500).json({message: err.message});
                 });
             }
             case 'event:send-result-for-poll': {
-                return pushService.sendPollsResult(token, {nickname: 'Test test'}).then(() => {
+                return pushService.sendPollsResult(token, {nickname: 'Test test'}, data).then(() => {
                     return res.status(200).json({ok: true});
                 }).catch((err) => {
                     return res.status(500).json({message: err.message});
                 });
             }
             case 'event:send-followee-from-follower': {
-                return pushService.sendFollow(token, {nickname: 'Test test'}).then(() => {
+                return pushService.sendFollow(token, {nickname: 'Test test'}, data).then(() => {
                     return res.status(200).json({ok: true});
                 }).catch((err) => {
                     return res.status(500).json({message: err.message});

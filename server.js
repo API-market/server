@@ -55,6 +55,7 @@ if(!process.env.LUMEOS_SERVER_DB) {
 app.use(function (req, res, next) {
   if (req.url.endsWith("/login")
     || req.url.match(/\/users/)
+    || req.url.match(/\/app/)
     || req.url.match(/\/push/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
@@ -77,6 +78,11 @@ userRoutes = require("./user_routes.js");
 pollRoutes = require("./poll_routes.js");
 notificationsRoutes = require("./notifications_routes");
 
+app.use('/app', (req, res) => {
+    if (req._parsedUrl.search)
+        return res.redirect('lumeos://' + req._parsedUrl.search);
+    res.end();
+})
 app.use('/v' + VERSION, basicRoutes);
 app.use('/v' + VERSION, userRoutes);
 app.use('/v' + VERSION, pollRoutes);

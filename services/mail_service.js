@@ -1,20 +1,40 @@
 const {createTransport} = require('nodemailer');
 const ejs = require('ejs');
-const {join} = require('fs');
+const {join} = require('path');
 const path = join(__dirname, '/../views/template_mail');
 
 class MailService {
 
     constructor() {
+        this.constants = {
+            FORGOT_PASSWORD: 'forgot_password'
+        };
         const tls = /^win/.test(process.platform) && {tls: {rejectUnauthorized: false}};
-        this.transporter = createTransport({
-            service: process.env.LUMEOS_EMAIL_SERVICE,
+        this.senders = {
             auth: {
                 user: process.env.LUMEOS_EMAIL_SENDER,
                 pass: process.env.LUMEOS_EMAIL_PASSWORD,
             },
             ...tls
-        });
+        };
+        this.config = {
+            // sender info
+            from: process.env.LUMEOS_EMAIL_FROM,
+            headers: {
+                'X-Laziness-level': 1000 // just an example header, no need to use this
+            }
+        };
+        if (process.env.LUMEOS_EMAIL_SERVICE) {
+            Object.assign(this.senders, {
+                service: process.env.LUMEOS_EMAIL_SERVICE
+            })
+        }
+        if (process.env.LUMEOS_EMAIL_HOST) {
+            Object.assign(this.senders, {
+                host: process.env.LUMEOS_EMAIL_HOST
+            })
+        }
+        this.transporter = createTransport(this.senders, this.config);
         this.ejs = ejs;
     }
 
@@ -40,12 +60,18 @@ class MailService {
         return [data];
     }
 
+    /**
+     * Send email to user
+     * @param to
+     * @param templateName
+     * @param replacements
+     * @param attachments
+     * {this} MailService
+     * @returns {Promise<any>}
+     */
     send(to, templateName, replacements, attachments) {
         return new Promise((resolve, reject) => {
-            this.renderTemplate(templateName, replacements).then((err, str) => {
-                if (err) {
-                    return reject(err)
-                }
+            this.renderTemplate(templateName, replacements).then((str) => {
                 const options = this._message(
                     this.getTemplate[templateName].SUBJECT,
                     to,
@@ -58,10 +84,11 @@ class MailService {
                         this.transporter.close();
                         reject(err);
                     }
+                    // console.log('[mail-service] ', data);
                     this.transporter.close();
                     resolve(data)
                 })
-            })
+            }).catch(reject)
         })
     }
 
@@ -85,7 +112,7 @@ class MailService {
 
     get getTemplate() {
         return {
-            FORGOT_PASSWORD: {
+            [this.constants.FORGOT_PASSWORD]: {
                 PATH: `${path}/forgot_password.ejs`,
                 SUBJECT: 'Forgot password',
             }
