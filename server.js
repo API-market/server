@@ -79,8 +79,13 @@ pollRoutes = require("./poll_routes.js");
 notificationsRoutes = require("./notifications_routes");
 
 app.use('/app', (req, res) => {
-    if (req._parsedUrl.search)
-        return res.redirect('lumeos://' + req._parsedUrl.search);
+    if (req._parsedUrl.search) {
+        let protocol = 'lumeos:';
+        if (!req.headers['user-agent'].match(/mobile/i)) {
+            protocol = ''
+        }
+        return res.redirect(`${protocol}//${req._parsedUrl.search}`);
+    }
     res.end();
 })
 app.use('/v' + VERSION, basicRoutes);
