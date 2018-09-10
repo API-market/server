@@ -26,7 +26,9 @@ var fs = require('fs');
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const nodemailer = require('nodemailer');
-const {pushService} = require('lumeos_services');
+const {PushService} = require('lumeos_services');
+const pushService = new PushService();
+console.log();
 
 const db_entities = require("./db_entities.js");
 const User = db_entities.User;
@@ -90,16 +92,25 @@ basicRouter.get('/send/push', function (req, res) {
         const mathod = req.query.method;
         switch (mathod) {
             case 'event:create-answer-for-poll': {
-                pushService.sendPolls(token, {nikname: 'Test test'});
-                return res.status(200).json({ok: true});
+                return pushService.sendPolls(token, {nickname: 'Test test'}).then(() => {
+                    return res.status(200).json({ok: true});
+                }).catch((err) => {
+                    return res.status(500).json({message: err.message});
+                });
             }
             case 'event:send-result-for-poll': {
-                pushService.sendPollsResult(token, {nikname: 'Test test'});
-                return res.status(200).json({ok: true});
+                return pushService.sendPollsResult(token, {nickname: 'Test test'}).then(() => {
+                    return res.status(200).json({ok: true});
+                }).catch((err) => {
+                    return res.status(500).json({message: err.message});
+                });
             }
             case 'event:send-followee-from-follower': {
-                pushService.sendFollow(token, {nikname: 'Test test'});
-                return res.status(200).json({ok: true});
+                return pushService.sendFollow(token, {nickname: 'Test test'}).then(() => {
+                    return res.status(200).json({ok: true});
+                }).catch((err) => {
+                    return res.status(500).json({message: err.message});
+                });
             }
             default: {
                 return res.status(404).json({error: 'Not Found', message: 'Method not found.'});
