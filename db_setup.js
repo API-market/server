@@ -42,9 +42,12 @@ const makeSequelize = function () {
     throw "Production env is specified, but LUMEOS_SERVER_DB is not set";
   }
 
-  return new Sequelize('database', 'username', 'password', {
+  return new Sequelize(
+      process.env.LUMEOS_SERVER_DB || 'database',
+      process.env.LUMEOS_SERVER_DB_USERNAME || 'username',
+      process.env.LUMEOS_SERVER_DB_PASSWORD || 'password', {
     host: 'localhost',
-    dialect: 'sqlite',
+    dialect: process.env.LUMEOS_SERVER_DB_DIALECT || 'sqlite',
 
     operatorsAliases: false,
     pool: {

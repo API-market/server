@@ -27,6 +27,7 @@ const {check, validationResult} = require('express-validator/check');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
+const {events} = require('lumeos_utils')
 
 const dbSetup = require("./db_setup.js");
 const sequelize = dbSetup.dbInstance;
@@ -189,7 +190,8 @@ pollRouter.get('/polls', function (req, res) {
       attributes: ["poll_id"]
     }).then(result => {
       if (!Array.isArray(result) || !result.length) {
-        res.status(404).json({error: "Not Found", message: "Poll not found"})
+          res.json(removeEmpty([]));
+          // res.status(404).json({error: "Not Found", message: "Poll not found"})
       } else {
         where_params.push({
           id: {[Op.or]: result.map(x => x.dataValues["poll_id"])}
@@ -203,7 +205,8 @@ pollRouter.get('/polls', function (req, res) {
               res.json(removeEmpty(poll));
             });
           } else {
-            res.status(404).json({error: "Not Found", message: "Poll not found"})
+            res.status(200).json([]);
+            // res.status(404).json({error: "Not Found", message: "Poll not found"})
           }
         })
       }
@@ -289,6 +292,17 @@ pollRouter.post('/polls/:poll_id', [
                   result.update({answer: req.body["answer"]}).then(resultNext => {
                     poll.increment('participant_count');
                     User.increment({answer_count: 1, balance: 5}, {where: {id: userId}});
+                    /**
+                     * create notification
+                     */
+                    User.findById(parseInt(poll.creator_id)).then((user) => {
+                        events.emit(events.constants.sendAnswerForPoll, {
+                            all_notifications: user.all_notifications,
+                            target_user_id: parseInt(poll.creator_id),
+                            from_user_id: parseInt(user.id),
+                            nickname: `${user.firstName} ${user.lastName}`
+                        });
+                    });
                     //updatePollPrice(poll); // TODO: Uncomment once we decide to charge people
                     res.status(204).json();
                   }).catch(error => {
@@ -309,6 +323,7 @@ pollRouter.post('/polls/:poll_id', [
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
   }).catch(error => {
+    console.log(error);
     res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
   });
 });
@@ -345,6 +360,17 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                     }
                     user.decrement("balance", {by: poll["price"]});
 
+                    /**
+                     * create notifications
+                     */
+                    User.findById(parseInt(poll.creator_id)).then((user) => {
+                        events.emit(events.constants.sendResultForPoll, {
+                            all_notifications: user.all_notifications,
+                            target_user_id: poll.creator_id,
+                            from_user_id: user.id,
+                            nickname: `${user.firstName} ${user.lastName}`
+                        })
+                    });
                     /* Thats how we actually should do it. Instead of giving for answers.
                     leave for later
                     Result.findAll({

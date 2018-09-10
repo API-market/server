@@ -8,3 +8,7 @@ test_database.sqlite
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 export_credentials
+.idea
+.env
+*-lock.json
+*.log

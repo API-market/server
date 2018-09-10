@@ -26,6 +26,8 @@ var fs = require('fs');
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const nodemailer = require('nodemailer');
+const {PushService} = require('lumeos_services');
+const pushService = new PushService();
 
 const db_entities = require("./db_entities.js");
 const User = db_entities.User;
@@ -65,7 +67,7 @@ basicRouter.post('/contact_us', [
         if (error) {
           console.log(error);
         } else {
-          console.log('Email sent: ' + info.response);
+            console.log('Email sent: ' + info.response);
         }
       });
 
@@ -78,6 +80,47 @@ basicRouter.post('/contact_us', [
 basicRouter.get('/faqs', function (req, res) {
   var contents = fs.readFileSync('faq.json', 'utf8');
   res.set('Content-Type', 'application/json').status(200).send(contents);
+});
+
+/**
+ * Send push ont mobile for testing
+ */
+basicRouter.get('/send/push', function (req, res) {
+    if (req.query.token && req.query.method) {
+        const token = req.query.token;
+        const mathod = req.query.method;
+        let data;
+        try {
+            data = JSON.parse(req.query.data)
+        } catch (e) {}
+        switch (mathod) {
+            case 'event:create-answer-for-poll': {
+                return pushService.sendPolls(token, {nickname: 'Test test'}, data).then(() => {
+                    return res.status(200).json({ok: true});
+                }).catch((err) => {
+                    return res.status(500).json({message: err.message});
+                });
+            }
+            case 'event:send-result-for-poll': {
+                return pushService.sendPollsResult(token, {nickname: 'Test test'}, data).then(() => {
+                    return res.status(200).json({ok: true});
+                }).catch((err) => {
+                    return res.status(500).json({message: err.message});
+                });
+            }
+            case 'event:send-followee-from-follower': {
+                return pushService.sendFollow(token, {nickname: 'Test test'}, data).then(() => {
+                    return res.status(200).json({ok: true});
+                }).catch((err) => {
+                    return res.status(500).json({message: err.message});
+                });
+            }
+            default: {
+                return res.status(404).json({error: 'Not Found', message: 'Method not found.'});
+            }
+        }
+    }
+    res.status(404).json({error: 'Not Found', message: 'Send params.'});
 });
 
 

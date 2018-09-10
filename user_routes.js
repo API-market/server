@@ -24,6 +24,9 @@
 
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
+const {events, token} = require('lumeos_utils');
+const {mailService} = require('lumeos_services');
+const {omit} = require('lodash');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -37,6 +40,7 @@ const jwt = require('jsonwebtoken');
 
 const User = db_entities.User;
 const Address = db_entities.Address;
+const Tokens = db_entities.Tokens;
 const ProfileImage = db_entities.ProfileImage;
 const Followship = db_entities.Followship;
 const getProfileImage = db_entities.getProfileImage;
@@ -58,30 +62,68 @@ const STANDARD_USER_ATTR = [
   "balance",
   "follower_count",
   "followee_count",
-  "answer_count"
+  "answer_count",
+  "all_notifications"
 ];
+
+const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
 
 
 var userRouter = express.Router();
 
-userRouter.post('/login', function (req, res) {
-  User.findOne({where: {email: req.body["email"]}}).then(function (user) {
-    if (user && user.verifyPassword(req.body["password"])) {
-      res.json(
+const getToken = (user) => {
+    return jwt.sign(
         {
-          user_id: user['id'],
-          token: jwt.sign(
-            {
-              user_id: user['id'],
-              iat: Math.floor(new Date() / 1000)
-            },
-            require("./server_info.js").SUPER_SECRET_JWT_KEY
-          )
-        }
-      )
+            user: user.toJSON(),
+            user_id: user['id'],
+            iat: Math.floor(new Date() / 1000)
+        },
+        require('./server_info.js').SUPER_SECRET_JWT_KEY
+    )
+}
+
+userRouter.post('/login', [
+    check("email").isEmail().normalizeEmail(),
+    check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
+    check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
+    check("name_phone").isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
+    check('password', 'The password must be 8+ chars long and contain a number')
+        .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+        .isLength({min: 8})
+        .matches(/\d/)
+], function (req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+      return res.status(422).json({errors: errors.array()});
+  }
+    User.findOne(
+        {where: {email: req.body['email']}},
+        {include: [{association: User.Tokens}]}
+    ).then(function (user) {
+        if (user && user.verifyPassword(req.body['password'])) {
+            Tokens.upsert({
+                user_id: user.id,
+                token: req.body.token_phone,
+                name: req.body.name_phone,
+                platform: req.body.platform,
+            }).then((data) => {
+            console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+          }).catch((err) => {
+            console.log(err, '<<<');
+            // return res.status(400).json({error: "Bad Request", message: err.message})
+          })
+            const dataUser = {
+                user_id: user['id'],
+                token: getToken(user)
+            };
+            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+            addProfileImage(res, user, EXCLUDE_USER_ATTR);
     } else {
       res.status(404).json({error: "Not Found", message: "User not found or password is incorrect."})
     }
+  }).catch((err) => {
+    console.log(err);
+    res.status(500).json({error: "Error", message: "Some error."})
   })
 });
 
@@ -115,7 +157,12 @@ userRouter.post('/users', [
         }]
       })
         .then(user => {
-          res.json({user_id: user["id"]});
+            const dataUser = {
+                user_id: user['id'],
+                token: getToken(user)
+            };
+            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+            addProfileImage(res, user, EXCLUDE_USER_ATTR);
         })
         .catch(error => {
           console.log("error: " + error);
@@ -127,11 +174,15 @@ userRouter.post('/users', [
     });
 });
 
-const addProfileImage = function (res, user) {
+const addProfileImage = function (res, user, exclude) {
   const userId = user.dataValues["user_id"];
   getProfileImage(userId).then(result => {
     user.dataValues["profile_image"] = result;
-    res.json(removeEmpty(user));
+    user = removeEmpty(user);
+    if(exclude) {
+      user = omit(user.toJSON(), exclude)
+    }
+    res.json(user);
   });
 }
 
@@ -254,10 +305,28 @@ userRouter.get('/users', function (req, res) {
 
 
 // make follower follow followee
-userRouter.post('/follow', function (req, res) {
+userRouter.post('/follow', [
+    check("followee_id").exists().isInt().trim().escape().withMessage("Field 'followee_id' cannot be empty"),
+    check("follower_id").exists().isInt().trim().escape().withMessage("Field 'follower_id' cannot be empty")
+], function (req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+      return res.status(422).json({errors: errors.array()});
+  }
   const followee_id = parseInt(req.body["followee_id"]);
   const follower_id = parseInt(req.body["follower_id"]);
-  User.findById(followee_id).then(followee => {
+
+  if (followee_id === follower_id) {
+    return res.status(400).json({
+        error: 'Bad Request',
+        message: 'You can\'t subscribe on yourself'
+    })
+  }
+  User.findById(followee_id, {
+    include: [
+        {association: User.Tokens}
+    ]
+  }).then(followee => {
     if (followee) {
       sequelize.sync()
         .then(() => {
@@ -274,6 +343,17 @@ userRouter.post('/follow', function (req, res) {
                   // so lets just update variables.
                   followee.increment("follower_count");
                   follower.increment("followee_count");
+
+                  /**
+                   * create notification
+                   */
+                  events.emit(events.constants.sendFolloweeFromFollower, {
+                    all_notifications: followee.all_notifications,
+                    target_user_id: followee.id,
+                    from_user_id: follower.id,
+                    nickname: `${follower.firstName} ${follower.lastName}`
+                  });
+
                   res.status(204).json();
                 } else {
                   res.status(400).json({
@@ -474,13 +554,16 @@ userRouter.put('/users/:id', function (req, res) {
       user.update(req.body).then(() => {
         res.status(204).json();
       }).catch(error => {
-        console.log("failed user: " + user);
         console.log(error);
+        res.status(400).json({error: "Bad Request", message: "Not valid data"})
       })
     } else {
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
-  });
+  }).catch((err) => {
+    console.log(err);
+    res.status(500).json({error: "Error", message: "Some error."})
+  })
 });
 
 userRouter.delete('/users/:id', function (req, res) {
@@ -491,6 +574,101 @@ userRouter.delete('/users/:id', function (req, res) {
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
   });
+});
+
+userRouter.post('/users/forgot', [
+    check("email").isEmail().normalizeEmail(),
+], function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({errors: errors.array()});
+    }
+    User.findOne({
+        where: {
+          email: req.body.email
+        }
+    }).then((userDoc) => {
+      if (!userDoc) {
+        res.status(422).json({errors: [
+          {email: 'Email not found.'}
+        ]});
+      }
+
+      token.generate({
+          user_id: userDoc.id
+      }, {expiresIn: '2h'}).then((data) => {
+          userDoc.update({forgot_token: data}).then(() => {
+              mailService.send(userDoc.email, mailService.constants.FORGOT_PASSWORD, {
+                  link: `/app/?token=${data}`
+              }).then(() => {
+                res.status(204).json();
+              }).catch((error) => {
+                  console.log(error);
+                  return res.status(500).json({error: 'Error', message: error.message});
+              })
+          }).catch((error) => {
+              console.log(error);
+              return res.status(500).json({error: "Error", message: error.message});
+          })
+      }).catch(((error) => {
+          console.log(error);
+          return res.status(500).json({error: "Error", message: error.message});
+      }));
+    }).catch((error) => {
+        console.log(error);
+        res.status(500).json({error: "Error", message: "Some error."})
+    })
+});
+
+userRouter.post('/users/forgot/verify', [
+    check('password', 'The password must be 8+ chars long and contain a number')
+        .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+        .isLength({min: 8})
+        .matches(/\d/),
+    check('password_confirm')
+        .custom((value, { req }) => {
+        if (value !== req.body.password) {
+            throw new Error('Password confirmation does not match password');
+        }
+        return true;
+    }),
+    check('forgot_token')
+        .custom((value, { req }) => {
+        return token.verify(value)
+            .then((data) => {
+                req.token = data;
+            })
+            .catch((error) => {
+                const [, message] = error.message.split(' ');
+                throw new Error(`Field 'forgot_token' ${message}`);
+            })
+        })
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({errors: errors.array()});
+    }
+    const id = parseInt(req.token.user_id);
+    User.findOne({
+        where: {
+            id,
+            forgot_token: req.body.forgot_token
+        }
+    })
+        .then((userDoc) => {
+            if (!userDoc) {
+                return res.status(404).json({error: "Not Found", message: "User not found"});
+            }
+            return userDoc.update({
+                password: req.body.password,
+                forgot_token: null
+            }).then((userUpdated) => {
+                res.json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
+            })
+        }).catch((error) => {
+            console.log(error.message);
+            res.status(500).json({error: 'Error', message: 'Some error.'});
+        });
 });
 
 module.exports = userRouter;
