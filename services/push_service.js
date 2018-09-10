@@ -20,7 +20,10 @@ class PushService {
             },
             notification: {
                 title: 'Title of your push notification',
-                body: 'Body of your push notification'
+                body: 'Body of your push notification',
+                sound: 'default',
+                priority: 'high',
+                lights: 'true',
             }
         };
 

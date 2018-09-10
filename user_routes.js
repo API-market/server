@@ -24,7 +24,8 @@
 
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
-const {events} = require('lumeos_utils');
+const {events, token} = require('lumeos_utils');
+const {mailService} = require('lumeos_services');
 const {omit} = require('lodash');
 
 const Sequelize = require('sequelize');
@@ -573,6 +574,101 @@ userRouter.delete('/users/:id', function (req, res) {
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
   });
+});
+
+userRouter.post('/users/forgot', [
+    check("email").isEmail().normalizeEmail(),
+], function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({errors: errors.array()});
+    }
+    User.findOne({
+        where: {
+          email: req.body.email
+        }
+    }).then((userDoc) => {
+      if (!userDoc) {
+        res.status(422).json({errors: [
+          {email: 'Email not found.'}
+        ]});
+      }
+
+      token.generate({
+          user_id: userDoc.id
+      }, {expiresIn: '2h'}).then((data) => {
+          userDoc.update({forgot_token: data}).then(() => {
+              mailService.send(userDoc.email, mailService.constants.FORGOT_PASSWORD, {
+                  link: `/app/?token=${data}`
+              }).then(() => {
+                res.status(204).json();
+              }).catch((error) => {
+                  console.log(error);
+                  return res.status(500).json({error: 'Error', message: error.message});
+              })
+          }).catch((error) => {
+              console.log(error);
+              return res.status(500).json({error: "Error", message: error.message});
+          })
+      }).catch(((error) => {
+          console.log(error);
+          return res.status(500).json({error: "Error", message: error.message});
+      }));
+    }).catch((error) => {
+        console.log(error);
+        res.status(500).json({error: "Error", message: "Some error."})
+    })
+});
+
+userRouter.post('/users/forgot/verify', [
+    check('password', 'The password must be 8+ chars long and contain a number')
+        .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+        .isLength({min: 8})
+        .matches(/\d/),
+    check('password_confirm')
+        .custom((value, { req }) => {
+        if (value !== req.body.password) {
+            throw new Error('Password confirmation does not match password');
+        }
+        return true;
+    }),
+    check('forgot_token')
+        .custom((value, { req }) => {
+        return token.verify(value)
+            .then((data) => {
+                req.token = data;
+            })
+            .catch((error) => {
+                const [, message] = error.message.split(' ');
+                throw new Error(`Field 'forgot_token' ${message}`);
+            })
+        })
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({errors: errors.array()});
+    }
+    const id = parseInt(req.token.user_id);
+    User.findOne({
+        where: {
+            id,
+            forgot_token: req.body.forgot_token
+        }
+    })
+        .then((userDoc) => {
+            if (!userDoc) {
+                return res.status(404).json({error: "Not Found", message: "User not found"});
+            }
+            return userDoc.update({
+                password: req.body.password,
+                forgot_token: null
+            }).then((userUpdated) => {
+                res.json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
+            })
+        }).catch((error) => {
+            console.log(error.message);
+            res.status(500).json({error: 'Error', message: 'Some error.'});
+        });
 });
 
 module.exports = userRouter;

@@ -48,6 +48,7 @@ const User = sequelize.define('user', {
         return this.setDataValue('password', bcrypt.hashSync(val, bcrypt.genSaltSync(8)));
     }
   },
+  forgot_token: Sequelize.STRING,
   phone: Sequelize.STRING,
   tag_line: Sequelize.STRING,
   dob: Sequelize.STRING,

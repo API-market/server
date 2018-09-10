@@ -32,7 +32,7 @@ $ npm start
 ```
 
 # Using JWT
-
+r
 First login to get the JSON web token.
 ```sh
 $ curl -H "Content-Type: application/json" --request POST --data '{"email":"some@email.com", "password":"some_password"}' localhost:3000/v1/login/
@@ -49,4 +49,4 @@ $ curl  -H "Authorization: Bearer some.hashed.token" localhost:3000/v1/users/1
 # Run seed for project
 
 > Whilst project is running, if you need to manually run seed, you can type `run-seed` with a carriage return, and will be create data in DB.
-> or npm run seed-run
+> or npm run run-seed
