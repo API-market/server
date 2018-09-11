@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 const dbObjects = require("./db_setup");
-
+const {UploadS3Service, PushService, UploadService} = require('lumeos_services');
 const sequelize = dbObjects.dbInstance;
 
 var bcrypt = require('bcrypt');
@@ -92,6 +92,12 @@ const Poll = sequelize.define('poll', {
   question: Sequelize.STRING,
   price: {type: Sequelize.DOUBLE, defaultValue: 0},
   participant_count: {type: Sequelize.INTEGER, defaultValue: 0},
+  avatar: {
+    type: Sequelize.STRING,
+    get: function () {
+      return UploadS3Service.getImage(this.getDataValue('avatar'));
+    }
+  },
   answers: {
     type: Sequelize.STRING,
     get: function () {

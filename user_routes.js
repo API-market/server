@@ -589,7 +589,7 @@ userRouter.post('/users/forgot', [
         }
     }).then((userDoc) => {
       if (!userDoc) {
-        res.status(422).json({errors: [
+        return res.status(422).json({errors: [
           {email: 'Email not found.'}
         ]});
       }

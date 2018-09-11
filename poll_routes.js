@@ -27,7 +27,8 @@ const {check, validationResult} = require('express-validator/check');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const {events} = require('lumeos_utils')
+const {events} = require('lumeos_utils');
+const {UploadService} = require('lumeos_services');
 
 const dbSetup = require("./db_setup.js");
 const sequelize = dbSetup.dbInstance;
@@ -66,11 +67,23 @@ function updatePollPrice(poll) {
   poll.update({price: newPrice});
 }
 
-pollRouter.post('/polls', [
+pollRouter.post('/polls', UploadService.middleware('avatar'), [
     check("question").not().isEmpty().trim().withMessage("Field 'question' cannot be empty"),
     check("answers").isArray().withMessage("Field 'answers' must be an array."),
     check("tags").optional().isArray().withMessage("Field 'tags' must be an array."),
-    check("creator_id").isInt().withMessage("Field 'creator_id' must be an int."),
+    check("creator_id").custom((value, {req}) => {
+      if (typeof req.user.user_id === "undefined") {
+          throw new Error("Field 'creator_id' must be.")
+      }
+      req.body.creator_id = req.user.user_id;
+      return true
+    }),
+    check("avatar").custom((value, {req}) => {
+      if (typeof req.file === "undefined") {
+        throw new Error("Field 'avatar' must be image.")
+      }
+      return true;
+    })
   ],
   (req, res) => {
     const errors = validationResult(req);
@@ -79,16 +92,20 @@ pollRouter.post('/polls', [
     }
     sequelize.sync()
       .then(() => {
-        Poll
-          .build(req.body)
-          .save()
-          .then(poll => {
-            res.json({poll_id: poll["id"]});
-          })
-          .catch(error => {
-            console.log(error);
-          })
-      })
+        return UploadService.upload(req.file).then(({file}) => {
+          Object.assign(req.body, {avatar: file});
+            return Poll
+                .build(req.body)
+                .save()
+                .then(poll => {
+                    poll.setDataValue('poll_id', poll.id);
+                    res.json(removeEmpty(poll));
+                });
+        });
+      }).catch((error) => {
+        console.log(error);
+        res.status(500).json({error: "Error", message: "Some error."})
+    })
   });
 
 pollRouter.get('/polls/:id', function (req, res) {
