@@ -51,7 +51,7 @@ class PushService {
             this.client.send(Object.assign(this.message, {to})).then((data) => {
                 resolve(data);
             }).catch((err) => {
-                console.error(`[push-service-error] token > ${to}`, err);
+                console.error(`[push-service-error] token > ${JSON.stringify(to)}`, err);
                 reject(new Error('Error send push notification'));
             });
         });
