@@ -26,8 +26,9 @@ var fs = require('fs');
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const nodemailer = require('nodemailer');
-const {PushService} = require('lumeos_services');
+const {PushService, PollService} = require('lumeos_services');
 const pushService = new PushService();
+const pollService = new PollService();
 
 const db_entities = require("./db_entities.js");
 const User = db_entities.User;
@@ -123,5 +124,10 @@ basicRouter.get('/send/push', function (req, res) {
     res.status(404).json({error: 'Not Found', message: 'Send params.'});
 });
 
+
+basicRouter.get('/send/all/notification', (req, res) => {
+    pollService.getNotAnswersPull();
+    res.json({ok: true});
+});
 
 module.exports = basicRouter;

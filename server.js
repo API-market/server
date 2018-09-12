@@ -56,6 +56,7 @@ app.use(function (req, res, next) {
   if (req.url.endsWith("/login")
     || req.url.match(/\/users/)
     || req.url.match(/\/app/)
+    || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
