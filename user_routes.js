@@ -35,7 +35,7 @@ const dbObjects = require("./db_setup.js");
 const sequelize = dbObjects.dbInstance;
 
 const db_entities = require("./db_entities.js");
-
+const {verifyPassword} = db_entities;
 const jwt = require('jsonwebtoken');
 
 const User = db_entities.User;
@@ -547,23 +547,60 @@ userRouter.delete('/profile_images/:id', function (req, res) {
   });
 });
 
-userRouter.put('/users/:id', function (req, res) {
-  User.findById(parseInt(req.params['id'])).then(user => {
-    if (user) {
-      console.log("user: " + user);
-      user.update(req.body).then(() => {
-        res.status(204).json();
-      }).catch(error => {
-        console.log(error);
-        res.status(400).json({error: "Bad Request", message: "Not valid data"})
-      })
-    } else {
-      res.status(404).json({error: "Not Found", message: "User not found"})
+userRouter.put('/users',
+    function (req, res, next) {
+        if (req.body.password) {
+            check('password', 'The password must be 8+ chars long and contain a number')
+                .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+                .isLength({min: 8})
+                .matches(/\d/);
+            check('passwordConfirm')
+                .custom((value, {req}) => {
+                    if (value !== req.body.password) {
+                        throw new Error('Password confirmation does not match password');
+                    }
+                    return true;
+                });
+            check('currentPassword')
+                .custom((value, {req}) => {
+                    if ((!req.auth || !req.body.currentPassword)) {
+                        throw new Error('Current Password wrong');
+                    }
+                    return User.findById(parseInt(req.auth.user_id)).then(user => {
+                        if (!user) {
+                            throw new Error('User not found');
+                        }
+                        if (!verifyPassword(req.body.currentPassword, user.password)) {
+                            throw new Error('Current Password wrong');
+                        }
+                        req.user = user;
+                        return true;
+                    });
+                })(req, res, next);
+            return
+        }
+        next();
     }
-  }).catch((err) => {
-    console.log(err);
-    res.status(500).json({error: "Error", message: "Some error."})
-  })
+, function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({errors: errors.array()});
+    }
+    const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
+        if (!user) {
+            return Promise.reject(new Error('User not found'));
+        }
+        return user;
+    });
+
+    userDoc.then((user) => {
+        return user.update(req.body).then((userUpdated) => {
+            res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
+        });
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).json({error: 'Error', message: 'Some error.'});
+    });
 });
 
 userRouter.delete('/users/:id', function (req, res) {

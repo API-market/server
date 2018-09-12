@@ -112,7 +112,7 @@ class Events extends EventEmitter {
 
     sendNotAnswersPoll(token, count) {
         this.pushService.sendNotAnswersPoll(token, {count}).then((data) => {
-            console.log(data, '<<<<< success');
+            console.log(data, '<<<<< success >>>>', token);
             this.emit(this.constants.sendNotAnswersPollCallback, data);
         }).catch((err) => {
             console.log(`[${constants.sendNotAnswersPollCallback}]`, err);

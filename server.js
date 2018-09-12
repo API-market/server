@@ -54,7 +54,7 @@ if(!process.env.LUMEOS_SERVER_DB) {
 
 app.use(function (req, res, next) {
   if (req.url.endsWith("/login")
-    || req.url.match(/\/users/)
+    // || req.url.match(/\/users/)
     || req.url.match(/\/app/)
     || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
@@ -65,8 +65,7 @@ app.use(function (req, res, next) {
   } else {
       try {
           const token = req.headers.authorization.split(' ')[1];
-          const decoded = jwt.verify(token, SUPER_SECRET_JWT_KEY);
-          req.user = decoded;
+          req.auth = jwt.verify(token, SUPER_SECRET_JWT_KEY);
           next();
       } catch (err) {
           res.status(401).json({message: 'Unauthorized: JWT token not provided'});

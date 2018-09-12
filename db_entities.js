@@ -84,9 +84,10 @@ User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
 
 User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
 
-User.prototype.verifyPassword = function (password) {
-  return bcrypt.compareSync(password, this.password);
+const verifyPassword = function (password, hash) {
+    return bcrypt.compareSync(password, hash || this.password);
 };
+User.prototype.verifyPassword = verifyPassword;
 
 const Poll = sequelize.define('poll', {
   question: Sequelize.STRING,
@@ -247,5 +248,6 @@ module.exports = {
   Followship: Followship,
   ProfileImage: ProfileImage,
   Transaction: Transaction,
-  getProfileImage: getProfileImage
+  getProfileImage: getProfileImage,
+  verifyPassword,
 }
