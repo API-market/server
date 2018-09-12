@@ -553,14 +553,14 @@ userRouter.put('/users',
             check('password', 'The password must be 8+ chars long and contain a number')
                 .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
                 .isLength({min: 8})
-                .matches(/\d/);
+                .matches(/\d/)(req);
             check('passwordConfirm')
                 .custom((value, {req}) => {
                     if (value !== req.body.password) {
                         throw new Error('Password confirmation does not match password');
                     }
                     return true;
-                });
+                })(req);
             check('currentPassword')
                 .custom((value, {req}) => {
                     if ((!req.auth || !req.body.currentPassword)) {
