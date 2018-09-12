@@ -27,7 +27,7 @@ class PollService {
                 const {token: to, participant_not_answered: count, user_id} = e.toJSON();
                 if (count > 0) {
                     console.log('[send-push] >', user_id);
-                    events.emit(events.constants.sendNotAnswersPoll, {to, count})
+                    events.emit(events.constants.sendNotAnswersPoll, to, count)
                 }
             });
 
@@ -35,7 +35,7 @@ class PollService {
             console.log('[cron-push-error] ', error);
         });
     }
-}
 
+}
 
 module.exports = PollService;
