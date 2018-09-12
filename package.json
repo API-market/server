@@ -7,7 +7,9 @@
     "start": "node bin/www",
     "dev": "nodemon bin/www",
     "test": "NODE_ENV=test SQLITE_FILENAME=$(pwd)/test_database.sqlite mocha tests/runner.js",
-    "seed-run": "node ./seed.js"
+    "migrate": "sequelize db:migrate",
+    "migrate:rollback": "sequelize db:migrate::undo",
+    "model:generate": "sequelize model:generate"
   },
   "repository": {
     "type": "git",
