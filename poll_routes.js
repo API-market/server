@@ -103,9 +103,9 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
                 });
         });
       }).catch((error) => {
-        console.log(error);
-        res.status(500).json({error: "Error", message: "Some error."})
-    })
+          console.log(error);
+          res.status(500).json({error: "Error", message: "Some error."})
+      })
   });
 
 pollRouter.get('/polls/:id', function (req, res) {
