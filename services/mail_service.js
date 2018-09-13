@@ -7,7 +7,8 @@ class MailService {
 
     constructor() {
         this.constants = {
-            FORGOT_PASSWORD: 'forgot_password'
+            FORGOT_PASSWORD: 'forgot_password',
+            VERIFY_USER: 'verify_user',
         };
         const tls = /^win/.test(process.platform) && {tls: {rejectUnauthorized: false}};
         this.senders = {
@@ -114,7 +115,11 @@ class MailService {
         return {
             [this.constants.FORGOT_PASSWORD]: {
                 PATH: `${path}/forgot_password.ejs`,
-                SUBJECT: 'Forgot password',
+                SUBJECT: '[Lumeos] Forgot password',
+            },
+            [this.constants.VERIFY_USER]: {
+                PATH: `${path}/verify_user.ejs`,
+                SUBJECT: '[Lumeos] Verify​ your ​email ​address',
             }
         };
     }

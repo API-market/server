@@ -24,7 +24,7 @@
 
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
-const {events, token} = require('lumeos_utils');
+const {events, token, model} = require('lumeos_utils');
 const {mailService} = require('lumeos_services');
 const {omit} = require('lodash');
 
@@ -82,8 +82,10 @@ const getToken = (user) => {
     )
 }
 
+const emailValidate = check("email").isEmail().normalizeEmail();
+
 userRouter.post('/login', [
-    check("email").isEmail().normalizeEmail(),
+    emailValidate,
     check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
     check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
     check("name_phone").isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
@@ -622,7 +624,7 @@ userRouter.post('/users/forgot', [
     }
     User.findOne({
         where: {
-          email: req.body.email
+          email: req.body.email,
         }
     }).then((userDoc) => {
       if (!userDoc) {
@@ -636,7 +638,8 @@ userRouter.post('/users/forgot', [
       }, {expiresIn: '2h'}).then((data) => {
           userDoc.update({forgot_token: data}).then(() => {
               mailService.send(userDoc.email, mailService.constants.FORGOT_PASSWORD, {
-                  link: `/app/?token=${data}`
+                  link: `/app/?token=${data}`,
+                  username: `${userDoc.firstName} ${userDoc.lastName}`,
               }).then(() => {
                 res.status(204).json();
               }).catch((error) => {
@@ -707,5 +710,84 @@ userRouter.post('/users/forgot/verify', [
             res.status(500).json({error: 'Error', message: 'Some error.'});
         });
 });
+
+userRouter
+    .route('/users/verify')
+    .post(function (req, res) {
+        User.findById(req.auth.user_id)
+            .then((user) => {
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                if (user.verify) {
+                    throw new Error('User already verified.');
+                }
+                return token.generate({
+                    user_id: user.id,
+                    verify: user.verify
+                }).then((token) => {
+                    return mailService.send(user.email, mailService.constants.VERIFY_USER, {
+                        link: `/app/?verifyToken=${token}`,
+                        username: `${user.firstName} ${user.lastName}`,
+                    }).then(() => {
+                        return user.update({
+                            verify_token: token
+                        }).then(() => {
+                            res.status(204).json();
+                        });
+                    });
+                });
+            })
+            .catch((error) => {
+                let message = 'Some error.';
+                let status = 500;
+                if(error.name === 'Error') {
+                    message = error.message;
+                    status = 400;
+                }
+                res.status(status).json({error: 'Error', message});
+            });
+    }).put([
+        check('verifyToken').custom((value, {req}) => {
+            if (value) {
+                return token.verify(value).then(() => {
+                    req.verifyToken = value;
+                });
+            }
+        })
+    ], function (req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({errors: errors.array()});
+        }
+        User.findOne({
+            where: {
+                id: req.auth.user_id,
+                verify_token: req.verifyToken,
+                verify: false,
+            }
+        })
+            .then(function (user) {
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                return user.update(model.formattingValue({
+                    verifyToken: null,
+                    verify: true,
+                    balance: user.balance + 100
+                })).then((user) => {
+                    res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
+                })
+            })
+            .catch(function (error) {
+                let message = 'Some error.';
+                let status = 500;
+                if(error.name === 'Error') {
+                    message = error.message;
+                    status = 400;
+                }
+                res.status(status).json({error: 'Error', message});
+            });
+    });
 
 module.exports = userRouter;

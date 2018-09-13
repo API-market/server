@@ -49,6 +49,7 @@ const User = sequelize.define('user', {
     }
   },
   forgot_token: Sequelize.STRING,
+  verify_token: Sequelize.STRING,
   phone: Sequelize.STRING,
   tag_line: Sequelize.STRING,
   dob: Sequelize.STRING,
@@ -60,6 +61,7 @@ const User = sequelize.define('user', {
   follower_count: {type: Sequelize.INTEGER, defaultValue: 0},
   answer_count: {type: Sequelize.INTEGER, defaultValue: 0},
   all_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
+  verify: {type: Sequelize.BOOLEAN, defaultValue: false},
 });
 
 const Address = sequelize.define('address', {
