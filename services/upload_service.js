@@ -9,6 +9,7 @@ class UploadService {
         this.uploadMulter = multer();
         this.ext = mime.extension;
         this.cropInstan = null;
+        this.width = 200;
     }
 
     middleware(fieldName = 'avatar') {
@@ -35,7 +36,8 @@ class UploadService {
         return new Promise((resolve, reject) => {
             this.file = file;
 
-            this.cropInstan = sharp(this.file.buffer).resize(100);
+            this.cropInstan = sharp(this.file.buffer)
+                .resize(this.width);
             this.compress()
                 .toBuffer(`./img.${this.file.ext}`, (err, buffer) => {
                     if (err) {
@@ -54,7 +56,7 @@ class UploadService {
                 return this.cropInstan.png({compressionLevel: 7});
             }
             case 'jpeg': {
-                return this.cropInstan.jpeg({quality: 60});
+                return this.cropInstan.jpeg({quality: 80});
             }
             default: {
                 return this.cropInstan.png({compressionLevel: 7});
