@@ -24,8 +24,8 @@
 
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
-const {events, token} = require('lumeos_utils');
-const {mailService} = require('lumeos_services');
+const {events, token, model} = require('lumeos_utils');
+const {mailService, UploadService} = require('lumeos_services');
 const {omit} = require('lodash');
 
 const Sequelize = require('sequelize');
@@ -35,7 +35,7 @@ const dbObjects = require("./db_setup.js");
 const sequelize = dbObjects.dbInstance;
 
 const db_entities = require("./db_entities.js");
-
+const {verifyPassword} = db_entities;
 const jwt = require('jsonwebtoken');
 
 const User = db_entities.User;
@@ -63,7 +63,9 @@ const STANDARD_USER_ATTR = [
   "follower_count",
   "followee_count",
   "answer_count",
-  "all_notifications"
+  "all_notifications",
+  "verify_token",
+  "verify",
 ];
 
 const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
@@ -82,8 +84,10 @@ const getToken = (user) => {
     )
 }
 
+const emailValidate = check("email").isEmail().normalizeEmail();
+
 userRouter.post('/login', [
-    check("email").isEmail().normalizeEmail(),
+    emailValidate,
     check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
     check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
     check("name_phone").isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
@@ -472,9 +476,14 @@ userRouter.get('/followees/:user_id', function (req, res) {
   });
 });
 
-userRouter.post('/profile_images/', [
+userRouter.post('/profile_images/', UploadService.middleware('image'), [
   check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
-  check("image").isBase64().withMessage("Field 'image' must be in base64 format."),
+  check("image").custom((value, {req}) => {
+      if (typeof req.file === "undefined") {
+          throw new Error("Field 'image' must be image.")
+      }
+      return true;
+  }),
 ], (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -482,37 +491,46 @@ userRouter.post('/profile_images/', [
   }
   User.findById(parseInt(req.body["user_id"])).then(user => {
     if (user) {
-      sequelize.sync()
-        .then(() => {
-          ProfileImage.create(req.body)
-            .then(() => {
-              res.json({user_id: req.body["user_id"]});
+        return ProfileImage.findById(req.body["user_id"]).then((profile) => {
+            if (profile) {
+                throw new Error('Image exist for current user');
+            }
+            return UploadService.upload(req.file, 'users').then(({file: image}) => {
+                Object.assign(req.body, {image});
+                return ProfileImage.create(req.body)
+                    .then((profile) => {
+                        res.json(profile.toJSON())
+                    });
+            }).catch(error => {
+                console.log("error: " + error);
+                res.status(400).json({
+                    error: "Bad Request",
+                    message: "Could not create image with " + JSON.stringify(req.body)
+                })
             })
-            .catch(error => {
-              console.log("error: " + error);
-              res.status(400).json({
-                error: "Bad Request",
-                message: "Could not create image with " + JSON.stringify(req.body)
-              })
-            })
-        });
+        }).catch((error) => {
+            console.log(error);
+            res.status(400).json({error: "Bad Request", message: error.message})
+        })
     }
     else {
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
   }).catch(error => {
+    console.log(error, '<<<');
     res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
   });
 });
 
-userRouter.get('/profile_images/:id', function (req, res) {
+userRouter.get('/profile_images/:id', function (req, res, ) {
   const userId = parseInt(req.params["id"]);
-  ProfileImage.findOne({where: {user_id: userId}}).then(profileImage => {
+  ProfileImage.findOne({
+      where: {
+        user_id: userId
+      }
+  }).then(profileImage => {
     if (profileImage) {
-      getProfileImage(userId).then(result => {
-        profileImage.dataValues["image"] = result;
-        res.json(removeEmpty(profileImage));
-      });
+        res.json(removeEmpty(profileImage))
     }
     else {
       res.status(404).json({error: "Not Found", message: "Profile image not found"})
@@ -522,18 +540,37 @@ userRouter.get('/profile_images/:id', function (req, res) {
   });
 });
 
-userRouter.put('/profile_images/:id', function (req, res) {
-  ProfileImage.findOne({where: {user_id: parseInt(req.params["id"])}}).then(profileImage => {
-    if (profileImage) {
-      profileImage.update(req.body).then(() => {
-        res.status(204).json();
+userRouter.put('/profile_images/:id',
+    UploadService.middleware('image'),
+    [
+        check("image").custom((value, {req}) => {
+            if (typeof req.file === "undefined") {
+                throw new Error("Field 'image' must be image.")
+            }
+            return true;
+        })
+    ], function (req, res) {
+      ProfileImage.findOne({
+          where: {
+              user_id: parseInt(req.params['id'])
+          }
+      })
+      .then(profileImage => {
+          if (profileImage) {
+              Object.assign(req.body, req.file);
+              return UploadService.upload(req.file, 'users').then(({file: image}) => {
+                  Object.assign(req.body, {image});
+                  return profileImage.update(req.body).then((profileImage) => {
+                      res.json(profileImage.toJSON());
+                  });
+              });
+          } else {
+              res.status(404).json({error: 'Not Found', message: 'Profile image not found'});
+          }
       }).catch(error => {
         console.log(error);
-      })
-    } else {
-      res.status(404).json({error: "Not Found", message: "Profile image not found"})
-    }
-  });
+        res.status(500).json({error: 'Error', message: 'Some error.'});
+      });
 });
 
 
@@ -547,23 +584,60 @@ userRouter.delete('/profile_images/:id', function (req, res) {
   });
 });
 
-userRouter.put('/users/:id', function (req, res) {
-  User.findById(parseInt(req.params['id'])).then(user => {
-    if (user) {
-      console.log("user: " + user);
-      user.update(req.body).then(() => {
-        res.status(204).json();
-      }).catch(error => {
-        console.log(error);
-        res.status(400).json({error: "Bad Request", message: "Not valid data"})
-      })
-    } else {
-      res.status(404).json({error: "Not Found", message: "User not found"})
+userRouter.put('/users',
+    function (req, res, next) {
+        if (req.body.password) {
+            check('password', 'The password must be 8+ chars long and contain a number')
+                .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+                .isLength({min: 8})
+                .matches(/\d/)(req);
+            check('confirmPassword')
+                .custom((value, {req}) => {
+                    if (value !== req.body.password) {
+                        throw new Error('Password confirmation does not match password');
+                    }
+                    return true;
+                })(req);
+            check('currentPassword')
+                .custom((value, {req}) => {
+                    if ((!req.auth || !req.body.currentPassword)) {
+                        throw new Error('Current Password wrong');
+                    }
+                    return User.findById(parseInt(req.auth.user_id)).then(user => {
+                        if (!user) {
+                            throw new Error('User not found');
+                        }
+                        if (!verifyPassword(req.body.currentPassword, user.password)) {
+                            throw new Error('Current Password wrong');
+                        }
+                        req.user = user;
+                        return true;
+                    });
+                })(req, res, next);
+            return
+        }
+        next();
     }
-  }).catch((err) => {
-    console.log(err);
-    res.status(500).json({error: "Error", message: "Some error."})
-  })
+, function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({errors: errors.array()});
+    }
+    const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
+        if (!user) {
+            return Promise.reject(new Error('User not found'));
+        }
+        return user;
+    });
+
+    userDoc.then((user) => {
+        return user.update(req.body).then((userUpdated) => {
+            res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
+        });
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).json({error: 'Error', message: 'Some error.'});
+    });
 });
 
 userRouter.delete('/users/:id', function (req, res) {
@@ -585,11 +659,11 @@ userRouter.post('/users/forgot', [
     }
     User.findOne({
         where: {
-          email: req.body.email
+          email: req.body.email,
         }
     }).then((userDoc) => {
       if (!userDoc) {
-        res.status(422).json({errors: [
+        return res.status(422).json({errors: [
           {email: 'Email not found.'}
         ]});
       }
@@ -599,7 +673,8 @@ userRouter.post('/users/forgot', [
       }, {expiresIn: '2h'}).then((data) => {
           userDoc.update({forgot_token: data}).then(() => {
               mailService.send(userDoc.email, mailService.constants.FORGOT_PASSWORD, {
-                  link: `/app/?token=${data}`
+                  link: `/app/?token=${data}`,
+                  username: `${userDoc.firstName} ${userDoc.lastName}`,
               }).then(() => {
                 res.status(204).json();
               }).catch((error) => {
@@ -670,5 +745,85 @@ userRouter.post('/users/forgot/verify', [
             res.status(500).json({error: 'Error', message: 'Some error.'});
         });
 });
+
+userRouter
+    .route('/users/verify')
+    .post(function (req, res) {
+        User.findById(req.auth.user_id)
+            .then((user) => {
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                if (user.verify) {
+                    throw new Error('User already verified.');
+                }
+                return token.generate({
+                    user_id: user.id,
+                    verify: user.verify
+                }).then((token) => {
+                    return mailService.send(user.email, mailService.constants.VERIFY_USER, {
+                        link: `/app/?verifyToken=${token}`,
+                        username: `${user.firstName} ${user.lastName}`,
+                    }).then(() => {
+                        return user.update({
+                            verify_token: token
+                        }).then(() => {
+                            res.status(204).json();
+                        });
+                    });
+                });
+            })
+            .catch((error) => {
+                let message = 'Some error.';
+                let status = 500;
+                if(error.name === 'Error') {
+                    message = error.message;
+                    status = 400;
+                }
+                res.status(status).json({error: 'Error', message});
+            });
+    })
+    .put([
+        check('verifyToken').custom((value, {req}) => {
+            if (value) {
+                return token.verify(value).then(() => {
+                    req.verifyToken = value;
+                });
+            }
+        })
+    ], function (req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({errors: errors.array()});
+        }
+        User.findOne({
+            where: {
+                id: req.auth.user_id,
+                verify_token: req.verifyToken,
+                verify: false,
+            }
+        })
+            .then(function (user) {
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                return user.update(model.formattingValue({
+                    verifyToken: null,
+                    verify: true,
+                    balance: user.balance + 100
+                })).then((user) => {
+                    res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
+                });
+            })
+            .catch(function (error) {
+                let message = 'Some error.';
+                let status = 500;
+                if (error.name === 'Error') {
+                    message = error.message;
+                    status = 400;
+                }
+                res.status(status).json({error: 'Error', message});
+            });
+    });
 
 module.exports = userRouter;

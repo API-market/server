@@ -13,17 +13,21 @@ class PollService {
      */
     getNotAnswersPull() {
         Tokens.findAll({
-            attributes: Object.keys(Tokens.attributes).concat([
-                [dbInstance.literal(`(SELECT count(poll.id) 
+            attributes: ['user_id', 'token'].concat([
+                [dbInstance.literal(`(SELECT count(DISTINCT poll.id) 
                                             FROM polls AS poll 
-                                            WHERE poll.creator_id = tokens.user_id 
-                                                AND poll.participant_count = 0)`), 'participant_not_answered']
+                                            WHERE poll.id NOT IN (
+                                                SELECT DISTINCT res.poll_id
+                                                FROM results AS res
+                                                WHERE res.user_id = "tokens"."user_id")
+                                            )`), 'participant_not_answered']
             ])
         }).then(poll => {
             poll.map((e) => {
-                const {token: to, participant_not_answered: count} = e.toJSON();
+                const {token: to, participant_not_answered: count, user_id} = e.toJSON();
                 if (count > 0) {
-                    events.emit(events.constants.sendNotAnswersPoll, {to, count})
+                    console.log('[send-push] >', user_id);
+                    events.emit(events.constants.sendNotAnswersPoll, to, count)
                 }
             });
 
@@ -31,7 +35,7 @@ class PollService {
             console.log('[cron-push-error] ', error);
         });
     }
-}
 
+}
 
 module.exports = PollService;

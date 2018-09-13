@@ -27,7 +27,8 @@ const {check, validationResult} = require('express-validator/check');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const {events} = require('lumeos_utils')
+const {events} = require('lumeos_utils');
+const {UploadService} = require('lumeos_services');
 
 const dbSetup = require("./db_setup.js");
 const sequelize = dbSetup.dbInstance;
@@ -66,11 +67,23 @@ function updatePollPrice(poll) {
   poll.update({price: newPrice});
 }
 
-pollRouter.post('/polls', [
+pollRouter.post('/polls', UploadService.middleware('avatar'), [
     check("question").not().isEmpty().trim().withMessage("Field 'question' cannot be empty"),
     check("answers").isArray().withMessage("Field 'answers' must be an array."),
     check("tags").optional().isArray().withMessage("Field 'tags' must be an array."),
-    check("creator_id").isInt().withMessage("Field 'creator_id' must be an int."),
+    check("creator_id").custom((value, {req}) => {
+      if (typeof req.auth.user_id === "undefined") {
+          throw new Error("Field 'creator_id' must be.")
+      }
+      req.body.creator_id = req.auth.user_id;
+      return true
+    }),
+    check("avatar").custom((value, {req}) => {
+      if (typeof req.file === "undefined") {
+        throw new Error("Field 'avatar' must be image.")
+      }
+      return true;
+    })
   ],
   (req, res) => {
     const errors = validationResult(req);
@@ -79,15 +92,19 @@ pollRouter.post('/polls', [
     }
     sequelize.sync()
       .then(() => {
-        Poll
-          .build(req.body)
-          .save()
-          .then(poll => {
-            res.json({poll_id: poll["id"]});
-          })
-          .catch(error => {
-            console.log(error);
-          })
+        return UploadService.upload(req.file).then(({file}) => {
+          Object.assign(req.body, {avatar: file});
+            return Poll
+                .build(req.body)
+                .save()
+                .then(poll => {
+                    poll.setDataValue('poll_id', poll.id);
+                    res.json(removeEmpty(poll));
+                });
+        });
+      }).catch((error) => {
+          console.log(error);
+          res.status(500).json({error: "Error", message: "Some error."})
       })
   });
 
@@ -183,7 +200,7 @@ pollRouter.get('/polls', function (req, res) {
     });
   }
   var where_object = {};
-  where_attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id", "createdAt"];
+  where_attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id", "createdAt", "avatar"];
   if (req.query["queryParticipant"]) {
     Result.findAll({
       where: {user_id: parseInt(req.query["queryParticipant"])},
@@ -295,14 +312,14 @@ pollRouter.post('/polls/:poll_id', [
                     /**
                      * create notification
                      */
-                    User.findById(parseInt(poll.creator_id)).then((user) => {
+                    // User.findById(parseInt(poll.creator_id)).then((user) => {
                         events.emit(events.constants.sendAnswerForPoll, {
                             all_notifications: user.all_notifications,
                             target_user_id: parseInt(poll.creator_id),
                             from_user_id: parseInt(user.id),
                             nickname: `${user.firstName} ${user.lastName}`
                         });
-                    });
+                    // });
                     //updatePollPrice(poll); // TODO: Uncomment once we decide to charge people
                     res.status(204).json();
                   }).catch(error => {
@@ -363,14 +380,14 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                     /**
                      * create notifications
                      */
-                    User.findById(parseInt(poll.creator_id)).then((user) => {
+                    // User.findById(parseInt(poll.creator_id)).then((user) => {
                         events.emit(events.constants.sendResultForPoll, {
                             all_notifications: user.all_notifications,
                             target_user_id: poll.creator_id,
                             from_user_id: user.id,
                             nickname: `${user.firstName} ${user.lastName}`
                         })
-                    });
+                    // });
                     /* Thats how we actually should do it. Instead of giving for answers.
                     leave for later
                     Result.findAll({

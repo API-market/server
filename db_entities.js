@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 const dbObjects = require("./db_setup");
-
+const {UploadS3Service, PushService, UploadService} = require('lumeos_services');
 const sequelize = dbObjects.dbInstance;
 
 var bcrypt = require('bcrypt');
@@ -49,6 +49,7 @@ const User = sequelize.define('user', {
     }
   },
   forgot_token: Sequelize.STRING,
+  verify_token: Sequelize.STRING,
   phone: Sequelize.STRING,
   tag_line: Sequelize.STRING,
   dob: Sequelize.STRING,
@@ -60,6 +61,7 @@ const User = sequelize.define('user', {
   follower_count: {type: Sequelize.INTEGER, defaultValue: 0},
   answer_count: {type: Sequelize.INTEGER, defaultValue: 0},
   all_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
+  verify: {type: Sequelize.BOOLEAN, defaultValue: false},
 });
 
 const Address = sequelize.define('address', {
@@ -84,14 +86,21 @@ User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
 
 User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
 
-User.prototype.verifyPassword = function (password) {
-  return bcrypt.compareSync(password, this.password);
+const verifyPassword = function (password, hash) {
+    return bcrypt.compareSync(password, hash || this.password);
 };
+User.prototype.verifyPassword = verifyPassword;
 
 const Poll = sequelize.define('poll', {
   question: Sequelize.STRING,
   price: {type: Sequelize.DOUBLE, defaultValue: 0},
   participant_count: {type: Sequelize.INTEGER, defaultValue: 0},
+  avatar: {
+    type: Sequelize.STRING,
+    get: function () {
+      return this.getDataValue('avatar') && UploadS3Service.getImage(this.getDataValue('avatar'));
+    }
+  },
   answers: {
     type: Sequelize.STRING,
     get: function () {
@@ -138,51 +147,8 @@ const ProfileImage = sequelize.define('profile_image', {
   },
   image: {
     type: Sequelize.STRING,
-    set: function (val) {
-
-      var params = {
-        Image: {
-          Bytes: new Buffer(val, 'base64')
-        },
-        MinConfidence: 50.0
-      };
-      rekognition.detectModerationLabels(params, function (err, data) {
-        if (err) console.log(err, err.stack);
-        else if (data["ModerationLabels"].length > 0) {
-          console.log("bad image");
-          console.log(data);
-        } else {
-          // Image is prob ok
-          var imageBuffer = imageFromBase64(val);
-          tinify.fromBuffer(imageBuffer).resize({
-            method: "fit",
-            width: 150,
-            height: 150
-          })
-            .toBuffer(function (err, resultData) {
-              if (err) {
-                console.log("Could not compress image for user_id: " + this.getDataValue('user_id'));
-                // if compression fails, its not critical. We can upload.
-              } else {
-                imageBuffer = resultData;
-              }
-              const data = {
-                Key: profile_images_key + this.getDataValue('user_id') + DEFAULT_IMAGE_FORMAT,
-                Body: imageBuffer,
-                ContentType: 'image/png',
-                ACL: 'public-read'
-              };
-              lumeosS3Bucket.putObject(data, function (err, data) {
-                if (err) {
-                  console.log(err);
-                  console.log('Error uploading data: ', data);
-                } else {
-                  console.log('succesfully uploaded the image!');
-                }
-              });
-            }.bind(this));
-        }
-      }.bind(this));
+    get: function () {
+        return this.getDataValue('image') && UploadS3Service.getImage(this.getDataValue('image'));
     }
   },
 });
@@ -241,5 +207,6 @@ module.exports = {
   Followship: Followship,
   ProfileImage: ProfileImage,
   Transaction: Transaction,
-  getProfileImage: getProfileImage
+  getProfileImage: getProfileImage,
+  verifyPassword,
 }
