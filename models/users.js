@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
             }
         },
         forgot_token: DataTypes.STRING,
+        verify_token: Sequelize.STRING,
         phone: DataTypes.STRING,
         tag_line: DataTypes.STRING,
         dob: DataTypes.STRING,
@@ -32,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
         follower_count: {type: DataTypes.INTEGER, defaultValue: 0},
         answer_count: {type: DataTypes.INTEGER, defaultValue: 0},
         all_notifications: {type: DataTypes.BOOLEAN, defaultValue: true},
+        verify: {type: Sequelize.BOOLEAN, defaultValue: false},
     }, {});
     // Users.associate = (models) => {
         // console.log(this, '<<< users');
