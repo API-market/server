@@ -50,3 +50,17 @@ $ curl  -H "Authorization: Bearer some.hashed.token" localhost:3000/v1/users/1
 
 > Whilst project is running, if you need to manually run seed, you can type `run-seed` with a carriage return, and will be create data in DB.
 > or npm run run-seed
+
+# Sequelize CLI
+
+### Create new model with migrations
+> npm run model:generate -- name_modal --attributes firstName:string,age:number
+
+### Create new migrations
+> npm run migration:generate -- name_migrations
+
+### Run exists migrations
+> npm run migrate
+
+### Rollback exists migrations
+> npm run migrate:rollback

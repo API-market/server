@@ -31,7 +31,7 @@ class UploadS3Service {
      */
     formatData(file, dir = 'polls') {
         return {
-            Key: `${dir}/${this.hash()}_${file.originalname}`,
+            Key: `${dir}/${this.hash()}_${file.originalname || 'test.jpg'}`,
             Body: new Buffer(file.buffer, 'binary'),
             ContentType: file.mimetype || [this.constants.DEFAULT_IMAGE_FORMAT],
             ACL: 'public-read',

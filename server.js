@@ -54,7 +54,7 @@ if(!process.env.LUMEOS_SERVER_DB) {
 
 app.use(function (req, res, next) {
   if (req.url.endsWith("/login")
-    // || req.url.match(/\/users/)
+    || (req.url.match(/\/users/) && ['post'].includes(req.method.toLowerCase()))
     || req.url.match(/\/app/)
     || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
@@ -72,6 +72,16 @@ app.use(function (req, res, next) {
       }
   }
 });
+
+// TODO import model model instead db_entity
+// const Models = require('./models');
+// console.log(Models.users, '<<<');
+// Models.users.create({
+//     lastName: 'Admin',
+//     firstName: 'Admin',
+//     email: 'admin@lumeos.io',
+//     password: 'SEED_AUTH',
+// }).then(console.log).catch(console.log)
 
 basicRoutes = require("./basic_routes.js");
 userRoutes = require("./user_routes.js");

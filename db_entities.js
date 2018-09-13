@@ -96,7 +96,7 @@ const Poll = sequelize.define('poll', {
   avatar: {
     type: Sequelize.STRING,
     get: function () {
-      return UploadS3Service.getImage(this.getDataValue('avatar'));
+      return this.getDataValue('avatar') && UploadS3Service.getImage(this.getDataValue('avatar'));
     }
   },
   answers: {
