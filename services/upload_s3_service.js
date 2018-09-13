@@ -1,10 +1,15 @@
 const AWS = require('aws-sdk');
 const crypto = require('crypto');
 const {resolve} = require('url');
+const Format = require('lumeos_utils/format');
 
 class UploadS3Service {
 
     constructor() {
+        this.utils = {
+            format: new Format()
+        };
+
         AWS.config.update({
             accessKeyId: process.env.ACCESS_KEY,
             secretAccessKey: process.env.SECRET_ACCESS_KEY,
@@ -31,7 +36,7 @@ class UploadS3Service {
      */
     formatData(file, dir = 'polls') {
         return {
-            Key: `${dir}/${this.hash()}_${file.originalname || 'test.jpg'}`,
+            Key: `${dir}/${this.hash()}_${this.utils.format.slug((file.originalname || 'test.jpg'))}`,
             Body: new Buffer(file.buffer, 'binary'),
             ContentType: file.mimetype || [this.constants.DEFAULT_IMAGE_FORMAT],
             ACL: 'public-read',
