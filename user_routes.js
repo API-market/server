@@ -554,7 +554,7 @@ userRouter.put('/users',
                 .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
                 .isLength({min: 8})
                 .matches(/\d/)(req);
-            check('passwordConfirm')
+            check('confirmPassword')
                 .custom((value, {req}) => {
                     if (value !== req.body.password) {
                         throw new Error('Password confirmation does not match password');
