@@ -54,7 +54,8 @@ if(!process.env.LUMEOS_SERVER_DB) {
 
 app.use(function (req, res, next) {
   if (req.url.endsWith("/login")
-    || (req.url.match(/\/users/) && ['post'].includes(req.method.toLowerCase()))
+    || (req.url.match(/\/users\/?$/) && ['post'].includes(req.method.toLowerCase()))
+    || (req.url.match(/\/users\/forgot\/?$/) && ['post'].includes(req.method.toLowerCase()))
     || req.url.match(/\/app/)
     || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
