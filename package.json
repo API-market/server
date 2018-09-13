@@ -8,8 +8,12 @@
     "dev": "nodemon bin/www",
     "test": "NODE_ENV=test SQLITE_FILENAME=$(pwd)/test_database.sqlite mocha tests/runner.js",
     "migrate": "sequelize db:migrate",
-    "migrate:rollback": "sequelize db:migrate::undo",
-    "model:generate": "sequelize model:generate"
+    "migrate:rollback": "sequelize db:migrate:undo",
+    "model:generate": "sequelize model:generate --name",
+    "migration:generate": "sequelize migration:generate --name",
+    "seed:generate": "sequelize seed:generate --name",
+    "seed": "sequelize db:seed:all",
+    "seed:rollback": "sequelize db:seed:undo"
   },
   "repository": {
     "type": "git",
