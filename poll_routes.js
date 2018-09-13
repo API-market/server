@@ -200,7 +200,7 @@ pollRouter.get('/polls', function (req, res) {
     });
   }
   var where_object = {};
-  where_attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id", "createdAt"];
+  where_attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id", "createdAt", "avatar"];
   if (req.query["queryParticipant"]) {
     Result.findAll({
       where: {user_id: parseInt(req.query["queryParticipant"])},
