@@ -747,7 +747,8 @@ userRouter
                 }
                 res.status(status).json({error: 'Error', message});
             });
-    }).put([
+    })
+    .put([
         check('verifyToken').custom((value, {req}) => {
             if (value) {
                 return token.verify(value).then(() => {
@@ -777,12 +778,12 @@ userRouter
                     balance: user.balance + 100
                 })).then((user) => {
                     res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
-                })
+                });
             })
             .catch(function (error) {
                 let message = 'Some error.';
                 let status = 500;
-                if(error.name === 'Error') {
+                if (error.name === 'Error') {
                     message = error.message;
                     status = 400;
                 }
