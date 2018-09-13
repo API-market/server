@@ -25,7 +25,7 @@
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const {events, token, model} = require('lumeos_utils');
-const {mailService} = require('lumeos_services');
+const {mailService, UploadService} = require('lumeos_services');
 const {omit} = require('lodash');
 
 const Sequelize = require('sequelize');
@@ -63,7 +63,9 @@ const STANDARD_USER_ATTR = [
   "follower_count",
   "followee_count",
   "answer_count",
-  "all_notifications"
+  "all_notifications",
+  "verify_token",
+  "verify",
 ];
 
 const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
@@ -474,9 +476,14 @@ userRouter.get('/followees/:user_id', function (req, res) {
   });
 });
 
-userRouter.post('/profile_images/', [
+userRouter.post('/profile_images/', UploadService.middleware('image'), [
   check("user_id").isInt().withMessage("Field 'user_id' must be an int."),
-  check("image").isBase64().withMessage("Field 'image' must be in base64 format."),
+  check("image").custom((value, {req}) => {
+      if (typeof req.file === "undefined") {
+          throw new Error("Field 'image' must be image.")
+      }
+      return true;
+  }),
 ], (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -484,37 +491,46 @@ userRouter.post('/profile_images/', [
   }
   User.findById(parseInt(req.body["user_id"])).then(user => {
     if (user) {
-      sequelize.sync()
-        .then(() => {
-          ProfileImage.create(req.body)
-            .then(() => {
-              res.json({user_id: req.body["user_id"]});
+        return ProfileImage.findById(req.body["user_id"]).then((profile) => {
+            if (profile) {
+                throw new Error('Image exist for current user');
+            }
+            return UploadService.upload(req.file, 'users').then(({file: image}) => {
+                Object.assign(req.body, {image});
+                return ProfileImage.create(req.body)
+                    .then((profile) => {
+                        res.json(profile.toJSON())
+                    });
+            }).catch(error => {
+                console.log("error: " + error);
+                res.status(400).json({
+                    error: "Bad Request",
+                    message: "Could not create image with " + JSON.stringify(req.body)
+                })
             })
-            .catch(error => {
-              console.log("error: " + error);
-              res.status(400).json({
-                error: "Bad Request",
-                message: "Could not create image with " + JSON.stringify(req.body)
-              })
-            })
-        });
+        }).catch((error) => {
+            console.log(error);
+            res.status(400).json({error: "Bad Request", message: error.message})
+        })
     }
     else {
       res.status(404).json({error: "Not Found", message: "User not found"})
     }
   }).catch(error => {
+    console.log(error, '<<<');
     res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
   });
 });
 
-userRouter.get('/profile_images/:id', function (req, res) {
+userRouter.get('/profile_images/:id', function (req, res, ) {
   const userId = parseInt(req.params["id"]);
-  ProfileImage.findOne({where: {user_id: userId}}).then(profileImage => {
+  ProfileImage.findOne({
+      where: {
+        user_id: userId
+      }
+  }).then(profileImage => {
     if (profileImage) {
-      getProfileImage(userId).then(result => {
-        profileImage.dataValues["image"] = result;
-        res.json(removeEmpty(profileImage));
-      });
+        res.json(removeEmpty(profileImage))
     }
     else {
       res.status(404).json({error: "Not Found", message: "Profile image not found"})
@@ -524,18 +540,37 @@ userRouter.get('/profile_images/:id', function (req, res) {
   });
 });
 
-userRouter.put('/profile_images/:id', function (req, res) {
-  ProfileImage.findOne({where: {user_id: parseInt(req.params["id"])}}).then(profileImage => {
-    if (profileImage) {
-      profileImage.update(req.body).then(() => {
-        res.status(204).json();
+userRouter.put('/profile_images/:id',
+    UploadService.middleware('image'),
+    [
+        check("image").custom((value, {req}) => {
+            if (typeof req.file === "undefined") {
+                throw new Error("Field 'image' must be image.")
+            }
+            return true;
+        })
+    ], function (req, res) {
+      ProfileImage.findOne({
+          where: {
+              user_id: parseInt(req.params['id'])
+          }
+      })
+      .then(profileImage => {
+          if (profileImage) {
+              Object.assign(req.body, req.file);
+              return UploadService.upload(req.file, 'users').then(({file: image}) => {
+                  Object.assign(req.body, {image});
+                  return profileImage.update(req.body).then((profileImage) => {
+                      res.json(profileImage.toJSON());
+                  });
+              });
+          } else {
+              res.status(404).json({error: 'Not Found', message: 'Profile image not found'});
+          }
       }).catch(error => {
         console.log(error);
-      })
-    } else {
-      res.status(404).json({error: "Not Found", message: "Profile image not found"})
-    }
-  });
+        res.status(500).json({error: 'Error', message: 'Some error.'});
+      });
 });
 
 
