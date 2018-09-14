@@ -63,6 +63,7 @@ const User = sequelize.define('user', {
   all_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   verify: {type: Sequelize.BOOLEAN, defaultValue: false},
   not_answers_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
+  follows_you_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
 });
 
 const Address = sequelize.define('address', {

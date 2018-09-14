@@ -88,10 +88,23 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendFolloweeFromFollower({all_notifications, not_answers_notifications, nickname, target_user_id, from_user_id}) {
+    sendFolloweeFromFollower(params) {
+        const {
+            all_notifications,
+            not_answers_notifications,
+            follows_you_notifications,
+            target_user_id,
+            from_user_id
+        } = params;
+        console.log(`
+            ${all_notifications}
+            ${(all_notifications && !not_answers_notifications)}
+            ${(!all_notifications && follows_you_notifications)}
+        `);
         if (
-            all_notifications ||
-            (all_notifications && !not_answers_notifications)
+            all_notifications
+            || (all_notifications && !not_answers_notifications)
+            || (!all_notifications && follows_you_notifications)
         ) {
             Notifications.create({
                 target_user_id,
