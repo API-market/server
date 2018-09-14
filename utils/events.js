@@ -119,8 +119,9 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendNotAnswersPoll({count, token, not_answers_notifications, user_id}) {
+    sendNotAnswersPoll({count, to, not_answers_notifications, user_id}) {
         const self = this;
+        console.log({count, to, not_answers_notifications, user_id});
         Promise.all([
             Notifications.create({
                 target_user_id: user_id,
@@ -128,9 +129,8 @@ class Events extends EventEmitter {
                 description: `You have "${count}" not answer poll.`,
                 type: constants.sendNotAnswersPoll
             }),
-            self.pushService.sendNotAnswersPoll(token, {count})
+            self.pushService.sendNotAnswersPoll(to, {count})
         ]).then((data) => {
-            console.log(data, '<<<');
             self.emit(self.constants.sendNotAnswersPollCallback, null, data);
         }).catch((error) => {
             if (Object.keys(error).length) {
