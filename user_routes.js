@@ -806,7 +806,6 @@ userRouter
         }
         User.findOne({
             where: {
-                id: req.auth.user_id,
                 verify_token: req.verifyToken,
                 verify: false,
             }
