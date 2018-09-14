@@ -131,10 +131,11 @@ class Events extends EventEmitter {
             }),
             self.pushService.sendNotAnswersPoll(to, {count})
         ]).then((data) => {
+            data.map(e => console.log(JSON.stringify(e)));
             self.emit(self.constants.sendNotAnswersPollCallback, null, data);
         }).catch((error) => {
             if (Object.keys(error).length) {
-                console.log('[event-error] ', JSON.stringify(error));
+                console.log('[event-error] ', `\n${JSON.stringify(error)}\n`);
                 self.emit(this.constants.sendNotAnswersPollCallback, error, null);
             }
         });
