@@ -62,6 +62,7 @@ const User = sequelize.define('user', {
   answer_count: {type: Sequelize.INTEGER, defaultValue: 0},
   all_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   verify: {type: Sequelize.BOOLEAN, defaultValue: false},
+  not_answers_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
 });
 
 const Address = sequelize.define('address', {
@@ -85,6 +86,11 @@ const Tokens = sequelize.define('tokens', {
 User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
 
 User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
+Tokens.User = Tokens.belongsTo(User, {
+    as: 'users',
+    foreignKey: 'user_id',
+    constraints: false,
+});
 
 const verifyPassword = function (password, hash) {
     return bcrypt.compareSync(password, hash || this.password);
