@@ -161,12 +161,20 @@ userRouter.post('/users', [
         }]
       })
         .then(user => {
-            const dataUser = {
-                user_id: user['id'],
-                token: getToken(user)
-            };
-            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
-            addProfileImage(res, user, EXCLUDE_USER_ATTR);
+            return Tokens.upsert({
+                user_id: user.id,
+                token: req.body.token_phone,
+                name: req.body.name_phone,
+                platform: req.body.platform,
+            }).then((data) => {
+                console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+                const dataUser = {
+                    user_id: user['id'],
+                    token: getToken(user)
+                };
+                Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+                return addProfileImage(res, user, EXCLUDE_USER_ATTR);
+            });
         })
         .catch(error => {
           console.log("error: " + error);
@@ -180,7 +188,7 @@ userRouter.post('/users', [
 
 const addProfileImage = function (res, user, exclude) {
   const userId = user.dataValues["user_id"];
-  getProfileImage(userId).then(result => {
+  return getProfileImage(userId).then(result => {
     user.dataValues["profile_image"] = result;
     user = removeEmpty(user);
     if(exclude) {
