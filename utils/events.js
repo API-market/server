@@ -27,12 +27,15 @@ class Events extends EventEmitter {
         this.on(constants.sendNotAnswersPoll, this.sendNotAnswersPoll.bind(this));
     }
 
-    sendAnswerForPoll({all_notifications, nickname, target_user_id, from_user_id}) {
-        if (all_notifications) {
+    sendAnswerForPoll({all_notifications, target_user_id, from_user_id, not_answers_notifications}) {
+        if (
+            all_notifications ||
+            (all_notifications && !not_answers_notifications)
+        ) {
             Notifications.create({
                 target_user_id,
                 from_user_id,
-                description: `"${nickname}" answered your question`,
+                description: ` answered your question`,
                 type: constants.sendAnswerForPoll
             }).then((data) => {
                 this.emit(this.constants.sendAnswerForPollCallback, data);
@@ -55,12 +58,15 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendResultForPoll({all_notifications, nickname, target_user_id, from_user_id}) {
-        if (all_notifications) {
+    sendResultForPoll({all_notifications, not_answers_notifications, target_user_id, from_user_id}) {
+        if (
+            all_notifications ||
+            (all_notifications && !not_answers_notifications)
+        ) {
             Notifications.create({
                 target_user_id,
                 from_user_id,
-                description: `"${nickname}" purchased your poll results`,
+                description: ' purchased your poll results',
                 type: constants.sendResultForPoll
             }).then((data) => {
                 this.emit(this.constants.sendResultForPollCallback, data);
@@ -82,12 +88,15 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendFolloweeFromFollower({all_notifications, nickname, target_user_id, from_user_id}) {
-        if (all_notifications) {
+    sendFolloweeFromFollower({all_notifications, not_answers_notifications, nickname, target_user_id, from_user_id}) {
+        if (
+            all_notifications ||
+            (all_notifications && !not_answers_notifications)
+        ) {
             Notifications.create({
                 target_user_id,
                 from_user_id,
-                description: `"${nickname}" is following you`,
+                description: ' is following you',
                 type: constants.sendFolloweeFromFollower
             }).then((data) => {
                 this.emit(this.constants.sendFolloweeFromFollowerCallback, data);
@@ -110,13 +119,24 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendNotAnswersPoll(token, count) {
-        this.pushService.sendNotAnswersPoll(token, {count}).then((data) => {
-            console.log(data, '<<<<< success >>>>', token);
-            this.emit(this.constants.sendNotAnswersPollCallback, data);
-        }).catch((err) => {
-            console.log(`[${constants.sendNotAnswersPollCallback}]`, err);
-            this.emit(this.constants.sendNotAnswersPollCallback, err);
+    sendNotAnswersPoll({count, to, not_answers_notifications, user_id}) {
+        const self = this;
+        console.log({count, to, not_answers_notifications, user_id});
+        Promise.all([
+            Notifications.create({
+                target_user_id: user_id,
+                from_user_id: user_id,
+                description: `You have "${count}" not answer poll.`,
+                type: constants.sendNotAnswersPoll
+            }),
+            self.pushService.sendNotAnswersPoll(to, {count})
+        ]).then((data) => {
+            self.emit(self.constants.sendNotAnswersPollCallback, null, data);
+        }).catch((error) => {
+            if (Object.keys(error).length) {
+                console.log('[event-error] ', JSON.stringify(error));
+                self.emit(this.constants.sendNotAnswersPollCallback, error, null);
+            }
         });
     }
 }

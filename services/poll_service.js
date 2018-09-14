@@ -20,14 +20,29 @@ class PollService {
                                                 SELECT DISTINCT res.poll_id
                                                 FROM results AS res
                                                 WHERE res.user_id = "tokens"."user_id")
-                                            )`), 'participant_not_answered']
-            ])
+                                            )`), 'participant_not_answered'],
+            ]),
+            include: [{
+                association: Tokens.User,
+                required: true,
+                attributes: ['all_notifications', 'not_answers_notifications']
+            }]
         }).then(poll => {
             poll.map((e) => {
-                const {token: to, participant_not_answered: count, user_id} = e.toJSON();
+                const {
+                    token: to,
+                    participant_not_answered: count,
+                    user_id,
+                    users: {
+                        all_notifications,
+                        not_answers_notifications,
+                    }
+                } = e.toJSON();
                 if (count > 0) {
-                    console.log('[send-push] >', user_id);
-                    events.emit(events.constants.sendNotAnswersPoll, to, count)
+                    if (all_notifications || (!all_notifications && not_answers_notifications)) {
+                        console.log('[send-push] >', user_id);
+                        events.emit(events.constants.sendNotAnswersPoll, {to, count, not_answers_notifications, user_id})
+                    }
                 }
             });
 

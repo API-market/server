@@ -62,6 +62,7 @@ const User = sequelize.define('user', {
   answer_count: {type: Sequelize.INTEGER, defaultValue: 0},
   all_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   verify: {type: Sequelize.BOOLEAN, defaultValue: false},
+  not_answers_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
 });
 
 const Address = sequelize.define('address', {
@@ -85,6 +86,11 @@ const Tokens = sequelize.define('tokens', {
 User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
 
 User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
+Tokens.User = Tokens.belongsTo(User, {
+    as: 'users',
+    foreignKey: 'user_id',
+    constraints: false,
+});
 
 const verifyPassword = function (password, hash) {
     return bcrypt.compareSync(password, hash || this.password);
@@ -160,34 +166,14 @@ const Transaction = sequelize.define('transaction', {
 });
 
 const DEFAULT_PROFILE_IMAGE = process.env.S3_DEFAULT_PROFILE_IMAGE || "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png";
-const DEFAULT_IMAGE_FORMAT = ".png"
 const getProfileImage = function (user_id) {
-  const urlParams = {
-    Key: profile_images_key + user_id + DEFAULT_IMAGE_FORMAT,
-  };
-  var p = new Promise(function (resolve, reject) {
-    ProfileImage.findOne({where: {user_id: user_id}, attributes: ["image"]}).then(function (image) {
-      if (image) {
-          // TODO: This is bad, we should generate secure urls, but mobile team complains about having problem processing it.
-          // Will need to bring this back once we take over/rewrie mobile
-        const S3_BUCKET_PATH = process.env.S3_BUCKET_PATH || "https://s3-us-west-2.amazonaws.com/lumeos/"
-        resolve(S3_BUCKET_PATH + profile_images_key + user_id + DEFAULT_IMAGE_FORMAT);
-          /*
-        lumeosS3Bucket.getSignedUrl('getObject', urlParams, (err, url) => {
-          if (err) {
-            reject(err);
+  return ProfileImage.findOne({where: {user_id: user_id}, attributes: ["image"]})
+      .then(function (profileImage) {
+          if (profileImage) {
+              return Promise.resolve(profileImage.image);
           }
-          else {
-            resolve(url);
-          }
-        });
-        */
-      } else {
-        resolve(DEFAULT_PROFILE_IMAGE);
-      }
-    });
-  }).catch((err) => console.error(err));
-  return p;
+          return Promise.resolve(DEFAULT_PROFILE_IMAGE);
+      });
 };
 
 const Notifications = sequelize.define('notifications', {
@@ -196,7 +182,7 @@ const Notifications = sequelize.define('notifications', {
     description: Sequelize.STRING,
     type: Sequelize.STRING,
 });
-Notifications.belongsTo(User, {foreignKey: 'target_user_id', join: 'inner'});
+Notifications.belongsTo(User, {foreignKey: 'from_user_id', join: 'inner'});
 
 module.exports = {
   User: User,

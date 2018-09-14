@@ -78,12 +78,12 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
       req.body.creator_id = req.auth.user_id;
       return true
     }),
-    check("avatar").custom((value, {req}) => {
-      if (typeof req.file === "undefined") {
-        throw new Error("Field 'avatar' must be image.")
-      }
-      return true;
-    })
+    // check("avatar").custom((value, {req}) => {
+    //   if (typeof req.file === "undefined") {
+    //     throw new Error("Field 'avatar' must be image.")
+    //   }
+    //   return true;
+    // })
   ],
   (req, res) => {
     const errors = validationResult(req);

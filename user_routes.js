@@ -161,12 +161,20 @@ userRouter.post('/users', [
         }]
       })
         .then(user => {
-            const dataUser = {
-                user_id: user['id'],
-                token: getToken(user)
-            };
-            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
-            addProfileImage(res, user, EXCLUDE_USER_ATTR);
+            return Tokens.upsert({
+                user_id: user.id,
+                token: req.body.token_phone,
+                name: req.body.name_phone,
+                platform: req.body.platform,
+            }).then((data) => {
+                console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+                const dataUser = {
+                    user_id: user['id'],
+                    token: getToken(user)
+                };
+                Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+                return addProfileImage(res, user, EXCLUDE_USER_ATTR);
+            });
         })
         .catch(error => {
           console.log("error: " + error);
@@ -180,7 +188,7 @@ userRouter.post('/users', [
 
 const addProfileImage = function (res, user, exclude) {
   const userId = user.dataValues["user_id"];
-  getProfileImage(userId).then(result => {
+  return getProfileImage(userId).then(result => {
     user.dataValues["profile_image"] = result;
     user = removeEmpty(user);
     if(exclude) {
@@ -294,7 +302,7 @@ userRouter.get('/users', function (req, res) {
   };
   User.findAll(where_object).then(users => {
     if (users) {
-      Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
+      return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
         users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
         res.json(removeEmpty(users));
       });
@@ -311,7 +319,7 @@ userRouter.get('/users', function (req, res) {
 // make follower follow followee
 userRouter.post('/follow', [
     check("followee_id").exists().isInt().trim().escape().withMessage("Field 'followee_id' cannot be empty"),
-    check("follower_id").exists().isInt().trim().escape().withMessage("Field 'follower_id' cannot be empty")
+    check("follower_id").exists().isInt().trim().escape().withMessage("Field 'followerprofile_image_id' cannot be empty")
 ], function (req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -618,19 +626,30 @@ userRouter.put('/users',
         }
         next();
     }
-, function (req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(422).json({errors: errors.array()});
-    }
-    const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
-        if (!user) {
-            return Promise.reject(new Error('User not found'));
+    , [
+        check('not_answers_notifications')
+            .optional()
+            .isBoolean()
+            .withMessage('Field "not_answers_notifications" must be boolean.')
+    ],
+    function (req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({errors: errors.array()});
         }
-        return user;
-    });
+        const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
+            if (!user) {
+                return Promise.reject(new Error('User not found'));
+            }
+            return user;
+        });
 
     userDoc.then((user) => {
+        if (req.body.not_answers_notifications) {
+            Object.assign(req.body, {
+              all_notifications: false
+            });
+        }
         return user.update(req.body).then((userUpdated) => {
             res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
         });
@@ -798,7 +817,6 @@ userRouter
         }
         User.findOne({
             where: {
-                id: req.auth.user_id,
                 verify_token: req.verifyToken,
                 verify: false,
             }
