@@ -11,6 +11,8 @@ const constants = {
     sendFolloweeFromFollowerCallback: 'event:send-followee-from-follower-callback',
     sendNotAnswersPoll: 'event:send-not-answers-poll',
     sendNotAnswersPollCallback: 'event:send-not-answers-poll-callback',
+    sendCustomNotifications: 'event:send-custom-notifications',
+    sendCustomNotificationsCallback: 'event:send-custom-notifications-callback',
 };
 
 class Events extends EventEmitter {
@@ -25,6 +27,7 @@ class Events extends EventEmitter {
         this.on(constants.sendResultForPoll, this.sendResultForPoll.bind(this));
         this.on(constants.sendFolloweeFromFollower, this.sendFolloweeFromFollower.bind(this));
         this.on(constants.sendNotAnswersPoll, this.sendNotAnswersPoll.bind(this));
+        this.on(constants.sendCustomNotifications, this.sendCustomNotifications.bind(this));
     }
 
     sendAnswerForPoll({all_notifications, target_user_id, from_user_id, not_answers_notifications}) {
@@ -38,7 +41,7 @@ class Events extends EventEmitter {
                 description: ` answered your question`,
                 type: constants.sendAnswerForPoll
             }).then((data) => {
-                this.emit(this.constants.sendAnswerForPollCallback, data);
+                this.emit(this.constants.sendAnswerForPollCallback, null, data);
             }).catch((err) => {
                 console.log(`[${constants.sendAnswerForPoll}]`, err);
                 this.emit(this.constants.sendAnswerForPollCallback, err);
@@ -69,7 +72,7 @@ class Events extends EventEmitter {
                 description: ' purchased your poll results',
                 type: constants.sendResultForPoll
             }).then((data) => {
-                this.emit(this.constants.sendResultForPollCallback, data);
+                this.emit(this.constants.sendResultForPollCallback, null, data);
             }).catch((err) => {
                 console.log(`[${constants.sendResultForPoll}]`, err);
                 this.emit(this.constants.sendResultForPollCallback, err);
@@ -112,7 +115,7 @@ class Events extends EventEmitter {
                 description: ' is following you',
                 type: constants.sendFolloweeFromFollower
             }).then((data) => {
-                this.emit(this.constants.sendFolloweeFromFollowerCallback, data);
+                this.emit(this.constants.sendFolloweeFromFollowerCallback, null, data);
             }).catch((err) => {
                 console.log(`[${constants.sendFolloweeFromFollower}]`, err);
                 this.emit(this.constants.sendFolloweeFromFollowerCallback, err);
@@ -152,6 +155,17 @@ class Events extends EventEmitter {
                 self.emit(this.constants.sendNotAnswersPollCallback, error, null);
             }
         });
+    }
+
+    sendCustomNotifications({to, title, body}) {
+        this.pushService.sendCustomNotifications(to, {title, body})
+            .then((data) => {
+                this.emit(this.constants.sendCustomNotificationsCallback, null, data);
+            })
+            .catch((error) => {
+                console.log('[event-error] ', `\n${JSON.stringify(error)}\n`);
+                this.emit(this.constants.sendCustomNotificationsCallback, error, null);
+            });
     }
 }
 

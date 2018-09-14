@@ -28,7 +28,7 @@ class PollService {
                 attributes: ['all_notifications', 'not_answers_notifications']
             }]
         }).then(poll => {
-            poll.map((e) => {
+            return poll.map((e) => {
                 const {
                     token: to,
                     participant_not_answered: count,

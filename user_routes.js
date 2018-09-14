@@ -637,7 +637,11 @@ userRouter.put('/users',
         check('follows_you_notifications')
             .optional()
             .isBoolean()
-            .withMessage('Field "follows_you_notifications" must be boolean.')
+            .withMessage('Field "follows_you_notifications" must be boolean.'),
+        check('custom_notifications')
+            .optional()
+            .isBoolean()
+            .withMessage('Field "custom_notifications" must be boolean.')
     ],
     function (req, res) {
         const errors = validationResult(req);
@@ -655,6 +659,7 @@ userRouter.put('/users',
         if (
             req.body.not_answers_notifications
             || req.body.follows_you_notifications
+            || req.body.custom_notifications
         ) {
             Object.assign(req.body, {
               all_notifications: false
