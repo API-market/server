@@ -12,6 +12,8 @@ class CronJob {
         this.timePush = process.env.CRON_TIME_PUSH_NOTIFICATION ||  '0 11 * * 2,4';
 
         this.pushNotificationsJob();
+        // this.pollService.getNotAnswersPull()
+
     }
 
     pushNotificationsJob() {
