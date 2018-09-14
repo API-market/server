@@ -88,10 +88,23 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendFolloweeFromFollower({all_notifications, not_answers_notifications, nickname, target_user_id, from_user_id}) {
+    sendFolloweeFromFollower(params) {
+        const {
+            all_notifications,
+            not_answers_notifications,
+            follows_you_notifications,
+            target_user_id,
+            from_user_id
+        } = params;
+        console.log(`
+            ${all_notifications}
+            ${(all_notifications && !not_answers_notifications)}
+            ${(!all_notifications && follows_you_notifications)}
+        `);
         if (
-            all_notifications ||
-            (all_notifications && !not_answers_notifications)
+            all_notifications
+            || (all_notifications && !not_answers_notifications)
+            || (!all_notifications && follows_you_notifications)
         ) {
             Notifications.create({
                 target_user_id,
@@ -131,10 +144,11 @@ class Events extends EventEmitter {
             }),
             self.pushService.sendNotAnswersPoll(to, {count})
         ]).then((data) => {
+            data.map(e => console.log(JSON.stringify(e)));
             self.emit(self.constants.sendNotAnswersPollCallback, null, data);
         }).catch((error) => {
             if (Object.keys(error).length) {
-                console.log('[event-error] ', JSON.stringify(error));
+                console.log('[event-error] ', `\n${JSON.stringify(error)}\n`);
                 self.emit(this.constants.sendNotAnswersPollCallback, error, null);
             }
         });

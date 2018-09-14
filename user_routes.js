@@ -64,6 +64,8 @@ const STANDARD_USER_ATTR = [
   "followee_count",
   "answer_count",
   "all_notifications",
+  "not_answers_notifications",
+  "follows_you_notifications",
   "verify_token",
   "verify",
 ];
@@ -361,6 +363,7 @@ userRouter.post('/follow', [
                    */
                   events.emit(events.constants.sendFolloweeFromFollower, {
                     all_notifications: followee.all_notifications,
+                    follows_you_notifications: followee.follows_you_notifications,
                     target_user_id: followee.id,
                     from_user_id: follower.id,
                     nickname: `${follower.firstName} ${follower.lastName}`
@@ -389,8 +392,8 @@ userRouter.post('/follow', [
 });
 
 userRouter.delete('/follow', function (req, res) {
-  const followee_id = parseInt(req.body["followee_id"]);
-  const follower_id = parseInt(req.body["follower_id"]);
+  const followee_id = parseInt(req.body["followee_id"] || 34);
+  const follower_id = parseInt(req.body["follower_id"] || 11);
   Followship.destroy({
       where: {
         follower_id: follower_id,
@@ -630,7 +633,11 @@ userRouter.put('/users',
         check('not_answers_notifications')
             .optional()
             .isBoolean()
-            .withMessage('Field "not_answers_notifications" must be boolean.')
+            .withMessage('Field "not_answers_notifications" must be boolean.'),
+        check('follows_you_notifications')
+            .optional()
+            .isBoolean()
+            .withMessage('Field "follows_you_notifications" must be boolean.')
     ],
     function (req, res) {
         const errors = validationResult(req);
@@ -645,7 +652,10 @@ userRouter.put('/users',
         });
 
     userDoc.then((user) => {
-        if (req.body.not_answers_notifications) {
+        if (
+            req.body.not_answers_notifications
+            || req.body.follows_you_notifications
+        ) {
             Object.assign(req.body, {
               all_notifications: false
             });
