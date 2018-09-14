@@ -294,7 +294,7 @@ userRouter.get('/users', function (req, res) {
   };
   User.findAll(where_object).then(users => {
     if (users) {
-      Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
+      return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
         users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
         res.json(removeEmpty(users));
       });
@@ -311,7 +311,7 @@ userRouter.get('/users', function (req, res) {
 // make follower follow followee
 userRouter.post('/follow', [
     check("followee_id").exists().isInt().trim().escape().withMessage("Field 'followee_id' cannot be empty"),
-    check("follower_id").exists().isInt().trim().escape().withMessage("Field 'follower_id' cannot be empty")
+    check("follower_id").exists().isInt().trim().escape().withMessage("Field 'followerprofile_image_id' cannot be empty")
 ], function (req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
