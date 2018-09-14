@@ -40,6 +40,7 @@ class PollService {
                 } = e.toJSON();
                 if (count > 0) {
                     if (all_notifications || (!all_notifications && not_answers_notifications)) {
+                        console.log('[send-push] >', user_id);
                         events.emit(events.constants.sendNotAnswersPoll, {to, count, not_answers_notifications, user_id})
                     }
                 }
