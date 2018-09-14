@@ -52,7 +52,7 @@ if(!process.env.LUMEOS_SERVER_DB) {
     require('./seed');
 }
 
-app.use(function (req, res, next) {
+app.use('/v' + VERSION, function (req, res, next) {
   if (req.url.endsWith("/login")
     || (req.url.match(/\/users\/?$/) && ['post'].includes(req.method.toLowerCase()))
     || (req.url.match(/\/users\/forgot\/?$/) && ['post', 'put'].includes(req.method.toLowerCase()))
@@ -103,6 +103,11 @@ app.use('/v' + VERSION, basicRoutes);
 app.use('/v' + VERSION, userRoutes);
 app.use('/v' + VERSION, pollRoutes);
 app.use('/v' + VERSION, notificationsRoutes);
+
+/**
+ * Web notifications
+ */
+app.use('/web', require('./notifications_web_routes'));
 
 /**
  * Cron
