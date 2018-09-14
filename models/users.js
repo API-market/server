@@ -34,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
         answer_count: {type: DataTypes.INTEGER, defaultValue: 0},
         all_notifications: {type: DataTypes.BOOLEAN, defaultValue: true},
         verify: {type: Sequelize.BOOLEAN, defaultValue: false},
+        not_answers_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
     }, {});
     // Users.associate = (models) => {
         // console.log(this, '<<< users');
