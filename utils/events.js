@@ -134,6 +134,7 @@ class Events extends EventEmitter {
             self.emit(self.constants.sendNotAnswersPollCallback, null, data);
         }).catch((error) => {
             if (Object.keys(error).length) {
+                console.log('[event-error] ', JSON.stringify(error));
                 self.emit(this.constants.sendNotAnswersPollCallback, error, null);
             }
         });
