@@ -30,6 +30,8 @@ class UploadService {
                     .catch(reject)
             });
         }
+        //TODO if image not required
+        return Promise.resolve({file: ''});
     }
 
     crop(file) {

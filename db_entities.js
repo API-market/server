@@ -86,6 +86,11 @@ const Tokens = sequelize.define('tokens', {
 User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
 
 User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
+Tokens.User = Tokens.belongsTo(User, {
+    as: 'users',
+    foreignKey: 'user_id',
+    constraints: false,
+});
 
 const verifyPassword = function (password, hash) {
     return bcrypt.compareSync(password, hash || this.password);

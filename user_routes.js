@@ -618,19 +618,30 @@ userRouter.put('/users',
         }
         next();
     }
-, function (req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(422).json({errors: errors.array()});
-    }
-    const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
-        if (!user) {
-            return Promise.reject(new Error('User not found'));
+    , [
+        check('not_answers_notifications')
+            .optional()
+            .isBoolean()
+            .withMessage('Field "not_answers_notifications" must be boolean.')
+    ],
+    function (req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({errors: errors.array()});
         }
-        return user;
-    });
+        const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
+            if (!user) {
+                return Promise.reject(new Error('User not found'));
+            }
+            return user;
+        });
 
     userDoc.then((user) => {
+        if (req.body.not_answers_notifications) {
+            Object.assign(req.body, {
+              all_notifications: false
+            });
+        }
         return user.update(req.body).then((userUpdated) => {
             res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
         });
