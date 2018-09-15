@@ -17,7 +17,7 @@ notificationsRouter
     .get(function (req, res) {
         Notifications.findAll({
             where: {
-                target_user_id: parseInt(req.user.user_id)
+                target_user_id: parseInt(req.auth.user_id)
             },
             order: [['id', 'DESC']],
             attributes: [
@@ -67,7 +67,7 @@ notificationsRouter
             }
             Notifications.destroy({
                 where:  {
-                    target_user_id: req.user.user_id,
+                    target_user_id: req.auth.user_id,
                     id: req.params.notification_id
                 }
             }).then((data) => {

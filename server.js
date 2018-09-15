@@ -54,8 +54,10 @@ if(!process.env.LUMEOS_SERVER_DB) {
 
 app.use(function (req, res, next) {
   if (req.url.endsWith("/login")
-    || req.url.match(/\/users/)
+    || (req.url.match(/\/users\/?$/) && ['post'].includes(req.method.toLowerCase()))
+    || (req.url.match(/\/users\/forgot\/?$/) && ['post', 'put'].includes(req.method.toLowerCase()))
     || req.url.match(/\/app/)
+    || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
@@ -64,14 +66,23 @@ app.use(function (req, res, next) {
   } else {
       try {
           const token = req.headers.authorization.split(' ')[1];
-          const decoded = jwt.verify(token, SUPER_SECRET_JWT_KEY);
-          req.user = decoded;
+          req.auth = jwt.verify(token, SUPER_SECRET_JWT_KEY);
           next();
       } catch (err) {
           res.status(401).json({message: 'Unauthorized: JWT token not provided'});
       }
   }
 });
+
+// TODO import model model instead db_entity
+// const Models = require('./models');
+// console.log(Models.users, '<<<');
+// Models.users.create({
+//     lastName: 'Admin',
+//     firstName: 'Admin',
+//     email: 'admin@lumeos.io',
+//     password: 'SEED_AUTH',
+// }).then(console.log).catch(console.log)
 
 basicRoutes = require("./basic_routes.js");
 userRoutes = require("./user_routes.js");

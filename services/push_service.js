@@ -51,7 +51,7 @@ class PushService {
             this.client.send(Object.assign(this.message, {to})).then((data) => {
                 resolve(data);
             }).catch((err) => {
-                console.error(`[push-service-error] token > ${to}`, err);
+                console.error(`[push-service-error] token > ${JSON.stringify(to)}`, err);
                 reject(new Error('Error send push notification'));
             });
         });
@@ -118,7 +118,7 @@ class PushService {
     sendNotAnswersPoll(to, {count}, data) {
         return this.send(to, data, {
             title: 'Poll',
-            body: `You have "${count}" not answer poll.`
+            body: `You have ${count} polls to answer and earn more LUME.`
         })
     }
 }

@@ -8,7 +8,7 @@ class Token {
     }
 
     /**
-     * {this} Token
+     * @this Token
      * @param data
      * @param options
      * @returns {Promise<any>}
@@ -31,7 +31,7 @@ class Token {
      * Verify current token
      *
      * @param token
-     * {this} Token
+     * @this Token
      * @returns {Promise<any>}
      */
     verify(token) {
