@@ -392,8 +392,8 @@ userRouter.post('/follow', [
 });
 
 userRouter.delete('/follow', function (req, res) {
-  const followee_id = parseInt(req.body["followee_id"] || 34);
-  const follower_id = parseInt(req.body["follower_id"] || 11);
+  const followee_id = parseInt(req.body["followee_id"]);
+  const follower_id = parseInt(req.body["follower_id"]);
   Followship.destroy({
       where: {
         follower_id: follower_id,
