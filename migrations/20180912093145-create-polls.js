@@ -11,9 +11,6 @@ module.exports = {
             question: Sequelize.STRING,
             price: {type: Sequelize.DOUBLE, defaultValue: 0},
             participant_count: {type: Sequelize.INTEGER, defaultValue: 0},
-            avatar: {
-                type: Sequelize.STRING,
-            },
             answers: {
                 type: Sequelize.STRING,
             },

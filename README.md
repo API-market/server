@@ -26,6 +26,12 @@ THE SOFTWARE.
 
 # Server
 
+This is set environments in app
+
+```sh
+cp .env.example .env
+```
+
 ```sh
 $ npm install 
 $ npm start
