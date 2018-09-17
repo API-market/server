@@ -12,6 +12,8 @@ module.exports = {
             from_user_id: {type: Sequelize.INTEGER, allowNull: false},
             description: Sequelize.STRING,
             type: Sequelize.STRING,
+            createdAt: {type: Sequelize.DATE},
+            updatedAt: {type: Sequelize.DATE}
         });
     },
     down: (queryInterface, Sequelize) => {
