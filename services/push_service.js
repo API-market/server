@@ -117,7 +117,7 @@ class PushService {
      */
     sendNotAnswersPoll(to, {count}, data) {
         return this.send(to, data, {
-            title: 'Poll',
+            title: 'Polls',
             body: `You have ${count} polls to answer and earn more LUME.`
         })
     }
