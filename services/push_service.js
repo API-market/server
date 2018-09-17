@@ -117,8 +117,24 @@ class PushService {
      */
     sendNotAnswersPoll(to, {count}, data) {
         return this.send(to, data, {
-            title: 'Poll',
+            title: 'Polls',
             body: `You have ${count} polls to answer and earn more LUME.`
+        })
+    }
+
+    /**
+     *
+     * @param to
+     * @param title
+     * @param body
+     * @param data
+     * @this {PushService}
+     * @returns {Promise}
+     */
+    sendCustomNotifications(to, {title, body}, data) {
+        return this.send(to, data, {
+            title: title,
+            body: body
         })
     }
 }

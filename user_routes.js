@@ -392,8 +392,8 @@ userRouter.post('/follow', [
 });
 
 userRouter.delete('/follow', function (req, res) {
-  const followee_id = parseInt(req.body["followee_id"] || 34);
-  const follower_id = parseInt(req.body["follower_id"] || 11);
+  const followee_id = parseInt(req.body["followee_id"]);
+  const follower_id = parseInt(req.body["follower_id"]);
   Followship.destroy({
       where: {
         follower_id: follower_id,
@@ -637,7 +637,11 @@ userRouter.put('/users',
         check('follows_you_notifications')
             .optional()
             .isBoolean()
-            .withMessage('Field "follows_you_notifications" must be boolean.')
+            .withMessage('Field "follows_you_notifications" must be boolean.'),
+        check('custom_notifications')
+            .optional()
+            .isBoolean()
+            .withMessage('Field "custom_notifications" must be boolean.')
     ],
     function (req, res) {
         const errors = validationResult(req);
@@ -655,6 +659,7 @@ userRouter.put('/users',
         if (
             req.body.not_answers_notifications
             || req.body.follows_you_notifications
+            || req.body.custom_notifications
         ) {
             Object.assign(req.body, {
               all_notifications: false
