@@ -66,6 +66,7 @@ const STANDARD_USER_ATTR = [
   "all_notifications",
   "not_answers_notifications",
   "follows_you_notifications",
+  "custom_notifications",
   "verify_token",
   "verify",
 ];
