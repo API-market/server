@@ -393,8 +393,8 @@ userRouter.post('/follow', [
 });
 
 userRouter.delete('/follow', function (req, res) {
-  const followee_id = parseInt(req.body["followee_id"]);
-  const follower_id = parseInt(req.body["follower_id"]);
+  const followee_id = parseInt(req.body["followee_id"] || 34);
+  const follower_id = parseInt(req.body["follower_id"] || 11);
   Followship.destroy({
       where: {
         follower_id: follower_id,
@@ -844,7 +844,7 @@ userRouter
                 return user.update(model.formattingValue({
                     verifyToken: null,
                     verify: true,
-                    balance: user.balance + 100
+                    balance: user.balance + 50
                 })).then((user) => {
                     res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
                 });

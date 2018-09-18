@@ -1,0 +1,4 @@
+{
+  "name": "lumeos_middlewares",
+  "main": "./index.js"
+}

@@ -1,0 +1,6 @@
+<h1>Server Error</h1>
+<%= error %>
+<br>
+<% if (process.env.NODE_ENV === 'development') {%>
+    <%= error.stack %>
+<% } %>
