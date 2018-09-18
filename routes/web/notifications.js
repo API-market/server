@@ -91,19 +91,31 @@ notificationsWebRouter.post('/notifications/send/:id', function (req, res) {
         .then((item) => {
             if (!item) throw notFound();
             const {title, description} = item;
-            item.usersId.map((user_id) => {
-                events.emit(events.constants.sendCustomNotifications, {
-                    user_id,
-                    title,
-                    description
+            return User.findAll({
+                attributes: ['id'],
+                where: {
+                    id: item.usersId,
+                    [Op.or]: {
+                        custom_notifications: true,
+                        all_notifications: true
+                    },
+                }
+            }).then((users) => {
+                users.map((user) => {
+                    events.emit(events.constants.sendCustomNotifications, {
+                        user_id: user.id,
+                        title,
+                        description
+                    });
+                });
+                events.on(events.constants.sendCustomNotificationsCallback, (err) => {
+                    clearTimeout(this.pid);
+                    this.pid = setTimeout(() => {
+                        res.json({});
+                    }, 1000)
                 });
             });
-            events.on(events.constants.sendCustomNotificationsCallback, (err) => {
-                clearTimeout(this.pid);
-                this.pid = setTimeout(() => {
-                    res.json({});
-                }, 1000)
-            });
+
         }).catch(error => {
             res.render(`errors/${error.status || 500}`, {error});
         });
