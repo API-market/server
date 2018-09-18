@@ -1,8 +1,9 @@
 const express = require('express');
 const {Op} = require('sequelize');
+const {events} = require('lumeos_utils')
 // const {check, validationResult} = require('express-validator/check');
 // const util = require('../utilities.js');
-const {User, CustomNotifications} = require('../../db_entities.js');
+const {User, CustomNotifications, Tokens} = require('../../db_entities.js');
 
 // const removeEmpty = util.removeEmpty;
 const notificationsWebRouter = express.Router();
@@ -32,7 +33,6 @@ notificationsWebRouter.get('/notifications/edit/:id', function (req, res) {
         where: {
             id: req.params.id,
         },
-        attributes: Object.keys(CustomNotifications.attributes).concat([['body', 'description']])
     }).then((item) => {
         if (!item) {
             throw notFound()
@@ -86,15 +86,39 @@ notificationsWebRouter.post('/notifications/add', function (req, res) {
     });
 });
 
+notificationsWebRouter.post('/notifications/send/:id', function (req, res) {
+    CustomNotifications.findById(req.params.id)
+        .then((item) => {
+            if (!item) throw notFound();
+            const {title, description} = item;
+            item.usersId.map((user_id) => {
+                events.emit(events.constants.sendCustomNotifications, {
+                    user_id,
+                    title,
+                    description
+                });
+            });
+            events.on(events.constants.sendCustomNotificationsCallback, (err) => {
+                clearTimeout(this.pid);
+                this.pid = setTimeout(() => {
+                    res.json({});
+                }, 1000)
+            });
+        }).catch(error => {
+            res.render(`errors/${error.status || 500}`, {error});
+        });
+});
+
 notificationsWebRouter.delete('/notifications/delete/:id', function (req, res) {
     CustomNotifications.destroy({
         where: {
             id: req.params.id
         }
     }).then((item) => {
+        console.log(item);
         if (item === 0) throw notFound();
-
-        res.redirect('/web/notifications');
+        res.setHeader('Location', '/web/notifications');
+        res.json({});
     }).catch((error) => {
         console.log(error);
         res.render(`errors/${error.status || 500}`, {error});

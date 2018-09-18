@@ -10,7 +10,7 @@ module.exports = {
                 type: Sequelize.INTEGER
             },
             title: Sequelize.STRING,
-            body: Sequelize.STRING,
+            description: Sequelize.TEXT,
             active: {
                 type: Sequelize.BOOLEAN,
                 defaultValue: true

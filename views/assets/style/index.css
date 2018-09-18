@@ -1,0 +1,32 @@
+.loader{
+    width: 37px;
+    height: 24px;
+    border-radius: 100%;
+    position: relative;
+    margin: 0 auto;
+}
+
+#loader-7:before{
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    animation: flip 1s infinite;
+}
+
+@keyframes flip {
+    0% {
+        transform: rotate(0);
+    }
+
+    50% {
+        transform: rotateY(180deg);
+    }
+
+    100% {
+        transform: rotateY(180deg)  rotateX(180deg);
+    }
+}

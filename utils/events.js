@@ -157,14 +157,30 @@ class Events extends EventEmitter {
         });
     }
 
-    sendCustomNotifications({to, title, body}) {
+    sendCustomNotifications({user_id, title, description}) {
+        Notifications.create({
+            target_user_id: user_id,
+            from_user_id: user_id,
+            description,
+            type: constants.sendCustomNotifications
+        })
+        .then((data) => {
+            this.emit(this.constants.sendCustomNotificationsCallback, null, data);
+        })
+        .catch((error) => {
+            console.log('[event-error] ', error);
+            this.emit(this.constants.sendCustomNotificationsCallback, error, null);
+        });
+    }
+
+    sendCustomNotificationsPush({to, title, body}) {
         this.pushService.sendCustomNotifications(to, {title, body})
             .then((data) => {
-                this.emit(this.constants.sendCustomNotificationsCallback, null, data);
+                this.emit(this.constants.sendCustomNotificationsPushCallback, null, data);
             })
             .catch((error) => {
-                console.log('[event-error] ', `\n${JSON.stringify(error)}\n`);
-                this.emit(this.constants.sendCustomNotificationsCallback, error, null);
+                console.log('[event-error] ', error);
+                this.emit(this.constants.sendCustomNotificationsPushCallback, error, null);
             });
     }
 }

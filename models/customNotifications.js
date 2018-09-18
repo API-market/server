@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER
         },
         title: DataTypes.STRING,
-        body: DataTypes.STRING,
+        description: Sequelize.TEXT,
         active: {
             type: DataTypes.BOOLEAN,
             defaultValue: true
