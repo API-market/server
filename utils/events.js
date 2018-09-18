@@ -142,7 +142,7 @@ class Events extends EventEmitter {
             Notifications.create({
                 target_user_id: user_id,
                 from_user_id: user_id,
-                description: `You have "${count}" not answer poll.`,
+                description: `You have ${count} polls to answer and earn more LUME.`,
                 type: constants.sendNotAnswersPoll
             }),
             self.pushService.sendNotAnswersPoll(to, {count})

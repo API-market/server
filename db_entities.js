@@ -186,8 +186,40 @@ const Notifications = sequelize.define('notifications', {
 });
 Notifications.belongsTo(User, {foreignKey: 'from_user_id', join: 'inner'});
 
+const CustomNotifications = sequelize.define('custom_notifications', {
+    id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER
+    },
+    title: Sequelize.STRING,
+    body: Sequelize.STRING,
+    active: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true
+    },
+    usersId: {
+        type: Sequelize.STRING,
+        get: function () {
+            if (this.getDataValue('usersId')) return JSON.parse(this.getDataValue('usersId'));
+            return [];
+        },
+        set: function (val) {
+            return this.setDataValue('usersId', JSON.stringify(val));
+        }
+    },
+    createdAt: {
+        type: Sequelize.DATE,
+    },
+    updatedAt: {
+        type: Sequelize.DATE,
+    }
+}, {timestamps: true});
+
 module.exports = {
   User: User,
+  CustomNotifications: CustomNotifications,
   Tokens: Tokens,
   Notifications: Notifications,
   Poll: Poll,

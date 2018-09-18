@@ -25,8 +25,9 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-
-var bodyParser = require('body-parser');
+const {basicAuth} = require('lumeos_middlewares')
+const bodyParser = require('body-parser');
+const {join} = require('path');
 app.use(bodyParser.json({limit: '5mb'}));
 app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
 app.use(cors());
@@ -107,7 +108,22 @@ app.use('/v' + VERSION, notificationsRoutes);
 /**
  * Web notifications
  */
-app.use('/web', require('./notifications_web_routes'));
+
+app.engine('ejs', require('ejs-locals'));
+app.set('view engine', 'ejs');
+app.use(express.static(join(__dirname, 'views/assets')));
+app.set('views', `${__dirname}/views`);
+// main variable for web
+app.use(function (req, res, next) {
+    res.locals._layoutFile = true;
+    res.locals.utils = {
+        active: (url, className = 'active') => {
+            return req.originalUrl === url ? className : ''
+        }
+    };
+    next()
+});
+app.use(process.env.ADMIN_ROUTER, require('./routes/web'));
 
 /**
  * Cron
