@@ -29,7 +29,11 @@ const Sequelize = require('sequelize');
 const makeSequelize = function () {
   if (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) {
     console.log("Connecting with: " + process.env.LUMEOS_SERVER_DB);
-    return new Sequelize(process.env.LUMEOS_SERVER_DB, {
+    return new Sequelize(
+        process.env.LUMEOS_SERVER_DB || 'database',
+        process.env.LUMEOS_SERVER_DB_USERNAME || 'username',
+        process.env.LUMEOS_SERVER_DB_PASSWORD || 'password', {
+      host: process.env.LUMEOS_SERVER_DB_HOST || '127.0.0.1',
       operatorsAliases: false,
       pool: {
         max: 5,
@@ -46,7 +50,7 @@ const makeSequelize = function () {
       process.env.LUMEOS_SERVER_DB || 'database',
       process.env.LUMEOS_SERVER_DB_USERNAME || 'username',
       process.env.LUMEOS_SERVER_DB_PASSWORD || 'password', {
-    host: 'localhost',
+    host: process.env.LUMEOS_SERVER_DB_HOST || 'localhost',
     dialect: process.env.LUMEOS_SERVER_DB_DIALECT || 'sqlite',
 
     operatorsAliases: false,
