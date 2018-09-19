@@ -12,13 +12,13 @@ const notificationsWebRouter = express.Router();
 /**
  * Get all notifications
  */
-notificationsWebRouter.get('/', function (req, res) {
-    res.render('home/index');
-});
+// notificationsWebRouter.get('/', function (req, res) {
+//     res.render('home/index');
+// });
 
 notificationsWebRouter.get('/logout', function (req, res) {
     res.setHeader('Authorization', 'Basic xxx');
-    res.redirect(401, '/web');
+    res.redirect(401, process.env.ADMIN_ROUTER + '/notifications');
 });
 
 module.exports = notificationsWebRouter;
