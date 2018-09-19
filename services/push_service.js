@@ -24,6 +24,7 @@ class PushService {
                 sound: 'default',
                 priority: 'high',
                 lights: 'true',
+                badge: 2
             }
         };
 
@@ -34,7 +35,7 @@ class PushService {
      *
      * @param to
      * @param data
-     * @param notification
+     * @param notification {title, body, sound, priority, lights, badge}
      * @this {PushService}
      * @returns {Promise}
      */
@@ -115,10 +116,11 @@ class PushService {
      * @this {PushService}
      * @returns {Promise}
      */
-    sendNotAnswersPoll(to, {count}, data) {
+    sendNotAnswersPoll(to, {count, badge}, data) {
         return this.send(to, data, {
             title: 'Polls',
-            body: `You have ${count} polls to answer and earn more LUME.`
+            body: `You have ${count} polls to answer and earn more LUME.`,
+            badge
         })
     }
 

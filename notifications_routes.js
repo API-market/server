@@ -15,6 +15,12 @@ notificationsRouter
      * Get all notifications
      */
     .get(function (req, res) {
+        /**
+         * clear count_notifications notifications
+         */
+        if (req.query.clearNotifications) {
+            User.clearNotifications([req.auth.user_id])
+        }
         Notifications.findAll({
             where: {
                 target_user_id: parseInt(req.auth.user_id)
