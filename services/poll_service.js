@@ -54,7 +54,9 @@ class PollService {
             })).then((result) => {
                 console.log('[send-push] >', result);
                     result.map((data) => {
-                        events.emit(events.constants.sendNotAnswersPoll, data)
+                        if (data) {
+                            events.emit(events.constants.sendNotAnswersPoll, data)
+                        }
                     })
                 });
 
