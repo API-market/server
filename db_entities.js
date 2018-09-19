@@ -19,9 +19,6 @@ const rekognition = new AWS.Rekognition();
 
 const profile_images_key = "profile_images_" + process.env.LUMEOS_ENV;
 
-var tinify = require("tinify");
-tinify.key = process.env.TINIFY_API_KEY;
-
 function imageFromBase64(dataURI) {
   var binary = atob(dataURI);
   var array = [];
