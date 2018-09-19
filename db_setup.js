@@ -34,6 +34,8 @@ const makeSequelize = function () {
         process.env.LUMEOS_SERVER_DB_USERNAME || 'username',
         process.env.LUMEOS_SERVER_DB_PASSWORD || 'password', {
       host: process.env.LUMEOS_SERVER_DB_HOST || '127.0.0.1',
+      dialect: process.env.LUMEOS_SERVER_DB_DIALECT || 'sqlite',
+
       operatorsAliases: false,
       pool: {
         max: 5,
