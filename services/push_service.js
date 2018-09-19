@@ -119,7 +119,7 @@ class PushService {
     sendNotAnswersPoll(to, {count, badge}, data) {
         return this.send(to, data, {
             title: 'Polls',
-            body: `You have ${count} polls to answer and earn more LUME.`,
+            body: `You can earn more Lumeos tokens today as you have ${count} unanswered polls`,
             badge
         })
     }

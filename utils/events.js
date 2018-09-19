@@ -141,7 +141,7 @@ class Events extends EventEmitter {
             Notifications.create({
                 target_user_id: user_id,
                 from_user_id: user_id,
-                description: `You have ${count} polls to answer and earn more LUME.`,
+                description: `You can earn more Lumeos tokens today as you have ${count} unanswered polls`,
                 type: constants.sendNotAnswersPoll
             }),
             self.pushService.sendNotAnswersPoll(to, {count, badge})

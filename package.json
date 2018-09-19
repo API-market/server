@@ -13,7 +13,8 @@
     "migration:generate": "sequelize migration:generate --name",
     "seed:generate": "sequelize seed:generate --name",
     "seed": "sequelize db:seed:all",
-    "seed:rollback": "sequelize db:seed:undo"
+    "seed:rollback": "sequelize db:seed:undo",
+    "prestart": "npm run migrate"
   },
   "repository": {
     "type": "git",
