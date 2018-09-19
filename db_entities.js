@@ -28,7 +28,7 @@ function imageFromBase64(dataURI) {
   return Buffer.from(new Uint8Array(array));
 }
 
-const User = sequelize.define('user', {
+const UserBase = sequelize.define('user', {
   eos: Sequelize.STRING,
   firstName: Sequelize.STRING,
   lastName: Sequelize.STRING,
@@ -62,7 +62,68 @@ const User = sequelize.define('user', {
   not_answers_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   follows_you_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   custom_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
+  count_notifications: {type: Sequelize.INTEGER},
 });
+
+class User extends UserBase {
+
+    static incrementPushNotifications(ids) {
+        const field = 'count_notifications';
+        return this.update({ [field]: Sequelize.literal(`${field} + 1`) }, {
+            where: {
+                id: {
+                    [Sequelize.Op.in] : ids
+                },
+                [Sequelize.Op.or]: {
+                    all_notifications: true,
+                    not_answers_notifications: true
+                }
+            }
+        });
+    }
+
+    /**
+     *
+     * @param [ids] array
+     * @returns {*}
+     */
+    static clearNotifications(ids) {
+        const field = 'count_notifications';
+        return this.update({ [field]: 0 }, {
+            where: {
+                id: {
+                    [Sequelize.Op.in] : ids
+                },
+                [Sequelize.Op.or]: {
+                    all_notifications: true,
+                    not_answers_notifications: true
+                }
+            }
+        });
+    }
+
+    static incrementOnePushNotification(id) {
+        const field = 'count_notifications';
+        return this.findOne({
+            where: {
+                id,
+                [Sequelize.Op.or]: {
+                    all_notifications: true,
+                    not_answers_notifications: true
+                }
+            },
+            attributes: [
+                'id',
+                field
+            ]
+        }).then((user) => {
+            return user.update({ [field]: user[field] + 1 })
+                .then(() => {
+                    return user.getDataValue(field);
+                })
+        });
+    }
+}
 
 const Address = sequelize.define('address', {
   street: Sequelize.STRING,
@@ -95,6 +156,7 @@ const verifyPassword = function (password, hash) {
     return bcrypt.compareSync(password, hash || this.password);
 };
 User.prototype.verifyPassword = verifyPassword;
+
 
 const Poll = sequelize.define('poll', {
   question: Sequelize.STRING,

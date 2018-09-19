@@ -1,11 +1,12 @@
 const {dbInstance} = require('../db_setup');
-const {Tokens} = require('../db_entities');
+const {Tokens, User} = require('../db_entities');
 const {events} = require('lumeos_utils');
 
 /**
  * @class PollService
  * @final
  */
+
 class PollService {
 
     /**
@@ -28,30 +29,34 @@ class PollService {
                 attributes: ['all_notifications', 'not_answers_notifications', 'count_notifications']
             }]
         }).then(poll => {
-            return poll.map((e) => {
+            return Promise.all(poll.map((e) => {
                 const {
                     token: to,
-                    participant_not_answered: count,
+                    participant_not_answered,
                     user_id,
                     users: {
                         all_notifications,
                         not_answers_notifications,
-                        count_notifications,
                     }
                 } = e.toJSON();
-                if (count > 0) {
+                if (participant_not_answered > 0) {
                     if (all_notifications || (!all_notifications && not_answers_notifications)) {
-                        console.log('[send-push] >', user_id);
-                        events.emit(events.constants.sendNotAnswersPoll, {
-                            to,
-                            count,
-                            not_answers_notifications,
-                            user_id,
-                            count_notifications
-                        })
+                        return User.incrementOnePushNotification(user_id).then((count_notifications) => {
+                            return {
+                                to,
+                                count: participant_not_answered,
+                                user_id,
+                                count_notifications
+                            };
+                        });
                     }
                 }
-            });
+            })).then((result) => {
+                console.log('[send-push] >', result);
+                    result.map((data) => {
+                        events.emit(events.constants.sendNotAnswersPoll, data)
+                    })
+                });
 
         }).catch(error => {
             console.log('[cron-push-error] ', error);
