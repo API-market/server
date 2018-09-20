@@ -13,6 +13,8 @@ const constants = {
     sendNotAnswersPollCallback: 'event:send-not-answers-poll-callback',
     sendCustomNotifications: 'event:send-custom-notifications',
     sendCustomNotificationsCallback: 'event:send-custom-notifications-callback',
+    sendCustomNotificationsPush: 'event:send-custom-notifications-push',
+    sendCustomNotificationsPushCallback: 'event:send-custom-notifications-push-callback',
 };
 
 class Events extends EventEmitter {
@@ -28,6 +30,7 @@ class Events extends EventEmitter {
         this.on(constants.sendFolloweeFromFollower, this.sendFolloweeFromFollower.bind(this));
         this.on(constants.sendNotAnswersPoll, this.sendNotAnswersPoll.bind(this));
         this.on(constants.sendCustomNotifications, this.sendCustomNotifications.bind(this));
+        this.on(constants.sendCustomNotificationsPush, this.sendCustomNotificationsPush.bind(this));
     }
 
     sendAnswerForPoll({all_notifications, target_user_id, from_user_id, not_answers_notifications}) {
@@ -172,8 +175,8 @@ class Events extends EventEmitter {
         });
     }
 
-    sendCustomNotificationsPush({to, title, body}) {
-        this.pushService.sendCustomNotifications(to, {title, body})
+    sendCustomNotificationsPush({to, title, body, count_notifications: badge}) {
+        this.pushService.sendCustomNotifications(to, {title, body, badge})
             .then((data) => {
                 this.emit(this.constants.sendCustomNotificationsPushCallback, null, data);
             })

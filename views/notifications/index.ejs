@@ -22,7 +22,8 @@
             <td>
                 <a href="/web/notifications/edit/<%= user.id %>" class="btn btn-primary">Edit</a>
                 <a href="/web/notifications/delete/<%= user.id %>" data-delete class="btn btn-danger">Delete</a>
-                <a href="/web/notifications/send/<%= user.id %>" data-send class="btn btn-info">Send</a>
+                <a href="/web/notifications/send/<%= user.id %>" data-send class="btn btn-info">Send Notification</a>
+                <a href="/web/notifications/send/<%= user.id %>/push" data-send class="btn btn-info">Send Push</a>
             </td>
         </tr>
     <% }) || 'Not found' %>

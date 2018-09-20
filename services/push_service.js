@@ -133,10 +133,11 @@ class PushService {
      * @this {PushService}
      * @returns {Promise}
      */
-    sendCustomNotifications(to, {title, body}, data) {
+    sendCustomNotifications(to, {title, body, badge}, data) {
         return this.send(to, data, {
             title: title,
-            body: body
+            body: body,
+            badge
         })
     }
 }
