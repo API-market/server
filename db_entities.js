@@ -95,10 +95,6 @@ class User extends UserBase {
             where: {
                 id: {
                     [Sequelize.Op.in] : ids
-                },
-                [Sequelize.Op.or]: {
-                    all_notifications: true,
-                    not_answers_notifications: true
                 }
             }
         });

@@ -85,7 +85,9 @@ notificationsRouter
                 if (!data) {
                     return res.status(404).json({error: 'Not Found', message: 'Notification not found'});
                 }
-                return res.json([]);
+                return User.clearNotifications(req.auth.user_id).then(() => {
+                    return res.json([]);
+                })
             });
         } catch (err) {
             console.log(err);
