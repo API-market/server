@@ -156,10 +156,10 @@ class Events extends EventEmitter {
         });
     }
 
-    sendCustomNotifications({user_id, title, description}) {
+    sendCustomNotifications({user_id, from_user_id, title, description}) {
         Notifications.create({
             target_user_id: user_id,
-            from_user_id: user_id,
+            from_user_id: from_user_id,
             description,
             type: constants.sendCustomNotifications
         })

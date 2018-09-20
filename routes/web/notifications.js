@@ -1,9 +1,10 @@
 const express = require('express');
 const {Op} = require('sequelize');
-const {events} = require('lumeos_utils')
+const {events} = require('lumeos_utils');
 // const {check, validationResult} = require('express-validator/check');
 // const util = require('../utilities.js');
 const {User, CustomNotifications, Tokens} = require('../../db_entities.js');
+const {USER_MAIN_LUMEOS} = require('../../server_info')
 
 // const removeEmpty = util.removeEmpty;
 const notificationsWebRouter = express.Router();
@@ -91,30 +92,39 @@ notificationsWebRouter.post('/notifications/send/:id', function (req, res) {
         .then((item) => {
             if (!item) throw notFound();
             const {title, description} = item;
-            return User.findAll({
-                attributes: ['id'],
+            return User.findOne({
                 where: {
-                    id: item.usersId,
-                    [Op.or]: {
-                        custom_notifications: true,
-                        all_notifications: true
-                    },
+                    email: USER_MAIN_LUMEOS
                 }
-            }).then((users) => {
-                users.map((user) => {
-                    events.emit(events.constants.sendCustomNotifications, {
-                        user_id: user.id,
-                        title,
-                        description
+            }).then((mainUser) => {
+                if (!item) throw notFound('Main user not found');
+
+                return User.findAll({
+                    attributes: ['id'],
+                    where: {
+                        id: item.usersId,
+                        [Op.or]: {
+                            custom_notifications: true,
+                            all_notifications: true
+                        },
+                    }
+                }).then((users) => {
+                    users.map((user) => {
+                        events.emit(events.constants.sendCustomNotifications, {
+                            user_id: user.id,
+                            from_user_id: mainUser.id,
+                            title,
+                            description
+                        });
+                    });
+                    events.on(events.constants.sendCustomNotificationsCallback, (err) => {
+                        clearTimeout(this.pid);
+                        this.pid = setTimeout(() => {
+                            res.json({});
+                        }, 1000)
                     });
                 });
-                events.on(events.constants.sendCustomNotificationsCallback, (err) => {
-                    clearTimeout(this.pid);
-                    this.pid = setTimeout(() => {
-                        res.json({});
-                    }, 1000)
-                });
-            });
+            })
 
         }).catch(error => {
             res.render(`errors/${error.status || 500}`, {error});
