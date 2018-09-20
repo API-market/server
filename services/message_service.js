@@ -60,13 +60,20 @@ class MessageService {
      * @param code
      */
     verifyPhoneToken(phone_number, country_code, code) {
-        return this._request('get', '/protected/json/phones/verification/check', {
-                'api_key': this.apiKey,
-                'verification_code': code,
-                'phone_number': phone_number,
-                'country_code': country_code
-            }
-        );
+        return new Promise((resolve, reject) => {
+            this._request('get', '/protected/json/phones/verification/check', {
+                    'api_key': this.apiKey,
+                    'verification_code': code,
+                    'phone_number': phone_number,
+                    'country_code': country_code
+                }
+            ).then((body) => {
+                if (body.success) {
+                    resolve(body)
+                }
+                reject(body)
+            }).catch(reject)
+        })
     };
 
     _request(type, path, params, callback, qs) {

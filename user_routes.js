@@ -847,7 +847,7 @@ userRouter
                 return user.update(model.formattingValue({
                     verifyToken: null,
                     verify: true,
-                    balance: user.balance + 50
+                    balance: user.balance + 50 // TODO History like a logs
                 })).then((user) => {
                     res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
                 });
@@ -907,7 +907,7 @@ userRouter
         if (!errors.isEmpty()) {
             return res.status(422).json({errors: errors.array()});
         }
-        const {phone, phoneCountryCode} = req.body;
+        const {phone, phoneCountryCode, code} = req.body;
         User.findOne({
             where: {
                 phone: phone,
@@ -919,12 +919,14 @@ userRouter
             if (!user) {
                 throw new Error('User not found');
             }
-            return MessageService.verifyPhoneToken(phone, phoneCountryCode).then(() => {
-                return user.update({
-                    verify_phone: true,
-                }).then((user) => {
-                    res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
-                });
+            return MessageService.verifyPhoneToken(phone, phoneCountryCode, code)
+                .then(() => {
+                    return user.update({
+                        verify_phone: true,
+                        balance: user.balance + 50 // TODO History like a logs
+                    }).then((user) => {
+                        res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
+                    });
             });
         })
         .catch(function (error) {
