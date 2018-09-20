@@ -25,7 +25,7 @@
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const {events, token, model} = require('lumeos_utils');
-const {mailService, UploadService} = require('lumeos_services');
+const {mailService, UploadService, MessageService} = require('lumeos_services');
 const {omit} = require('lodash');
 
 const Sequelize = require('sequelize');
@@ -55,6 +55,7 @@ const STANDARD_USER_ATTR = [
   "firstName",
   "lastName",
   "phone",
+  "phone_code",
   "dob",
   "gender",
   "school",
@@ -67,7 +68,9 @@ const STANDARD_USER_ATTR = [
   "not_answers_notifications",
   "follows_you_notifications",
   "custom_notifications",
+  "count_notifications",
   "verify_token",
+  "verify_phone",
   "verify",
 ];
 
@@ -844,7 +847,7 @@ userRouter
                 return user.update(model.formattingValue({
                     verifyToken: null,
                     verify: true,
-                    balance: user.balance + 50
+                    balance: user.balance + 50 // TODO History like a logs
                 })).then((user) => {
                     res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
                 });
@@ -859,5 +862,77 @@ userRouter
                 res.status(status).json({error: 'Error', message});
             });
     });
+
+userRouter
+    .route('/users/phone/verify')
+    .post([
+        check('phone').exists().isString().trim().escape().withMessage('Field \'phone\' cannot be empty'),
+        check('phoneCountryCode').exists().isString().trim().escape().withMessage('Field \'phoneCountryCode\' cannot be empty'),
+    ], function (req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({errors: errors.array()});
+        }
+        const {phone, phoneCountryCode} = req.body;
+        User.findOne({where: model.formattingValue({
+                id: req.auth.user_id,
+                phone: phone,
+                phoneCountryCode: phoneCountryCode,
+            }, [], {phoneCountryCode: 'phoneCode'})})
+            .then((user) => {
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                if (user.verify_phone) {
+                    throw new Error('User already phone verified.');
+                }
+                return MessageService
+                    .requestPhoneVerification(phone, phoneCountryCode)
+                    .then(({message}) => {
+                        res.json({
+                            message
+                        });
+                    });
+            })
+            .catch((error) => {
+                res.status(500).json({error: 'Error', message: error.message});
+            });
+    })
+    .put([
+        check('code').exists().isString().trim().escape().withMessage('Field \'code\' cannot be empty'),
+        check('phone').exists().isString().trim().escape().withMessage('Field \'phone\' cannot be empty'),
+        check('phoneCountryCode').exists().isString().trim().escape().withMessage('Field \'phoneCountryCode\' cannot be empty'),
+    ], function (req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({errors: errors.array()});
+        }
+        const {phone, phoneCountryCode, code} = req.body;
+        User.findOne({
+            where: {
+                phone: phone,
+                phone_code: phoneCountryCode,
+                verify_phone: false,
+            }
+        })
+        .then(function (user) {
+            if (!user) {
+                throw new Error('User not found');
+            }
+            return MessageService.verifyPhoneToken(phone, phoneCountryCode, code)
+                .then(() => {
+                    return user.update({
+                        verify_phone: true,
+                        balance: user.balance + 50 // TODO History like a logs
+                    }).then((user) => {
+                        res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
+                    });
+            });
+        })
+        .catch(function (error) {
+            res.status(500).json({error: 'Error', message: error.message});
+        });
+    });
+
 
 module.exports = userRouter;

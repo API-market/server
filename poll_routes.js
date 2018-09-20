@@ -189,15 +189,23 @@ pollRouter.get('/polls', function (req, res) {
       creator_id: req.query["queryCreator"]
     });
   }
-  if (req.query["queryQuestion"]) {
+  if (req.query["queryQuestion"] && !req.query["queryTag"]) {
     where_params.push({
       question: {[likeOp]: "%" + req.query["queryQuestion"] + "%"}
     });
   }
-  if (req.query["queryTag"]) {
+  if (req.query["queryTag"] && !req.query["queryQuestion"]) {
     where_params.push({
       tags: {[likeOp]: "%" + req.query["queryTag"] + "%"}
     });
+  }
+  if (req.query["queryQuestion"] && req.query["queryTag"]) {
+      where_params.push({
+          [Op.or]: {
+              tags: {[likeOp]: "%" + req.query["queryTag"] + "%"},
+              question: {[likeOp]: "%" + req.query["queryQuestion"] + "%"}
+          }
+      });
   }
   var where_object = {};
   where_attributes = [["id", "poll_id"], "question", "answers", "tags", "participant_count", "price", "creator_id", "createdAt", "avatar"];
