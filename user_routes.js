@@ -915,21 +915,21 @@ userRouter
                 verify_phone: false,
             }
         })
-            .then(function (user) {
-                if (!user) {
-                    throw new Error('User not found');
-                }
-                return MessageService.verifyPhoneToken(phone, phoneCountryCode).then((data) => {
-                    return user.update({
-                        verify_phone: true,
-                    }).then((user) => {
-                        res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
-                    });
+        .then(function (user) {
+            if (!user) {
+                throw new Error('User not found');
+            }
+            return MessageService.verifyPhoneToken(phone, phoneCountryCode).then(() => {
+                return user.update({
+                    verify_phone: true,
+                }).then((user) => {
+                    res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
                 });
-            })
-            .catch(function (error) {
-                res.status(500).json({error: 'Error', message: error.message});
             });
+        })
+        .catch(function (error) {
+            res.status(500).json({error: 'Error', message: error.message});
+        });
     });
 
 
