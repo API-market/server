@@ -65,6 +65,17 @@ const UserBase = sequelize.define('user', {
   follows_you_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   custom_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   count_notifications: {type: Sequelize.INTEGER},
+}, {
+    hooks: {
+        beforeUpdate(model) {
+            const phonePrev = `${model._previousDataValues.phone_code}${model._previousDataValues.phone}`;
+            const phoneCurrent = `${model.phone_code}${model.phone}`;
+            const verifyPhone = model._previousDataValues.verify_phone;
+            if (phonePrev !== phoneCurrent && verifyPhone) {
+                model.verify_phone = false
+            }
+        }
+    }
 });
 
 class User extends UserBase {
