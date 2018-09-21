@@ -38,14 +38,11 @@ $(document).ready(() => {
         }
 
         loader(elem) {
-            const text = `<div class="loader" id="loader-7"></div>`;
-            if ($(elem).find('#loader-7').length) {
-                $(elem).find('#loader-7').remove();
-                $(elem).html($.defaultText);
+            if ($(elem).find('.fas.fa-spin').length) {
+                $(elem).find('.fas').removeClass('fa-spin');
                 return
             }
-            $.defaultText = $(elem).html();
-            $(elem).html(text);
+            $(elem).find('.fas').addClass('fa-spin')
         }
 
         sendNotifications() {
@@ -65,6 +62,12 @@ $(document).ready(() => {
                         }).catch(console.error)
                 }
             })
+            return this;
+        }
+
+        initTooltip() {
+            $('[data-toggle="tooltip"]').tooltip();
+
             return this;
         }
 
@@ -90,6 +93,7 @@ $(document).ready(() => {
         init() {
             this.deleteConfirm()
                 .allSelected()
+                .initTooltip()
                 .sendNotifications();
         }
     }

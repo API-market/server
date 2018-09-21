@@ -274,6 +274,7 @@ const CustomNotifications = sequelize.define('custom_notifications', {
             return [];
         },
         set: function (val) {
+            if (typeof val === "string") val = [val];
             return this.setDataValue('usersId', JSON.stringify(val));
         }
     },

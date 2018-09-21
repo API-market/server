@@ -1,4 +1,4 @@
-<form method="post" action="/web/notifications/add">
+<form method="post" action="<%= action %>">
     <h2>Add notification</h2>
     <div class="form-group">
         <label for="title">Title</label>
@@ -14,7 +14,7 @@
         <label for="users-select">Users</label>
         <select class="form-control" id="users-select" multiple required size="10" name="users">
             <% users.map(function (user) { %>
-                <option value="<%= user.id %>"><%= user.firstName %> <%= user.lastName %></option>
+                <option <%= user.selected ? 'selected': ''%> value="<%= user.id %>"><%= user.firstName %> <%= user.lastName %></option>
             <% }) %>
         </select>
         <button class="btn btn-primary btn-sm" all-select>select all users</button>

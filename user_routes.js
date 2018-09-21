@@ -847,7 +847,7 @@ userRouter
                 return user.update(model.formattingValue({
                     verifyToken: null,
                     verify: true,
-                    balance: user.balance + 50 // TODO History like a logs
+                    balance: user.balance + 50
                 })).then((user) => {
                     res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
                 });
