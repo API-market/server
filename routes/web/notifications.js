@@ -49,8 +49,17 @@ notificationsWebRouter.get('/notifications/edit/:id', function (req, res) {
                 'firstName',
                 'lastName',
             ]
-        }).then((users) => {
-            res.render('notifications/entity', {item: item.toJSON(), users, action: `/web/notifications/edit/${item.id}`});
+        }).then((selectedUser) => {
+            return User.findAll().then((users) => {
+                users.forEach((user) => {
+                    selectedUser.map((selectedUser) => {
+                        if (user.id === selectedUser.id) {
+                            user.selected = true
+                        }
+                    })
+                });
+                res.render('notifications/entity', {item: item.toJSON(), users, action: `/web/notifications/edit/${item.id}`})
+            })
         });
     }).catch((error) => {
         console.log(error);
@@ -59,9 +68,12 @@ notificationsWebRouter.get('/notifications/edit/:id', function (req, res) {
 });
 
 notificationsWebRouter.post('/notifications/edit/:id', function (req, res) {
-    CustomNotifications.update(Object.assign(req.body, {usersId: req.body.users}), {id: req.params.id})
+    CustomNotifications.update(Object.assign(req.body, {usersId: req.body.users}), {
+        where: {
+            id: req.params.id
+        }
+    })
         .then((item) => {
-            console.log(item);
             res.redirect('/web/notifications');
         }).catch(error => {
         res.render(`errors/${error.status || 500}`, {error});
@@ -72,7 +84,7 @@ notificationsWebRouter.get('/notifications/add', function (req, res) {
     User.findAll({
         attributes: ['id', 'firstName', 'lastName']
     }).then((users) => {
-        res.render('notifications/entity', {users, item: {}});
+        res.render('notifications/entity', {users, item: {}, action: '/notifications/add'});
     }).catch((error) => {
         res.render(`errors/${error.status || 500}`, {error});
     })
@@ -87,7 +99,7 @@ notificationsWebRouter.post('/notifications/add', function (req, res) {
     });
 });
 
-notificationsWebRouter.post('/notifications/send/:id', function (req, res) {
+notificationsWebRouter.post('/notifications/send/:id/:type?', function (req, res) {
     CustomNotifications.findById(req.params.id)
         .then((item) => {
             if (!item) throw notFound();
@@ -107,8 +119,37 @@ notificationsWebRouter.post('/notifications/send/:id', function (req, res) {
                             custom_notifications: true,
                             all_notifications: true
                         },
+                    },
+                    include: [
+                        {association: User.Tokens}
+                    ]
+            })
+                .then((users) => {
+                    if (req.params.type && req.params.type === 'push') {
+                        return Promise.all(users.map((user) => {
+                            return User
+                                .incrementOnePushNotification(user.id)
+                                .then((count_notifications) => {
+                                    user.tokens.map(({token: to}) => {
+                                        console.log({
+                                            to,
+                                            title,
+                                            body: description,
+                                            count_notifications,
+                                        });
+                                        events.emit(events.constants.sendCustomNotificationsPush, {
+                                            to,
+                                            title,
+                                            body: description,
+                                            count_notifications,
+                                        });
+                                    });
+                                    setTimeout(() => {
+                                        return res.json({});
+                                    }, 1000)
+                                })
+                        }));
                     }
-                }).then((users) => {
                     users.map((user) => {
                         events.emit(events.constants.sendCustomNotifications, {
                             user_id: user.id,
@@ -117,12 +158,9 @@ notificationsWebRouter.post('/notifications/send/:id', function (req, res) {
                             description
                         });
                     });
-                    events.on(events.constants.sendCustomNotificationsCallback, (err) => {
-                        clearTimeout(this.pid);
-                        this.pid = setTimeout(() => {
-                            res.json({});
-                        }, 1000)
-                    });
+                    setTimeout(() => {
+                        return res.json({});
+                    }, 1000)
                 });
             })
 
