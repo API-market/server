@@ -13,8 +13,8 @@ module.exports = {
             }, {}),
             queryInterface.bulkInsert('users', [
                 {
-                    lastName: 'Lumeos',
-                    firstName: 'Notification',
+                    lastName: 'Notification',
+                    firstName: 'Lumeos',
                     email: USER_MAIN_LUMEOS,
                     password: SEED_AUTH,
                     createdAt: new Date(),
