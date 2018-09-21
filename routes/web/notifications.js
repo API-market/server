@@ -84,7 +84,7 @@ notificationsWebRouter.get('/notifications/add', function (req, res) {
     User.findAll({
         attributes: ['id', 'firstName', 'lastName']
     }).then((users) => {
-        res.render('notifications/entity', {users, item: {}, action: '/notifications/add'});
+        res.render('notifications/entity', {users, item: {}, action: '/web/notifications/add'});
     }).catch((error) => {
         res.render(`errors/${error.status || 500}`, {error});
     })
