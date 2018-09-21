@@ -49,8 +49,17 @@ notificationsWebRouter.get('/notifications/edit/:id', function (req, res) {
                 'firstName',
                 'lastName',
             ]
-        }).then((users) => {
-            res.render('notifications/entity', {item: item.toJSON(), users, action: `/web/notifications/edit/${item.id}`});
+        }).then((selectedUser) => {
+            return User.findAll().then((users) => {
+                users.forEach((user) => {
+                    selectedUser.map((selectedUser) => {
+                        if (user.id === selectedUser.id) {
+                            user.selected = true
+                        }
+                    })
+                });
+                res.render('notifications/entity', {item: item.toJSON(), users, action: `/web/notifications/edit/${item.id}`})
+            })
         });
     }).catch((error) => {
         console.log(error);
@@ -114,13 +123,20 @@ notificationsWebRouter.post('/notifications/send/:id/:type?', function (req, res
                     include: [
                         {association: User.Tokens}
                     ]
-            }).then((users) => {
+            })
+                .then((users) => {
                     if (req.params.type && req.params.type === 'push') {
-                        Promise.all(users.map((user) => {
+                        return Promise.all(users.map((user) => {
                             return User
                                 .incrementOnePushNotification(user.id)
                                 .then((count_notifications) => {
                                     user.tokens.map(({token: to}) => {
+                                        console.log({
+                                            to,
+                                            title,
+                                            body: description,
+                                            count_notifications,
+                                        });
                                         events.emit(events.constants.sendCustomNotificationsPush, {
                                             to,
                                             title,
@@ -128,14 +144,11 @@ notificationsWebRouter.post('/notifications/send/:id/:type?', function (req, res
                                             count_notifications,
                                         });
                                     });
+                                    setTimeout(() => {
+                                        return res.json({});
+                                    }, 1000)
                                 })
                         }));
-                        return events.on(events.constants.sendCustomNotificationsPushCallback, (err) => {
-                            clearTimeout(this.pid);
-                            this.pid = setTimeout(() => {
-                                res.json({});
-                            }, 1000)
-                        });
                     }
                     users.map((user) => {
                         events.emit(events.constants.sendCustomNotifications, {
@@ -145,12 +158,9 @@ notificationsWebRouter.post('/notifications/send/:id/:type?', function (req, res
                             description
                         });
                     });
-                    return events.on(events.constants.sendCustomNotificationsCallback, (err) => {
-                        clearTimeout(this.pid);
-                        this.pid = setTimeout(() => {
-                            res.json({});
-                        }, 1000)
-                    });
+                    setTimeout(() => {
+                        return res.json({});
+                    }, 1000)
                 });
             })
 
