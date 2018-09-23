@@ -843,7 +843,7 @@ userRouter
         })
             .then(function (user) {
                 if (!user) {
-                    throw new Error('User not found');
+                    throw new Error('User was verify');
                 }
                 return user.update(model.formattingValue({
                     verifyToken: null,
