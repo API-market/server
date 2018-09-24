@@ -183,7 +183,14 @@ userRouter.post('/users', [
             });
         })
         .catch(error => {
-          console.log("error: " + error);
+          if (error.message === 'Validation error') {
+              const errors = error.errors.map(err => ({
+                  param: err.path,
+                  msg: `The ${err.message.replace('_', ' ')}.`
+              }));
+              const status = 422;
+              return res.status(status).json({errors});
+          }
           res.status(400).json({
             error: "Bad Request",
             message: "Could not create user with " + JSON.stringify(req.body)
@@ -673,9 +680,15 @@ userRouter.put('/users',
             res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
         });
     }).catch((err) => {
-        console.log(err);
-        res.status(500).json({error: 'Error', message: 'Some error.'});
-    });
+        if (err.message === 'Validation error') {
+            const errors = err.errors.map(err => ({
+                param: err.path,
+                msg: `The ${err.message.replace('_', ' ')}.`
+            }));
+            const status = 422;
+            return res.status(status).json({errors});
+        }
+        res.status(500).json({error: 'Error', message: 'Some error.'});    });
 });
 
 userRouter.delete('/users/:id', function (req, res) {
@@ -842,7 +855,7 @@ userRouter
         })
             .then(function (user) {
                 if (!user) {
-                    throw new Error('User not found');
+                    throw new Error('User was verify');
                 }
                 return user.update(model.formattingValue({
                     verifyToken: null,
