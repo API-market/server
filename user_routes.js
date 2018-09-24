@@ -142,30 +142,29 @@ userRouter.post('/logout', function (req, res) {
 });
 
 userRouter.post('/users', [
-  check("firstName").not().isEmpty().trim().escape().withMessage("Field 'firstName' cannot be empty"),
-  check("lastName").not().isEmpty().trim().escape().withMessage("Field 'lastName' cannot be empty"),
-  check("email").isEmail().normalizeEmail(),
-  check("phone").optional().isMobilePhone("any"),
-  check("dob").isISO8601().withMessage("Invalid 'dob' specified, ISO8601 required"),
-  check("gender").optional().isIn(["male", "female", "other"]),
-  check("school").optional().trim().escape(),
-  check("employer").optional().trim().escape(),
-  check('password', 'The password must be 8+ chars long and contain a number')
-    .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
-    .isLength({min: 8})
-    .matches(/\d/)
+    check('firstName').not().isEmpty().trim().escape().withMessage('Field \'firstName\' cannot be empty'),
+    check('lastName').not().isEmpty().trim().escape().withMessage('Field \'lastName\' cannot be empty'),
+    check('email').isEmail().normalizeEmail(),
+    check('phone').optional().isMobilePhone('any'),
+    check('dob').isISO8601().withMessage('Invalid \'dob\' specified, ISO8601 required'),
+    check('gender').optional().isIn(['male', 'female', 'other']),
+    check('school').optional().trim().escape(),
+    check('employer').optional().trim().escape(),
+    check('password', 'The password must be 8+ chars long and contain a number')
+        .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+        .isLength({min: 8})
+        .matches(/\d/)
 ], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({errors: errors.array()});
-  }
-  sequelize.sync()
-    .then(() => {
-      User.create(req.body, {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({errors: errors.array()});
+    }
+
+    User.create(req.body, {
         include: [{
-          association: User.Address
+            association: User.Address
         }]
-      })
+    })
         .then(user => {
             return Tokens.upsert({
                 user_id: user.id,
@@ -182,21 +181,25 @@ userRouter.post('/users', [
                 return addProfileImage(res, user, EXCLUDE_USER_ATTR);
             });
         })
-        .catch(error => {
-          if (error.message === 'Validation error') {
-              const errors = error.errors.map(err => ({
-                  param: err.path,
-                  msg: `The ${err.message.replace('_', ' ')}.`
-              }));
-              const status = 422;
-              return res.status(status).json({errors});
-          }
-          res.status(400).json({
-            error: "Bad Request",
-            message: "Could not create user with " + JSON.stringify(req.body)
-          })
-        })
-    });
+        .catch((error) => {
+            const status = 422;
+            if (error.message === 'Validation error') {
+                const errors = error.errors.map(err => ({
+                    param: err.path,
+                    msg: `The ${err.message.replace('_', ' ')}.`
+                }));
+                return res.status(status).json({errors});
+            }
+            if (error.name === 'SequelizeDatabaseError') {
+                return res.status(status).json({errors: [{
+                        msg: error.message
+                }]});
+            }
+            res.status(400).json({
+                error: 'Bad Request',
+                message: 'Could not create user with ' + JSON.stringify(req.body)
+            });
+        });
 });
 
 const addProfileImage = function (res, user, exclude) {
