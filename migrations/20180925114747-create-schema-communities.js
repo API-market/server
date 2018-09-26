@@ -1,6 +1,6 @@
 'use strict';
 const {migration} = require('lumeos_utils');
-const {count_participant, poll_answers, community_count_answers} = require('../migrations_views');
+const {count_participant, poll_answers, community_count_answers, constansts} = require('../migrations_views');
 
 const schemaName = 'communities';
 module.exports = {
@@ -76,7 +76,7 @@ module.exports = {
                     schema: schemaName
                 });
             }).then(() => {
-                return migration.createView(queryInterface, count_participant.name, count_participant(), {schema: schemaName});
+                return migration.createView(queryInterface, constansts.countParticipant, count_participant(), {schema: schemaName});
             }).then(() => {
                 return queryInterface.createTable('polls', {
                     id: {
@@ -151,18 +151,18 @@ module.exports = {
                     type: 'unique',
                 });
             }).then(() => {
-                return migration.createView(queryInterface, poll_answers.name, poll_answers(), {schema: schemaName});
+                return migration.createView(queryInterface, constansts.pollAnswers, poll_answers(), {schema: schemaName});
             }).then(() => {
-                return migration.createView(queryInterface, community_count_answers.name, community_count_answers(), {schema: schemaName});
+                return migration.createView(queryInterface, constansts.communityCountAnswers, community_count_answers(), {schema: schemaName});
             });
     },
 
     down: (queryInterface) => {
-        return migration.dropView(queryInterface, community_count_answers.name, null, {schema: schemaName})
+        return migration.dropView(queryInterface, constansts.communityCountAnswers, null, {schema: schemaName})
             .then(() => {
-                return migration.dropView(queryInterface, poll_answers.name, null, {schema: schemaName});
+                return migration.dropView(queryInterface, constansts.pollAnswers, null, {schema: schemaName});
             }).then(() => {
-                return migration.dropView(queryInterface, count_participant.name, null, {schema: schemaName});
+                return migration.dropView(queryInterface, constansts.countParticipant, null, {schema: schemaName});
             }).then(() => {
                 return queryInterface.dropTable('polls_answers', {});
             }).then(() => {
@@ -173,6 +173,6 @@ module.exports = {
                 return queryInterface.dropTable('community', {});
             }).then(() => {
                 queryInterface.dropSchema(schemaName)
-            });
+            }).catch(console.log);
     }
 };
