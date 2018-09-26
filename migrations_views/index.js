@@ -1,8 +1,14 @@
+
+exports.constansts = {
+    countParticipant: 'count_participant',
+    pollAnswers: 'poll_answers',
+    communityCountAnswers: 'community_count_answers',
+};
 /**
  * Count user in community (joined users or members community)
  * @returns {string}
  */
-exports.count_participant = function count_participant() {
+exports[exports.constansts.countParticipant] = () => {
     return `(
         SELECT
             c_cc.community_id,
@@ -15,7 +21,7 @@ exports.count_participant = function count_participant() {
  * Count answers by each polls
  * @returns {string}
  */
-exports.poll_answers = function poll_answers() {
+exports[exports.constansts.pollAnswers] = () => {
     return `(
         SELECT
             c_pa.poll_id,
@@ -28,7 +34,7 @@ exports.poll_answers = function poll_answers() {
  * Count answers by unique poll_id for community
  * @returns {string}
  */
-exports.community_count_answers = function community_count_answers() {
+exports[exports.constansts.communityCountAnswers]= () => {
     return `(
         SELECT
             c_ct.id,

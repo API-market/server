@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
             }
         },
         forgot_token: DataTypes.STRING,
-        verify_token: Sequelize.STRING,
+        verify_token: DataTypes.STRING,
         phone: DataTypes.STRING,
         phone_code: DataTypes.STRING,
         tag_line: DataTypes.STRING,
@@ -34,17 +34,20 @@ module.exports = (sequelize, DataTypes) => {
         follower_count: {type: DataTypes.INTEGER, defaultValue: 0},
         answer_count: {type: DataTypes.INTEGER, defaultValue: 0},
         all_notifications: {type: DataTypes.BOOLEAN, defaultValue: true},
-        verify: {type: Sequelize.BOOLEAN, defaultValue: false},
-        verify_phone: {type: Sequelize.BOOLEAN, defaultValue: false},
-        not_answers_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
-        follows_you_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
-        custom_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
-        count_notifications: {type: Sequelize.INTEGER, defaultValue: 0},
-    }, {});
-    // Users.associate = (models) => {
-        // console.log(this, '<<< users');
+        verify: {type: DataTypes.BOOLEAN, defaultValue: false},
+        verify_phone: {type: DataTypes.BOOLEAN, defaultValue: false},
+        not_answers_notifications: {type: DataTypes.BOOLEAN, defaultValue: true},
+        follows_you_notifications: {type: DataTypes.BOOLEAN, defaultValue: true},
+        custom_notifications: {type: DataTypes.BOOLEAN, defaultValue: true},
+        count_notifications: {type: DataTypes.INTEGER, defaultValue: 0},
+    }, {
+        tableName: 'users'
+    });
+    Users.associate = (models) => {
+        Users.hasOne(models.profileImages, {foreignKey: 'user_id'});
+
         // Users.hasMany(models.tokens, {as: 'tokens', foreignKey: 'user_id'});
         // Users.belongsTo(models.addresses, {as: 'address', constraints: false});
-    // };
+    };
     return Users;
 };
