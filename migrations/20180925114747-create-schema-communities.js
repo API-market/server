@@ -76,11 +76,6 @@ module.exports = {
                     schema: schemaName
                 });
             }).then(() => {
-                const query = `(SELECT
-                                    c_cc.community_id,
-                                    count(c_cc.user_id)
-                                FROM communities.community_users AS c_cc
-                                GROUP BY c_cc.community_id)`;
                 return migration.createView(queryInterface, count_participant.name, count_participant(), {schema: schemaName});
             }).then(() => {
                 return queryInterface.createTable('polls', {
