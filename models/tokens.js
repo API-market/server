@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         active: {type: DataTypes.BOOLEAN, defaultValue: true},
     }, {});
     Tokens.associate = function (models) {
-        this.belongsTo(models.Polls, {foreignKey: 'user_id'});
+        // this.belongsTo(models.Polls, {foreignKey: 'user_id'});
     };
     return Tokens;
 };

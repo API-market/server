@@ -1,0 +1,1 @@
+exports.communityController = require('./community_controller');

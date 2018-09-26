@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
     });
     Notifications.associate = function (models) {
-        this.belongsTo(models.Users, {foreignKey: 'target_user_id', join: 'inner'});
+        // Notifications.belongsTo(User, {foreignKey: 'from_user_id', join: 'inner'});
     };
     return Notifications;
 };
