@@ -32,22 +32,6 @@ class ModelUtils {
         }, {});
     }
 
-    /**
-     *
-     * @this ModelUtils
-     * @param queryInterface
-     * @param tableName
-     * @param fields
-     * @param options
-     * @returns {*}
-     */
-    multipleUniqueMigration(queryInterface, {tableName, fields}, options) {
-        if (!tableName) throw new Error('Set tableName');
-        if (!(fields instanceof Array)) throw new Error('The fields must be array');
-        const query = `ALTER TABLE ${tableName} ADD UNIQUE (${fields})`;
-
-        return queryInterface.sequelize.query(query, options);
-    }
 }
 
 module.exports = ModelUtils;
