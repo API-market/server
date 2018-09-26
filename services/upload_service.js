@@ -31,7 +31,7 @@ class UploadService {
             });
         }
         //TODO if image not required
-        return Promise.resolve({file: ''});
+        return Promise.resolve({file: null});
     }
 
     crop(file) {
