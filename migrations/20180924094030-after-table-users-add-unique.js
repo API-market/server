@@ -1,5 +1,5 @@
 'use strict';
-const {model} = require('lumeos_utils');
+const {migration} = require('lumeos_utils');
 const {User} = require('../db_entities');
 
 const tableName = 'public.users';
@@ -8,7 +8,7 @@ module.exports = {
         return User.update({phone: null, phone_code: null}, {
             where: {}
         }).then(() => {
-            return model.multipleUniqueMigration(queryInterface, {tableName, fields: ['phone', 'phone_code']});
+            return migration.multipleUnique(queryInterface, {tableName, fields: ['phone', 'phone_code']});
         });
     },
 
