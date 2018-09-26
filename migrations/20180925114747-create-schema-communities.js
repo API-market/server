@@ -173,6 +173,6 @@ module.exports = {
                 return queryInterface.dropTable('community', {});
             }).then(() => {
                 queryInterface.dropSchema(schemaName)
-            }).catch(console.log);
+            });
     }
 };
