@@ -9,7 +9,8 @@ const router = express.Router();
 router.route('/community')
     .all(auth)
     .get(communityController.list)
-    .post([UploadService.middleware('image'), communityValidate.create], communityController.create);
+    .post([UploadService.middleware('image'), communityValidate.create], communityController.create)
+    .put([UploadService.middleware('image'), communityValidate.update], communityController.update);
 
 
 module.exports = router;

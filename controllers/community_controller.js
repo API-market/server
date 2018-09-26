@@ -33,7 +33,8 @@ class CommunityController {
         })
             .then((data) => {
                 res.sendResponse(community.formatResponse(data));
-            }).catch(next);
+            })
+            .catch(next);
     }
 
     create(req, res, next) {
@@ -45,8 +46,8 @@ class CommunityController {
                         community_id: communityNew.id,
                         user_id: req.auth.user_id
                     }, {transaction}).then(() => {
-                        return communityNew
-                    })
+                        return communityNew;
+                    });
                 })
                 .then((communityNew) => {
                     return UploadS3Service
@@ -56,11 +57,38 @@ class CommunityController {
                                 .update({image: file}, {transaction})
                                 .then((communityUpdated) => {
                                     res.sendResponse(community.formatResponse(communityUpdated));
-                                })
-                        })
-                })
+                                });
+                        });
+                });
         })
-        .catch(next);
+            .catch(next);
+    }
+
+    update(req, res, next) {
+        return sequelize.transaction((transaction) => {
+            return community.update(community.formatData(req.body), {transaction})
+                .then((communityUpdated) => {
+                    return UploadS3Service
+                        .upload(req.body.image, 'community')
+                        .then(({file}) => {
+                            return communityUpdated
+                                .update({image: file}, {transaction})
+                                .then((communityUpdated) => {
+                                    return Object.assign(communityUpdated, {
+                                        old_image: communityUpdated._previousDataValues.image
+                                    });
+                                });
+                        });
+                })
+                .then((communityUpdated) => {
+                    return UploadS3Service
+                        .delete(communityUpdated.old_image)
+                        .then(() => {
+                            return res.sendResponse(community.formatResponse(communityUpdated));
+                        });
+                });
+        })
+            .catch(next);
     }
 }
 
