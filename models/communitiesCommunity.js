@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-    const Address = sequelize.define('addresses', {
+    const CommunitiesCommunity = sequelize.define('community', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -25,20 +25,17 @@ module.exports = (sequelize, DataTypes) => {
         image: {
             type: DataTypes.STRING
         },
-        owner_id: {
+        creator_id: {
             type: DataTypes.INTEGER,
-            references: {
-                model: 'users',
-                key: 'id'
-            },
-            onUpdate: 'cascade',
-            onDelete: 'cascade'
         }
     }, {
-        schema: 'communities'
+        schema: 'communities',
+        tableName: 'community',
+        timestamps: false
     });
-    Address.associate = function (models) {
-
+    CommunitiesCommunity.associate = (models) => {
+        CommunitiesCommunity.belongsTo(models.users, {foreignKey: 'creator_id'});
+        CommunitiesCommunity.belongsTo(models.countParticipantView, {foreignKey: 'id', as: 'members'})
     };
-    return Address;
+    return CommunitiesCommunity;
 };
