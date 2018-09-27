@@ -59,6 +59,7 @@ const STANDARD_USER_ATTR = [
   "dob",
   "gender",
   "school",
+  "address",
   "employer",
   "balance",
   "follower_count",

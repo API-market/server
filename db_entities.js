@@ -50,6 +50,7 @@ const UserBase = sequelize.define('user', {
   phone: Sequelize.STRING,
   phone_code: Sequelize.STRING,
   tag_line: Sequelize.STRING,
+  address: Sequelize.STRING,
   dob: Sequelize.STRING,
   gender: Sequelize.STRING,
   school: Sequelize.STRING,
@@ -154,7 +155,7 @@ const Tokens = sequelize.define('tokens', {
 
 User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
 
-User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
+// User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
 Tokens.User = Tokens.belongsTo(User, {
     as: 'users',
     foreignKey: 'user_id',
