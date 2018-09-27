@@ -25,7 +25,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const {responseFormatter} = require('lumeos_middlewares')
+const {responseFormatter, basicAuth} = require('lumeos_middlewares')
 const bodyParser = require('body-parser');
 const {join} = require('path');
 app.use(bodyParser.json({limit: '5mb'}));
@@ -126,6 +126,9 @@ app.use(function (req, res, next) {
     next()
 });
 app.use(process.env.ADMIN_ROUTER, require('./routes/web'));
+
+const swaggerUi = require('swagger-ui-express');
+app.use('/api-docs', basicAuth.init, swaggerUi.serve, swaggerUi.setup(require('./swagger')));
 
 app.use(responseFormatter.error404);
 app.use(responseFormatter.errors);
