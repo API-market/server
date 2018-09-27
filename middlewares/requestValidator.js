@@ -19,7 +19,10 @@ class RequestValidatorMiddleware {
                                 message: item.message
                             };
                         });
-                    return next(errors);
+                    const error = new Error('Validate Error');
+                    error.errors = errors;
+                    error.status = 422;
+                    return next(error);
                 }
                 return next();
             }
@@ -28,6 +31,15 @@ class RequestValidatorMiddleware {
     }
 
     getRequestBody(req) {
+        if (req.file) {
+            Object.assign(req.body, {[req.file.fieldname]: req.file})
+        }
+        if (req.files) {
+            Object.assign(req.body, req.files.reduce((init, file) => {
+                init[file.fieldname] = file;
+                return init;
+            }));
+        }
         switch (req.method) {
             case 'GET':
             case 'DELETE':

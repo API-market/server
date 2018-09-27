@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     const CommunitiesCommunityUsers = sequelize.define('communityUsers', {
         community_id: {
             type: DataTypes.INTEGER,
+            primaryKey: true,
         },
         user_id: {
             type: DataTypes.INTEGER,

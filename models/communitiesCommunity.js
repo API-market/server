@@ -1,4 +1,5 @@
 'use strict';
+const {UploadS3Service} = require('lumeos_services');
 
 module.exports = (sequelize, DataTypes) => {
     const CommunitiesCommunity = sequelize.define('community', {
@@ -23,7 +24,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING
         },
         image: {
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            get: function () {
+                return this.getDataValue('image') && UploadS3Service.getImage(this.getDataValue('image'));
+            }
         },
         creator_id: {
             type: DataTypes.INTEGER,
@@ -35,7 +39,18 @@ module.exports = (sequelize, DataTypes) => {
     });
     CommunitiesCommunity.associate = (models) => {
         CommunitiesCommunity.belongsTo(models.users, {foreignKey: 'creator_id'});
-        CommunitiesCommunity.belongsTo(models.countParticipantView, {foreignKey: 'id', as: 'members'})
+        CommunitiesCommunity.belongsTo(models.countParticipantView, {foreignKey: 'id', as: 'members'});
+    };
+    CommunitiesCommunity.formatter = (models, _) => {
+        CommunitiesCommunity.formatData = (data) => {
+            return _.pick(data, ['name', 'description', 'creator_id']);
+        };
+        CommunitiesCommunity.formatResponse = (data) => {
+            if (data instanceof Array) {
+                return data.map(d => _.omit(d.toJSON(), ['updated_at']));
+            }
+            return _.omit(data.toJSON(), ['updated_at']);
+        };
     };
     return CommunitiesCommunity;
 };
