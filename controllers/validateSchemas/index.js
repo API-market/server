@@ -1,0 +1,1 @@
+exports.communityValidate = require('./community');

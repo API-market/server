@@ -44,6 +44,24 @@ class UploadS3Service {
     }
 
     /**
+     *
+     * @param file
+     * @returns {{Bucket: string | undefined | string | *, Delete: {Objects: *[]}}}
+     */
+    formatDataForDelete(file) {
+        return {
+            Bucket: this.bucketName,
+            Delete: {
+                Objects: [
+                    {
+                        Key: file
+                    }
+                ],
+            },
+        };
+    }
+
+    /**
      * Upload file to S3
      * @param file
      * @param dir
@@ -55,6 +73,18 @@ class UploadS3Service {
         return new Promise((resolve, reject) => {
             const data = this.formatData(file, dir);
             return this.bucket.putObject(data, (error, result) => {
+                if (error) {
+                    reject(error);
+                }
+                resolve(Object.assign(data, {bucket: this.bucketName, file: data.Key}, {S3: result}));
+            });
+        });
+    }
+
+    delete(file) {
+        return new Promise((resolve, reject) => {
+            const data = this.formatDataForDelete(file);
+            return this.bucket.deleteObjects(data, (error, result) => {
                 if (error) {
                     reject(error);
                 }

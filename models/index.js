@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const _ = require('lodash');
 const path = require('path');
 const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
@@ -29,6 +30,9 @@ fs
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
     db[modelName].associate(db);
+  }
+  if (db[modelName].formatter) {
+    db[modelName].formatter(db, _);
   }
 });
 
