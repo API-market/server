@@ -51,7 +51,7 @@ class RequestValidatorMiddleware {
         switch (req.method) {
             case 'GET':
             case 'DELETE':
-                return req.query || {};
+                return Object.assign(req.query, req.params) || {};
             case 'POST':
             case 'PUT':
             case 'PATCH':

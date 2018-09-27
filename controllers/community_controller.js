@@ -1,18 +1,19 @@
 const {community, users, profileImages, countParticipantView, communityUsers, sequelize} = require('lumeos_models');
+const {model} = require('lumeos_utils');
 const {UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 
 class CommunityController {
 
     list(req, res, next) {
-        let order = [];
+        let order = null;
         if (req.query) {
             const {createdAt, name} = req.query;
-            if (createdAt) {
-                order.push(['created_at', createdAt]);
+            if (createdAt && !name) {
+                order = [['created_at', createdAt]];
             }
-            if (name) {
-                order.push(['name', name]);
+            if (name && !createdAt) {
+                order = [['name', name]];
             }
         }
 
@@ -30,7 +31,7 @@ class CommunityController {
                 as: 'members',
                 attributes: ['count']
             }],
-            order
+            order: order || [['id', 'desc']]
         })
             .then((data) => {
                 res.sendResponse(community.formatResponse(data));
@@ -107,6 +108,48 @@ class CommunityController {
                         });
                 });
         })
+            .catch(next);
+    }
+
+    joinToCommunity(req, res, next) {
+        return community.findById(req.params.id)
+            .then((communityEntity) => {
+                if (!communityEntity) {
+                    throw errors.notFound('Community not exists');
+                }
+                if (communityEntity.creator_id === +req.auth.user_id) {
+                    throw errors.bedRequest('You already joined');
+                }
+                return communityUsers.create(model.formattingValue(Object.assign(req.params, req.auth), [], {id: 'community_id'}))
+                    .then((communityUsersEntity) => {
+                        if (!communityUsersEntity) {
+                            throw errors.bedRequest();
+                        }
+                        res.sendResponse();
+                    });
+            })
+            .catch(next);
+    }
+
+    unJoinFromCommunity(req, res, next) {
+        return community.findById(req.params.id)
+            .then((communityEntity) => {
+                if (!communityEntity) {
+                    throw errors.notFound('Community not exists');
+                }
+                if (communityEntity.creator_id === +req.auth.user_id) {
+                    throw errors.bedRequest('Can\'t unjoined because you admin');
+                }
+                return communityUsers.destroy({
+                    where: model.formattingValue(Object.assign(req.body, req.auth), [], {id: 'community_id'})
+                })
+                    .then((communityUsersEntity) => {
+                        if (!communityUsersEntity) {
+                            throw errors.notFound('You unjoin from this community');
+                        }
+                        res.sendResponse();
+                    });
+            })
             .catch(next);
     }
 }

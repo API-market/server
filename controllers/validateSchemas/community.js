@@ -66,6 +66,18 @@ class CommunityValidate {
                     }),
             }));
     }
+
+    get joinFromCommunity() {
+        return requestValidator(Joi.object().keys({
+            id: Joi.number().required(),
+        }))
+    }
+
+    get unJoinFromCommunity() {
+        return requestValidator(Joi.object().keys({
+            id: Joi.number().required(),
+        }))
+    }
 }
 
 module.exports = new CommunityValidate();

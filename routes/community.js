@@ -12,5 +12,13 @@ router.route('/community/:id?')
     .post([UploadService.middleware('image'), communityValidate.create], communityController.create)
     .put([UploadService.middleware('image'), communityValidate.update], communityController.update);
 
+router.route('/community/:id/join')
+    .all(auth)
+    .post(communityValidate.joinFromCommunity, communityController.joinToCommunity);
+
+router.route('/community/:id/unjoin')
+    .all(auth)
+    .post(communityValidate.unJoinFromCommunity, communityController.unJoinFromCommunity);
+
 
 module.exports = router;
