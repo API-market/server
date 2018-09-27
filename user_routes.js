@@ -219,9 +219,9 @@ userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
   User.findById(userId, {
     attributes: STANDARD_USER_ATTR,
-    include: [
-      {association: User.Address, as: 'address'}
-    ],
+    // include: [
+    //   {association: User.Address, as: 'address'}
+    // ],
   }).then(user => {
     if (user) {
       if (req.query["isFollowerOf"]) {
