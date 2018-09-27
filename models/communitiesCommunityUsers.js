@@ -5,9 +5,11 @@ module.exports = (sequelize, DataTypes) => {
         community_id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
+            allowNull: false,
         },
         user_id: {
             type: DataTypes.INTEGER,
+            allowNull: false,
         }
     }, {
         schema: 'communities',
