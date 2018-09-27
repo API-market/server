@@ -163,9 +163,9 @@ userRouter.post('/users', [
   sequelize.sync()
     .then(() => {
       User.create(req.body, {
-        include: [{
-          association: User.Address
-        }]
+        // include: [{
+        //   association: User.Address
+        // }]
       })
         .then(user => {
             return Tokens.upsert({
