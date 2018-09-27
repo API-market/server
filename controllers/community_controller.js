@@ -1,5 +1,6 @@
 const {community, users, profileImages, countParticipantView, communityUsers, sequelize} = require('lumeos_models');
 const {UploadS3Service} = require('lumeos_services');
+const {errors} = require('lumeos_utils');
 
 class CommunityController {
 
@@ -53,11 +54,14 @@ class CommunityController {
                     return UploadS3Service
                         .upload(req.body.image, 'community')
                         .then(({file}) => {
-                            return communityNew
-                                .update({image: file}, {transaction})
-                                .then((communityUpdated) => {
-                                    res.sendResponse(community.formatResponse(communityUpdated));
-                                });
+                            if (file) {
+                                return communityNew
+                                    .update({image: file}, {transaction})
+                                    .then((communityUpdated) => {
+                                        res.sendResponse(community.formatResponse(communityUpdated));
+                                    });
+                            }
+                            res.sendResponse(community.formatResponse(communityNew));
                         });
                 });
         })
@@ -66,25 +70,40 @@ class CommunityController {
 
     update(req, res, next) {
         return sequelize.transaction((transaction) => {
-            return community.update(community.formatData(req.body), {transaction})
-                .then((communityUpdated) => {
-                    return UploadS3Service
-                        .upload(req.body.image, 'community')
-                        .then(({file}) => {
-                            return communityUpdated
-                                .update({image: file}, {transaction})
-                                .then((communityUpdated) => {
-                                    return Object.assign(communityUpdated, {
-                                        old_image: communityUpdated._previousDataValues.image
-                                    });
+            return community.findById(req.body.id)
+                .then((communityEntity) => {
+                    if (!communityEntity) {
+                        throw errors.notFound();
+                    }
+                    if (req.auth.user_id !== communityEntity.creator_id) {
+                        throw errors.forbidden('This community not yours');
+                    }
+                    let oldImage = communityEntity.image;
+                    return communityEntity.update(community.formatData(req.body), {transaction})
+                        .then((communityUpdated) => {
+                            return UploadS3Service
+                                .upload(req.body.image, 'community')
+                                .then(({file}) => {
+                                    if (!file) {
+                                        oldImage = null;
+                                        return communityUpdated;
+                                    }
+                                    return communityUpdated
+                                        .update({image: file}, {transaction})
+                                        .then((communityUpdated) => {
+                                            return communityUpdated;
+                                        });
                                 });
-                        });
-                })
-                .then((communityUpdated) => {
-                    return UploadS3Service
-                        .delete(communityUpdated.old_image)
-                        .then(() => {
-                            return res.sendResponse(community.formatResponse(communityUpdated));
+                        })
+                        .then((communityUpdated) => {
+                            if (!oldImage)
+                                return res.sendResponse(community.formatResponse(communityUpdated));
+
+                            return UploadS3Service
+                                .delete(oldImage)
+                                .then(() => {
+                                    return res.sendResponse(community.formatResponse(communityUpdated));
+                                });
                         });
                 });
         })

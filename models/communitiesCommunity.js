@@ -49,7 +49,10 @@ module.exports = (sequelize, DataTypes) => {
             if (data instanceof Array) {
                 return data.map(d => _.omit(d.toJSON(), ['updated_at']));
             }
-            return _.omit(data.toJSON(), ['updated_at']);
+            if (data.toJSON) {
+                data = data.toJSON()
+            }
+            return _.omit(data, ['updated_at']);
         };
     };
     return CommunitiesCommunity;

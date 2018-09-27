@@ -6,7 +6,7 @@ const {communityValidate} = require('../controllers/validateSchemas');
 
 const router = express.Router();
 
-router.route('/community')
+router.route('/community/:id?')
     .all(auth)
     .get(communityController.list)
     .post([UploadService.middleware('image'), communityValidate.create], communityController.create)

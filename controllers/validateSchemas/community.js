@@ -23,7 +23,13 @@ class CommunityValidate {
                         buffer: Joi.binary().required(),
                         size: Joi.number().required(),
                     })
-                    .required(),
+                    .options({
+                        language: {
+                            object: {
+                                base: 'must be image file'
+                            }
+                        }
+                    }),
             }));
     }
 
@@ -42,6 +48,7 @@ class CommunityValidate {
                     .required(),
                 image: Joi
                     .object()
+                    .label('"image" must be file')
                     .keys({
                         fieldname: Joi.string().required(),
                         originalname: Joi.string().required(),
@@ -50,7 +57,13 @@ class CommunityValidate {
                         buffer: Joi.binary().required(),
                         size: Joi.number().required(),
                     })
-                    .required(),
+                    .options({
+                        language: {
+                            object: {
+                                base: 'must be image file'
+                            }
+                        }
+                    }),
             }));
     }
 }
