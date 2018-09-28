@@ -100,7 +100,7 @@ class CommunityController {
     }
 
     joinToCommunity(req, res, next) {
-        return community.findById(req.params.id)
+        return community.findById(req.params.community_id)
             .then((communityEntity) => {
                 if (!communityEntity) {
                     throw errors.notFound('Community not exists');
@@ -120,7 +120,7 @@ class CommunityController {
     }
 
     unJoinFromCommunity(req, res, next) {
-        return community.findById(req.params.id)
+        return community.findById(req.params.community_id)
             .then((communityEntity) => {
                 if (!communityEntity) {
                     throw errors.notFound('Community not exists');
@@ -129,7 +129,7 @@ class CommunityController {
                     throw errors.bedRequest('Can\'t unjoined because you admin');
                 }
                 return communityUsers.destroy({
-                    where: model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat'], {id: 'community_id'})
+                    where: model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat'])
                 })
                     .then((communityUsersEntity) => {
                         if (!communityUsersEntity) {

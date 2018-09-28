@@ -80,13 +80,13 @@ class CommunityValidate {
 
     get joinFromCommunity() {
         return requestValidator(Joi.object().keys({
-            id: Joi.number().integer().required(),
+            community_id: Joi.number().integer().required(),
         }))
     }
 
     get unJoinFromCommunity() {
         return requestValidator(Joi.object().keys({
-            id: Joi.number().integer().required(),
+            community_id: Joi.number().integer().required(),
         }))
     }
 }

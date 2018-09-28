@@ -55,7 +55,7 @@ class RequestValidatorMiddleware {
             case 'POST':
             case 'PUT':
             case 'PATCH':
-                return req.body || {};
+                return Object.assign(req.body, req.params) || {};
             default :
                 return req.body || {};
         }
