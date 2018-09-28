@@ -397,6 +397,7 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                      * create notifications
                      */
                     User.findById(parseInt(poll.creator_id)).then((ownerPoll) => {
+                      console.log('ownerPoll \n\n', ownerPoll);
                         events.emit(events.constants.sendResultForPoll, {
                             all_notifications: ownerPoll.all_notifications,
                             target_user_id: poll.creator_id,
