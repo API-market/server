@@ -164,13 +164,13 @@ module.exports = {
             }).then(() => {
                 return migration.dropView(queryInterface, constansts.countParticipant, null, {schema: schemaName});
             }).then(() => {
-                return queryInterface.dropTable('polls_answers', {});
+                return queryInterface.dropTable('polls_answers', {schema: schemaName});
             }).then(() => {
-                return queryInterface.dropTable('polls', {});
+                return queryInterface.dropTable('polls', {schema: schemaName});
             }).then(() => {
-                return queryInterface.dropTable('community_users', {});
+                return queryInterface.dropTable('community_users', {schema: schemaName});
             }).then(() => {
-                return queryInterface.dropTable('community', {});
+                return queryInterface.dropTable('community', {schema: schemaName});
             }).then(() => {
                 queryInterface.dropSchema(schemaName)
             }).catch(console.log);

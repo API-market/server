@@ -36,7 +36,7 @@ class Events extends EventEmitter {
     sendAnswerForPoll({all_notifications, target_user_id, from_user_id, not_answers_notifications}) {
         if (
             all_notifications ||
-            (all_notifications && !not_answers_notifications)
+            (!all_notifications && not_answers_notifications)
         ) {
             Notifications.create({
                 target_user_id,
