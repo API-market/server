@@ -1,4 +1,4 @@
-const {community, users, profileImages, countParticipantView, communityUsers, sequelize} = require('lumeos_models');
+const {community, users, profileImages, countParticipantView, communityCountAnswersView , communityUsers, sequelize} = require('lumeos_models');
 const {model} = require('lumeos_utils');
 const {UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
@@ -8,31 +8,19 @@ class CommunityController {
     list(req, res, next) {
         let order = null;
         if (req.query) {
-            const {createdAt, name} = req.query;
+            const {createdAt, name, rank} = req.query;
             if (createdAt && !name) {
                 order = [['created_at', createdAt]];
             }
             if (name && !createdAt) {
                 order = [['name', name]];
             }
+            if (rank) {
+                order = [['rank', name]];
+            }
         }
 
-        return community.findAll({
-            attributes: Object.keys(community.attributes).filter(e => e !== 'creator_id'),
-            include: [{
-                model: users,
-                include: [{
-                    model: profileImages,
-                    attributes: ['image']
-                }],
-                attributes: ['id', 'firstName', 'lastName']
-            }, {
-                model: countParticipantView,
-                as: 'members',
-                attributes: ['count']
-            }],
-            order: order || [['id', 'desc']]
-        })
+        return community.getList({}, {order})
             .then((data) => {
                 res.sendResponse(community.formatResponse(data));
             })
@@ -120,7 +108,7 @@ class CommunityController {
                 if (communityEntity.creator_id === +req.auth.user_id) {
                     throw errors.bedRequest('You already joined');
                 }
-                return communityUsers.create(model.formattingValue(Object.assign(req.params, req.auth), [], {id: 'community_id'}))
+                return communityUsers.create(model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat'], {id: 'community_id'}))
                     .then((communityUsersEntity) => {
                         if (!communityUsersEntity) {
                             throw errors.bedRequest();
@@ -141,7 +129,7 @@ class CommunityController {
                     throw errors.bedRequest('Can\'t unjoined because you admin');
                 }
                 return communityUsers.destroy({
-                    where: model.formattingValue(Object.assign(req.body, req.auth), [], {id: 'community_id'})
+                    where: model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat'], {id: 'community_id'})
                 })
                     .then((communityUsersEntity) => {
                         if (!communityUsersEntity) {

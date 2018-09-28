@@ -38,7 +38,7 @@ class RequestValidatorMiddleware {
                     ];
                 }
                 error.errors = [
-                    {message: error.parent.detail.replace(/[\(\)]/g, '')}
+                    {message: (error.parent.detail || error.parent.message).replace(/[\(\)]/g, '')}
                 ];
             }
         }

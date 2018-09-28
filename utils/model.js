@@ -1,3 +1,5 @@
+const format = require('lumeos_utils/format');
+
 class ModelUtils {
 
     _formattingField(field) {
@@ -15,7 +17,7 @@ class ModelUtils {
                 return init;
             }
 
-            init[this._formattingField(field)] = data[field];
+            init[this._formattingField(field)] = parseInt(data[field]) || data[field];
 
             if (Object.keys(replace)) {
                 Object.keys(replace).forEach((prop) => {
@@ -23,7 +25,7 @@ class ModelUtils {
                         throw new Error(`Property: ${prop} not found`);
                     }
                     if (data[prop]) {
-                        init[this._formattingField(replace[prop])] = data[prop];
+                        init[this._formattingField(replace[prop])] = parseInt(data[prop]) || data[prop];
                     }
                     delete init[this._formattingField(prop)];
                 });

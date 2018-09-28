@@ -15,11 +15,11 @@ module.exports = {
                     },
                     created_at: {
                         type: Sequelize.DATE,
-                        defaultValue: new Date()
+                        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP(3)'),
                     },
                     updated_at: {
                         type: Sequelize.DATE,
-                        defaultValue: new Date()
+                        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP(3)'),
                     },
                     polls_at: {
                         type: Sequelize.DATE
@@ -87,11 +87,11 @@ module.exports = {
                     },
                     created_at: {
                         type: Sequelize.DATE,
-                        defaultValue: new Date()
+                        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP(3)'),
                     },
                     updated_at: {
                         type: Sequelize.DATE,
-                        defaultValue: new Date()
+                        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP(3)'),
                     },
                     question: Sequelize.STRING,
                     image: {

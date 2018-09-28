@@ -32,12 +32,12 @@ class RequestValidatorMiddleware {
 
     getRequestBody(req) {
         if (req.params) {
-            Object.assign(req.body, Object.keys(req.params).reduce((init, value) => {
+            req.params = Object.keys(req.params).reduce((init, value) => {
                 if (req.params[value]) {
                     init[value] = req.params[value];
                 }
                 return init;
-            }, {}))
+            }, {})
         }
         if (req.file) {
             Object.assign(req.body, {[req.file.fieldname]: req.file})

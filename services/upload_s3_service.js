@@ -7,7 +7,7 @@ class UploadS3Service {
 
     constructor() {
         this.utils = {
-            format: new Format()
+            format: Format
         };
 
         AWS.config.update({

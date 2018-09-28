@@ -22,7 +22,7 @@ class ErrorsUtils extends Error {
     }
 
     bedRequest(message = '') {
-        this.message = 'Bed request';
+        this.message = 'Bad request';
         this.status = 400;
         this.errors =  message instanceof String && [{message}] || [].concat(message);
 

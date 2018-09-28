@@ -34,6 +34,13 @@ Object.keys(db).forEach(modelName => {
   if (db[modelName].formatter) {
     db[modelName].formatter(db, _);
   }
+  if (db[modelName].methods) {
+      /**
+       * @param db Sequelize
+       * @param _ lodash
+       */
+    db[modelName].methods(db, _);
+  }
 });
 
 db.sequelize = sequelize;

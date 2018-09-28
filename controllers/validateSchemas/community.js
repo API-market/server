@@ -3,6 +3,17 @@ const {requestValidator} = require('lumeos_middlewares');
 
 class CommunityValidate {
 
+    get list() {
+        return requestValidator(Joi
+            .object()
+            .keys({
+                name: Joi.string().valid(['asc', 'desc']),
+                createdAt: Joi.string().valid(['asc', 'desc']),
+                rank: Joi.string().valid(['asc', 'desc']),
+            })
+        );
+    }
+
     get create() {
         return requestValidator(Joi
             .object()
@@ -69,13 +80,13 @@ class CommunityValidate {
 
     get joinFromCommunity() {
         return requestValidator(Joi.object().keys({
-            id: Joi.number().required(),
+            id: Joi.number().integer().required(),
         }))
     }
 
     get unJoinFromCommunity() {
         return requestValidator(Joi.object().keys({
-            id: Joi.number().required(),
+            id: Joi.number().integer().required(),
         }))
     }
 }
