@@ -39,7 +39,7 @@ Object.keys(db).forEach(modelName => {
        * @param db Sequelize
        * @param _ lodash
        */
-    db[modelName].methods(db, _);
+    db[modelName].methods(db, _, sequelize);
   }
 });
 

@@ -1,7 +1,6 @@
 'use strict';
+
 const {UploadS3Service} = require('lumeos_services');
-// const {users, profileImages, countParticipantView, communityCountAnswersView} = require('lumeos_models');
-const users = require('./users');
 
 module.exports = (sequelize, DataTypes) => {
     const CommunitiesCommunity = sequelize.define('community', {
@@ -12,6 +11,9 @@ module.exports = (sequelize, DataTypes) => {
         },
         created_at: {
             type: DataTypes.DATE
+        },
+        isJoin: {
+            type: DataTypes.VIRTUAL
         },
         updated_at: {
             type: DataTypes.DATE
@@ -44,22 +46,27 @@ module.exports = (sequelize, DataTypes) => {
         CommunitiesCommunity.belongsTo(models.countParticipantView, {foreignKey: 'id', as: 'members'});
         CommunitiesCommunity.belongsTo(models.communityCountAnswersView, {foreignKey: 'id', as: 'answers'});
     };
-    CommunitiesCommunity.methods = (models) => {
-
-        CommunitiesCommunity.getList = (query, {order}) => {
+    CommunitiesCommunity.methods = (models, _, db) => {
+        CommunitiesCommunity.getList = (query, {order, user_id}) => {
             return CommunitiesCommunity.findAll({
                 attributes: Object.keys(CommunitiesCommunity.attributes)
                     .filter(e => e !== 'creator_id')
-                    .concat([
-                        sequelize.literal('(SELECT 1+ 2) AS test')
-                    ]),
-                include: [{
-                    model: models.users,
+                    .concat([[
+                        sequelize.literal(`(
+                            SELECT CASE WHEN count(c_cu.community_id) > 0 THEN TRUE ELSE FALSE END
+                            FROM communities.community_users AS c_cu
+                            WHERE c_cu.user_id = ${user_id} 
+                            AND community.id = c_cu.community_id
+                            )`), 'is_joined'
+                    ]]),
+                include: [
+                    {
+                        model: models.users,
                         include: [{
                             model: models.profileImages,
                             attributes: ['image']
                         }],
-                    attributes: ['id', 'firstName', 'lastName']
+                        attributes: ['id', 'firstName', 'lastName']
                     }, {
                         model: models.countParticipantView,
                         as: 'members',
@@ -68,10 +75,11 @@ module.exports = (sequelize, DataTypes) => {
                         model: models.communityCountAnswersView,
                         as: 'answers',
                         attributes: ['count_answers', 'rank']
-                }],
+                    }
+                ],
                 order: order || [['id', 'desc']]
-            })
-        }
+            });
+        };
     };
     CommunitiesCommunity.formatter = (models, _) => {
         CommunitiesCommunity.formatData = (data) => {
@@ -82,7 +90,7 @@ module.exports = (sequelize, DataTypes) => {
                 return data.map(d => _.omit(d.toJSON(), ['updated_at']));
             }
             if (data.toJSON) {
-                data = data.toJSON()
+                data = data.toJSON();
             }
             return _.omit(data, ['updated_at']);
         };

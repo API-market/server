@@ -2,6 +2,8 @@ const {community, users, profileImages, countParticipantView, communityCountAnsw
 const {model} = require('lumeos_utils');
 const {UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
+const {dbInstance} = require('../db_setup');
+
 
 class CommunityController {
 
@@ -19,8 +21,9 @@ class CommunityController {
                 order = [['rank', name]];
             }
         }
+        const {user_id} = req.auth;
 
-        return community.getList({}, {order})
+        return community.getList({}, {order, user_id})
             .then((data) => {
                 res.sendResponse(community.formatResponse(data));
             })
