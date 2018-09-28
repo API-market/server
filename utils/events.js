@@ -66,6 +66,7 @@ class Events extends EventEmitter {
     }
 
     sendResultForPoll({all_notifications, not_answers_notifications, target_user_id, from_user_id}) {
+        console.log({all_notifications, not_answers_notifications, target_user_id, from_user_id}, 'sendResultForPoll');
         if (
             all_notifications ||
             (all_notifications && !not_answers_notifications)
