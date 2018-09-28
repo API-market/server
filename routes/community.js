@@ -1,10 +1,16 @@
 const express = require('express');
 const {auth} = require('lumeos_middlewares');
 const {UploadService} = require('lumeos_services');
-const {communityController} = require('lumeos_controllers');
-const {communityValidate} = require('../controllers/validateSchemas');
+const {communityController, communityPollsController} = require('lumeos_controllers');
+const {communityValidate, communityPollsValidate} = require('../controllers/validateSchemas');
 
 const router = express.Router();
+
+router.route('/community/:community_id/polls/:poll_id?')
+    .all(auth)
+    .get(communityPollsValidate.list, communityPollsController.list)
+    .post([UploadService.middleware('image'), communityPollsValidate.create], communityPollsController.create)
+    .put([UploadService.middleware('image'), communityPollsValidate.update], communityPollsController.update);
 
 router.route('/community/:id?')
     .all(auth)
