@@ -902,11 +902,11 @@ userRouter
             return res.status(422).json({errors: errors.array()});
         }
         const {phone, phoneCountryCode} = req.body;
-        User.findOne({where: model.formattingValue({
+        User.findOne({where: {
                 id: req.auth.user_id,
                 phone: phone,
-                phoneCountryCode: phoneCountryCode,
-            }, [], {phoneCountryCode: 'phoneCode'})})
+                phone_code: phoneCountryCode,
+            }})
             .then((user) => {
                 if (!user) {
                     throw new Error('User not found');
