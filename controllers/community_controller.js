@@ -108,7 +108,7 @@ class CommunityController {
                 if (communityEntity.creator_id === +req.auth.user_id) {
                     throw errors.bedRequest('You already joined');
                 }
-                return communityUsers.create(model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat'], {id: 'community_id'}))
+                return communityUsers.create(model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat']))
                     .then((communityUsersEntity) => {
                         if (!communityUsersEntity) {
                             throw errors.bedRequest();
