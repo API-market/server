@@ -323,14 +323,14 @@ pollRouter.post('/polls/:poll_id', [
                     /**
                      * create notification
                      */
-                    // User.findById(parseInt(poll.creator_id)).then((user) => {
+                    User.findById(parseInt(poll.creator_id)).then((currentUser) => {
                         events.emit(events.constants.sendAnswerForPoll, {
-                            all_notifications: user.all_notifications,
+                            all_notifications: currentUser.all_notifications,
                             target_user_id: parseInt(poll.creator_id),
                             from_user_id: parseInt(user.id),
                             nickname: `${user.firstName} ${user.lastName}`
                         });
-                    // });
+                    });
                     //updatePollPrice(poll); // TODO: Uncomment once we decide to charge people
                     res.status(204).json();
                   }).catch(error => {
