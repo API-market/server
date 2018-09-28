@@ -396,14 +396,14 @@ pollRouter.post('/polls/:poll_id/results', function (req, res) {
                     /**
                      * create notifications
                      */
-                    // User.findById(parseInt(poll.creator_id)).then((user) => {
+                    User.findById(parseInt(poll.creator_id)).then((ownerPoll) => {
                         events.emit(events.constants.sendResultForPoll, {
-                            all_notifications: user.all_notifications,
+                            all_notifications: ownerPoll.all_notifications,
                             target_user_id: poll.creator_id,
                             from_user_id: user.id,
                             nickname: `${user.firstName} ${user.lastName}`
                         })
-                    // });
+                    });
                     /* Thats how we actually should do it. Instead of giving for answers.
                     leave for later
                     Result.findAll({
