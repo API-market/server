@@ -26,8 +26,9 @@ const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const {events, token, model} = require('lumeos_utils');
 const {mailService, UploadService, MessageService} = require('lumeos_services');
+const {errors} = require('lumeos_utils');
+const {usersValidate} = require('lumeos_controllers/validateSchemas');
 const {omit} = require('lodash');
-
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -138,8 +139,18 @@ userRouter.post('/login', [
   })
 });
 
-userRouter.post('/logout', function (req, res) {
-  res.status(501).json();
+userRouter.post('/logout', usersValidate.logout, function (req, res, next) {
+    Tokens.destroy({
+        where: {
+            user_id: req.auth.user_id,
+            token: req.body.token_phone,
+        },
+    }).then((data) => {
+        if (!data) {
+            throw errors.notFound();
+        }
+        res.status(205).json();
+    }).catch(next)
 });
 
 userRouter.post('/users', [
