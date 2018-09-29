@@ -11,6 +11,10 @@ const constants = {
     sendFolloweeFromFollowerCallback: 'event:send-followee-from-follower-callback',
     sendNotAnswersPoll: 'event:send-not-answers-poll',
     sendNotAnswersPollCallback: 'event:send-not-answers-poll-callback',
+    sendCustomNotifications: 'event:send-custom-notifications',
+    sendCustomNotificationsCallback: 'event:send-custom-notifications-callback',
+    sendCustomNotificationsPush: 'event:send-custom-notifications-push',
+    sendCustomNotificationsPushCallback: 'event:send-custom-notifications-push-callback',
 };
 
 class Events extends EventEmitter {
@@ -25,6 +29,8 @@ class Events extends EventEmitter {
         this.on(constants.sendResultForPoll, this.sendResultForPoll.bind(this));
         this.on(constants.sendFolloweeFromFollower, this.sendFolloweeFromFollower.bind(this));
         this.on(constants.sendNotAnswersPoll, this.sendNotAnswersPoll.bind(this));
+        this.on(constants.sendCustomNotifications, this.sendCustomNotifications.bind(this));
+        this.on(constants.sendCustomNotificationsPush, this.sendCustomNotificationsPush.bind(this));
     }
 
     sendAnswerForPoll({all_notifications, target_user_id, from_user_id, not_answers_notifications}) {
@@ -38,7 +44,7 @@ class Events extends EventEmitter {
                 description: ` answered your question`,
                 type: constants.sendAnswerForPoll
             }).then((data) => {
-                this.emit(this.constants.sendAnswerForPollCallback, data);
+                this.emit(this.constants.sendAnswerForPollCallback, null, data);
             }).catch((err) => {
                 console.log(`[${constants.sendAnswerForPoll}]`, err);
                 this.emit(this.constants.sendAnswerForPollCallback, err);
@@ -69,7 +75,7 @@ class Events extends EventEmitter {
                 description: ' purchased your poll results',
                 type: constants.sendResultForPoll
             }).then((data) => {
-                this.emit(this.constants.sendResultForPollCallback, data);
+                this.emit(this.constants.sendResultForPollCallback, null, data);
             }).catch((err) => {
                 console.log(`[${constants.sendResultForPoll}]`, err);
                 this.emit(this.constants.sendResultForPollCallback, err);
@@ -88,10 +94,23 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendFolloweeFromFollower({all_notifications, not_answers_notifications, nickname, target_user_id, from_user_id}) {
+    sendFolloweeFromFollower(params) {
+        const {
+            all_notifications,
+            not_answers_notifications,
+            follows_you_notifications,
+            target_user_id,
+            from_user_id
+        } = params;
+        console.log(`
+            ${all_notifications}
+            ${(all_notifications && !not_answers_notifications)}
+            ${(!all_notifications && follows_you_notifications)}
+        `);
         if (
-            all_notifications ||
-            (all_notifications && !not_answers_notifications)
+            all_notifications
+            || (all_notifications && !not_answers_notifications)
+            || (!all_notifications && follows_you_notifications)
         ) {
             Notifications.create({
                 target_user_id,
@@ -99,7 +118,7 @@ class Events extends EventEmitter {
                 description: ' is following you',
                 type: constants.sendFolloweeFromFollower
             }).then((data) => {
-                this.emit(this.constants.sendFolloweeFromFollowerCallback, data);
+                this.emit(this.constants.sendFolloweeFromFollowerCallback, null, data);
             }).catch((err) => {
                 console.log(`[${constants.sendFolloweeFromFollower}]`, err);
                 this.emit(this.constants.sendFolloweeFromFollowerCallback, err);
@@ -119,25 +138,52 @@ class Events extends EventEmitter {
         // });
     }
 
-    sendNotAnswersPoll({count, to, not_answers_notifications, user_id}) {
+    sendNotAnswersPoll({count, to, not_answers_notifications, user_id, count_notifications: badge}) {
         const self = this;
-        console.log({count, to, not_answers_notifications, user_id});
         Promise.all([
             Notifications.create({
                 target_user_id: user_id,
                 from_user_id: user_id,
-                description: `You have "${count}" not answer poll.`,
+                description: `You can earn more Lumeos tokens today as you have ${count} unanswered polls`,
                 type: constants.sendNotAnswersPoll
             }),
-            self.pushService.sendNotAnswersPoll(to, {count})
+            self.pushService.sendNotAnswersPoll(to, {count, badge})
         ]).then((data) => {
+            data.map(e => console.log(JSON.stringify(e)));
             self.emit(self.constants.sendNotAnswersPollCallback, null, data);
         }).catch((error) => {
             if (Object.keys(error).length) {
-                console.log('[event-error] ', JSON.stringify(error));
+                console.log('[event-error] ', `\n${JSON.stringify(error)}\n`);
                 self.emit(this.constants.sendNotAnswersPollCallback, error, null);
             }
         });
+    }
+
+    sendCustomNotifications({user_id, from_user_id, title, description}) {
+        Notifications.create({
+            target_user_id: user_id,
+            from_user_id: from_user_id,
+            description,
+            type: constants.sendCustomNotifications
+        })
+        .then((data) => {
+            this.emit(this.constants.sendCustomNotificationsCallback, null, data);
+        })
+        .catch((error) => {
+            console.log('[event-error] ', error);
+            this.emit(this.constants.sendCustomNotificationsCallback, error, null);
+        });
+    }
+
+    sendCustomNotificationsPush({to, title, body, count_notifications: badge}) {
+        this.pushService.sendCustomNotifications(to, {title, body, badge})
+            .then((data) => {
+                this.emit(this.constants.sendCustomNotificationsPushCallback, null, data);
+            })
+            .catch((error) => {
+                console.log('[event-error] ', error);
+                this.emit(this.constants.sendCustomNotificationsPushCallback, error, null);
+            });
     }
 }
 

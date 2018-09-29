@@ -15,6 +15,12 @@ notificationsRouter
      * Get all notifications
      */
     .get(function (req, res) {
+        /**
+         * clear count_notifications notifications
+         */
+        if (req.query.clearNotifications) {
+            User.clearNotifications([req.auth.user_id])
+        }
         Notifications.findAll({
             where: {
                 target_user_id: parseInt(req.auth.user_id)
@@ -48,7 +54,7 @@ notificationsRouter
                     res.status(500).json({error: 'Error', message: 'Some error.'});
                 });
             }
-            res.status(404).json({error: 'Not Found', message: 'Notifications not found'})
+            res.status(404).json({error: 'Not Found', message: 'Notifications not found'});
         }).catch((err) => {
             console.log(err);
             res.status(500).json({error: 'Error', message: 'Some error.'});
@@ -58,27 +64,34 @@ notificationsRouter
      * Remove notification by id
      */
     .delete([
-        check('notification_id').exists().withMessage("Field 'notification_id' must be not empty."),
+        check('notification_id').optional().isNumeric().withMessage('Field \'notification_id\' must be not empty.'),
     ], function (req, res) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(422).json({errors: errors.array()});
             }
-            Notifications.destroy({
-                where:  {
-                    target_user_id: req.auth.user_id,
+            let whereQuery = {
+                target_user_id: req.auth.user_id,
+            };
+            if (req.params.notification_id) {
+                Object.assign(whereQuery, {
                     id: req.params.notification_id
-                }
+                });
+            }
+            Notifications.destroy({
+                where: whereQuery
             }).then((data) => {
-                if(!data) {
+                if (!data) {
                     return res.status(404).json({error: 'Not Found', message: 'Notification not found'});
                 }
-                return res.status(204).json({});
-            })
+                return User.clearNotifications(req.auth.user_id).then(() => {
+                    return res.json([]);
+                })
+            });
         } catch (err) {
             console.log(err);
-            res.status(500).json({error: 'Error', message: 'Some error.'})
+            res.status(500).json({error: 'Error', message: 'Some error.'});
         }
     });
 

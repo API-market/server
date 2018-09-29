@@ -31,7 +31,7 @@ class UploadService {
             });
         }
         //TODO if image not required
-        return Promise.resolve({file: ''});
+        return Promise.resolve({file: null});
     }
 
     crop(file) {
@@ -55,13 +55,13 @@ class UploadService {
         Object.assign(this.file, {ext});
         switch (ext) {
             case 'png': {
-                return this.cropInstan.png({compressionLevel: 7});
+                return this.cropInstan.png({compressionLevel: 9});
             }
             case 'jpeg': {
                 return this.cropInstan.jpeg({quality: 80});
             }
             default: {
-                return this.cropInstan.png({compressionLevel: 7});
+                return this.cropInstan.png({compressionLevel: 9});
             }
         }
     }

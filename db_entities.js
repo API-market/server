@@ -28,7 +28,7 @@ function imageFromBase64(dataURI) {
   return Buffer.from(new Uint8Array(array));
 }
 
-const User = sequelize.define('user', {
+const UserBase = sequelize.define('user', {
   eos: Sequelize.STRING,
   firstName: Sequelize.STRING,
   lastName: Sequelize.STRING,
@@ -48,6 +48,7 @@ const User = sequelize.define('user', {
   forgot_token: Sequelize.STRING,
   verify_token: Sequelize.STRING,
   phone: Sequelize.STRING,
+  phone_code: Sequelize.STRING,
   tag_line: Sequelize.STRING,
   dob: Sequelize.STRING,
   gender: Sequelize.STRING,
@@ -59,8 +60,79 @@ const User = sequelize.define('user', {
   answer_count: {type: Sequelize.INTEGER, defaultValue: 0},
   all_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   verify: {type: Sequelize.BOOLEAN, defaultValue: false},
+  verify_phone: {type: Sequelize.BOOLEAN, defaultValue: false},
   not_answers_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
+  follows_you_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
+  custom_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
+  count_notifications: {type: Sequelize.INTEGER},
+}, {
+    hooks: {
+        beforeUpdate(model) {
+            const phonePrev = `${model._previousDataValues.phone_code}${model._previousDataValues.phone}`;
+            const phoneCurrent = `${model.phone_code}${model.phone}`;
+            const verifyPhone = model._previousDataValues.verify_phone;
+            if (phonePrev !== phoneCurrent && verifyPhone) {
+                model.verify_phone = false
+            }
+        }
+    }
 });
+
+class User extends UserBase {
+
+    static incrementPushNotifications(ids) {
+        const field = 'count_notifications';
+        return this.update({ [field]: Sequelize.literal(`${field} + 1`) }, {
+            where: {
+                id: {
+                    [Sequelize.Op.in] : ids
+                },
+                [Sequelize.Op.or]: {
+                    all_notifications: true,
+                    not_answers_notifications: true
+                }
+            }
+        });
+    }
+
+    /**
+     *
+     * @param [ids] array
+     * @returns {*}
+     */
+    static clearNotifications(ids) {
+        const field = 'count_notifications';
+        return this.update({ [field]: 0 }, {
+            where: {
+                id: {
+                    [Sequelize.Op.in] : ids
+                }
+            }
+        });
+    }
+
+    static incrementOnePushNotification(id) {
+        const field = 'count_notifications';
+        return this.findOne({
+            where: {
+                id,
+                [Sequelize.Op.or]: {
+                    all_notifications: true,
+                    not_answers_notifications: true
+                }
+            },
+            attributes: [
+                'id',
+                field
+            ]
+        }).then((user) => {
+            return user.update({ [field]: user[field] + 1 })
+                .then(() => {
+                    return user.getDataValue(field);
+                })
+        });
+    }
+}
 
 const Address = sequelize.define('address', {
   street: Sequelize.STRING,
@@ -93,6 +165,7 @@ const verifyPassword = function (password, hash) {
     return bcrypt.compareSync(password, hash || this.password);
 };
 User.prototype.verifyPassword = verifyPassword;
+
 
 const Poll = sequelize.define('poll', {
   question: Sequelize.STRING,
@@ -181,8 +254,41 @@ const Notifications = sequelize.define('notifications', {
 });
 Notifications.belongsTo(User, {foreignKey: 'from_user_id', join: 'inner'});
 
+const CustomNotifications = sequelize.define('custom_notifications', {
+    id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER
+    },
+    title: Sequelize.STRING,
+    description: Sequelize.TEXT,
+    active: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true
+    },
+    usersId: {
+        type: Sequelize.STRING,
+        get: function () {
+            if (this.getDataValue('usersId')) return JSON.parse(this.getDataValue('usersId'));
+            return [];
+        },
+        set: function (val) {
+            if (typeof val === "string") val = [val];
+            return this.setDataValue('usersId', JSON.stringify(val));
+        }
+    },
+    createdAt: {
+        type: Sequelize.DATE,
+    },
+    updatedAt: {
+        type: Sequelize.DATE,
+    }
+}, {timestamps: true});
+
 module.exports = {
   User: User,
+  CustomNotifications: CustomNotifications,
   Tokens: Tokens,
   Notifications: Notifications,
   Poll: Poll,

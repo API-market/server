@@ -1,0 +1,43 @@
+<table class="table">
+    <h1 class="float-left">List notifications</h1>
+    <div class="float-right pt-2">
+        <a href="/web/notifications/add" class="btn btn-success">Add</a>
+    </div>
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">#</th>
+        <th scope="col">Title</th>
+        <th scope="col">Descriptions</th>
+        <th scope="col">Created</th>
+        <th scope="col">Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% users.map((user) => { %>
+        <tr>
+            <th scope="row"><%= user.id %></th>
+            <td><%= user.title %></td>
+            <td><%= user.description %></td>
+            <td><%= user.createdAt %></td>
+            <td>
+                <a href="/web/notifications/edit/<%= user.id %>" class="btn btn-primary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <a href="/web/notifications/delete/<%= user.id %>" data-delete class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+                <a href="/web/notifications/send/<%= user.id %>" data-send class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Send Message Notification">
+                    <i class="fas fa-envelope"></i>
+                </a>
+                <a href="/web/notifications/send/<%= user.id %>/push" data-send class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Send Push Notification">
+                    <i class="fas fa-mobile-alt"></i>
+                </a>
+            </td>
+        </tr>
+    <% }) || 'Not found' %>
+    </tbody>
+
+    <% if (typeof error != "undefined" ) { %>
+        <%= error %>
+    <% } %>
+</table>

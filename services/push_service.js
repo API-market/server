@@ -24,6 +24,7 @@ class PushService {
                 sound: 'default',
                 priority: 'high',
                 lights: 'true',
+                badge: 2
             }
         };
 
@@ -34,7 +35,7 @@ class PushService {
      *
      * @param to
      * @param data
-     * @param notification
+     * @param notification {title, body, sound, priority, lights, badge}
      * @this {PushService}
      * @returns {Promise}
      */
@@ -115,10 +116,28 @@ class PushService {
      * @this {PushService}
      * @returns {Promise}
      */
-    sendNotAnswersPoll(to, {count}, data) {
+    sendNotAnswersPoll(to, {count, badge}, data) {
         return this.send(to, data, {
-            title: 'Poll',
-            body: `You have ${count} polls to answer and earn more LUME.`
+            title: 'Polls',
+            body: `You can earn more Lumeos tokens today as you have ${count} unanswered polls`,
+            badge
+        })
+    }
+
+    /**
+     *
+     * @param to
+     * @param title
+     * @param body
+     * @param data
+     * @this {PushService}
+     * @returns {Promise}
+     */
+    sendCustomNotifications(to, {title, body, badge}, data) {
+        return this.send(to, data, {
+            title: title,
+            body: body,
+            badge
         })
     }
 }
