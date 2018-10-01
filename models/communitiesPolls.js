@@ -58,21 +58,37 @@ module.exports = (sequelize, DataTypes) => {
         timestamps: true,
         updatedAt: 'updated_at',
         createdAt: 'created_at',
+        scopes: {
+            community: () => ({
+                include: [
+                    {model: sequelize.models.community, as: 'community'}
+                ]
+            })
+        }
     });
 
     CommunitiesPolls.associate = function (models) {
-        CommunitiesPolls.belongsTo(models.community, {as: 'community', foreignKey: 'community_id'})
+        CommunitiesPolls.belongsTo(models.community, {as: 'community', foreignKey: 'community_id'});
     };
 
     CommunitiesPolls.methods = (models, _, db) => {
+        const attributes = Object.keys(_.omit(CommunitiesPolls.attributes, ['community_id']));
         CommunitiesPolls.getList = ({where}, {order}) => {
-            return CommunitiesPolls.findAll({
-                where,
-                include: [
-                    {model: models.community, as: 'community'}
-                ],
-                order: order || [['id', 'desc']]
-            });
+            return CommunitiesPolls
+                .scope('community')
+                .findAll({
+                    where,
+                    attributes,
+                    order: order || [['id', 'desc']]
+                });
+        };
+        CommunitiesPolls.getOne = ({where}, {}) => {
+            return CommunitiesPolls
+                .scope('community')
+                .findOne({
+                    where,
+                    attributes,
+                });
         };
     };
 
@@ -82,12 +98,12 @@ module.exports = (sequelize, DataTypes) => {
         };
         CommunitiesPolls.formatResponse = (data) => {
             if (data instanceof Array) {
-                return data.map(d => _.omit(d.toJSON(), ['updated_at']));
+                return data.map(d => _.omit(d.toJSON(), ['updated_at', 'community_id']));
             }
             if (data.toJSON) {
                 data = data.toJSON();
             }
-            return _.omit(data, ['updated_at']);
+            return _.omit(data, ['updated_at', 'community_id']);
         };
     };
 

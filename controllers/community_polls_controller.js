@@ -17,9 +17,20 @@ class CommunityPollsController {
                 order = [['question', question]];
             }
         }
-        return community.findById(req.params.community_id)
+        const {community_id, poll_id: id} = req.params;
+        return community.findById(community_id)
             .then((communityEntity) => {
                 if (!communityEntity) throw errors.notFound('Community not exists');
+                if (id) {
+                    return communityPolls.getOne({
+                        where: {
+                            community_id,
+                            id,
+                        }
+                    }, {order}).then((communityPollsEntity) => {
+                        res.sendResponse(communityPolls.formatResponse(communityPollsEntity));
+                    })
+                }
                 return communityPolls.getList({
                     where: {
                         community_id: +req.params.community_id
@@ -39,7 +50,8 @@ class CommunityPollsController {
                     if (!communityEntity) throw errors.notFound('Community not exists');
 
                     Object.assign(req.body, {creator_id: req.auth.user_id, community_id: req.params.community_id});
-                    return communityPolls.create(communityPolls.formatData(req.body), {transaction})
+                    return communityPolls
+                        .create(communityPolls.formatData(req.body), {transaction})
                         .then((communityPollsNew) => {
                             return UploadS3Service
                                 .upload(req.body.image, 'community_polls')
@@ -59,8 +71,9 @@ class CommunityPollsController {
     }
 
     update(req, res, next) {
+        const {poll_id} = req.params;
         return sequelize.transaction((transaction) => {
-            return communityPolls.findById(req.body.id)
+            return communityPolls.findById(poll_id)
                 .then((communityPollsEntity) => {
                     if (!communityPollsEntity) {
                         throw errors.notFound();
