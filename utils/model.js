@@ -34,6 +34,22 @@ class ModelUtils {
         }, {});
     }
 
+    /**
+     * @this ModelUtils
+     * @returns {{beforeCreate: beforeCreate, beforeUpdate: beforeUpdate}}
+     */
+    get defaultHooks() {
+        return {
+            beforeCreate: (user) => {
+                const currentUnixTimestamp = Math.floor(Date.now() / 1000);
+                user.created_at = currentUnixTimestamp;
+                user.updated_at = currentUnixTimestamp;
+            },
+            beforeUpdate: (user) => {
+                user.updated_at = Math.floor(Date.now() / 1000);
+            }
+        };
+    }
 }
 
 module.exports = ModelUtils;
