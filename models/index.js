@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const _ = require('lodash');
 const path = require('path');
 const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
@@ -22,13 +23,23 @@ fs
   })
   .forEach(file => {
     const modelPath = path.join(__dirname, file);
-    const model = sequelize.importCache = require(modelPath);
-    db[model.name] = model;
+    const model = sequelize.import(modelPath);
+    exports[model.name] = db[model.name] = model;
   });
 
 Object.keys(db).forEach(modelName => {
-  if (db[modelName].relashans) {
+  if (db[modelName].associate) {
     db[modelName].associate(db);
+  }
+  if (db[modelName].formatter) {
+    db[modelName].formatter(db, _);
+  }
+  if (db[modelName].methods) {
+      /**
+       * @param db Sequelize
+       * @param _ lodash
+       */
+    db[modelName].methods(db, _, sequelize);
   }
 });
 

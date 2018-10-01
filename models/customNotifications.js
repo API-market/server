@@ -9,13 +9,13 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER
         },
         title: DataTypes.STRING,
-        description: Sequelize.TEXT,
+        description: DataTypes.TEXT,
         active: {
             type: DataTypes.BOOLEAN,
             defaultValue: true
         },
         usersId: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             get: function () {
                 if (this.getDataValue('answers')) return JSON.parse(this.getDataValue('answers'));
             },
