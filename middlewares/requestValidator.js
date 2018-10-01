@@ -34,7 +34,7 @@ class RequestValidatorMiddleware {
         if (req.params) {
             req.params = Object.keys(req.params).reduce((init, value) => {
                 if (req.params[value]) {
-                    init[value] = req.params[value];
+                    init[value] = parseInt(req.params[value]) || req.params[value];
                 }
                 return init;
             }, {})

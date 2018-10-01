@@ -1,9 +1,7 @@
-const {community, users, profileImages, countParticipantView, communityCountAnswersView , communityUsers, sequelize} = require('lumeos_models');
+const {community, users, profileImages, countParticipantView, communityCountAnswersView, communityUsers, sequelize} = require('lumeos_models');
 const {model} = require('lumeos_utils');
 const {UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
-const {dbInstance} = require('../db_setup');
-
 
 class CommunityController {
 
@@ -109,12 +107,12 @@ class CommunityController {
                     throw errors.notFound('Community not exists');
                 }
                 if (communityEntity.creator_id === +req.auth.user_id) {
-                    throw errors.bedRequest('You already joined');
+                    throw errors.badRequest('You already joined');
                 }
                 return communityUsers.create(model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat']))
                     .then((communityUsersEntity) => {
                         if (!communityUsersEntity) {
-                            throw errors.bedRequest();
+                            throw errors.badRequest();
                         }
                         res.sendResponse();
                     });
@@ -129,7 +127,7 @@ class CommunityController {
                     throw errors.notFound('Community not exists');
                 }
                 if (communityEntity.creator_id === +req.auth.user_id) {
-                    throw errors.bedRequest('Can\'t unjoined because you admin');
+                    throw errors.badRequest('Can\'t unjoined because you admin');
                 }
                 return communityUsers.destroy({
                     where: model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat'])

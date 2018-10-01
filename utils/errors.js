@@ -21,7 +21,7 @@ class ErrorsUtils extends Error {
         return this;
     }
 
-    bedRequest(message = '') {
+    badRequest(message = '') {
         this.message = 'Bad request';
         this.status = 400;
         this.errors =  message instanceof String && [{message}] || [].concat(message);
