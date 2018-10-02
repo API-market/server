@@ -7,7 +7,7 @@
     "start": "node bin/www",
     "dev": "nodemon --ext js,ejs --watch ./ --exec 'node bin/www -r dotenv/config'",
     "test": "NODE_ENV=test SQLITE_FILENAME=$(pwd)/test_database.sqlite mocha tests/runner.js",
-    "test:e2e": "PORT=8083 jest --config ./tests/jest-e2e.json --detectOpenHandles --bail",
+    "test:e2e": "PORT=8083 jest --config ./tests/jest-e2e.json --bail",
     "migrate": "sequelize db:migrate",
     "migrate:rollback": "sequelize db:migrate:undo",
     "model:generate": "sequelize model:generate --name",
