@@ -29,6 +29,8 @@ module.exports = {
             followee_count: {type: Sequelize.INTEGER, defaultValue: 0},
             follower_count: {type: Sequelize.INTEGER, defaultValue: 0},
             answer_count: {type: Sequelize.INTEGER, defaultValue: 0},
+            createdAt: {type: Sequelize.DATE},
+            updatedAt: {type: Sequelize.DATE}
         });
     },
     down: (queryInterface, Sequelize) => {

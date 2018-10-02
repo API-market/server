@@ -77,7 +77,7 @@ const UserBase = sequelize.define('user', {
             }
         }
     },
-	timestamps: false,
+	timestamps: true,
 });
 
 class User extends UserBase {
