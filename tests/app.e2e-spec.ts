@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ silent: true });
 
 import * as server from '../server';
-import {expectErrorResponse, expectSuccessResponse, generateNewUserCredentials} from './e2e-helpers';
+import {expectCorrectUser, expectSuccessResponse, expectValidationError, generateNewUserCredentials} from './e2e-helpers';
 
 jest.setTimeout(25000);
 
@@ -36,13 +36,13 @@ describe('Global e2e tests', () => {
         response = await request(server)
             .post(`/v1/users`)
             .send({});
-        await expectErrorResponse(response, 422);
+        await expectValidationError(response);
 
         // some fields empty
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
-        await expectErrorResponse(response, 422);
+        await expectValidationError(response);
 
         credentials.dob = `2005-08-09T18:31:42+03:30`;
         credentials.password = `password1`;
@@ -51,32 +51,58 @@ describe('Global e2e tests', () => {
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
-        await expectErrorResponse(response, 422);
+        await expectValidationError(response);
 
         // can't use complicated but short password
         credentials.password = `A1b2C+D`;
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
-        await expectErrorResponse(response, 422);
+        await expectValidationError(response);
         credentials.password = `A1b2C+D0`;
 
         // can't create user without phone tokens
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
-        await expectErrorResponse(response, 422);
+        await expectValidationError(response);
 
         // well done
         credentials.token_phone = Math.random().toString(36).slice(-8);
         credentials.name_phone = Math.random().toString(36).slice(-8);
-        credentials.platform = Math.random().toString(36).slice(-8);
+        credentials.platform = `android`;
         credentials.email = `new` + credentials.email;
 
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
         await expectSuccessResponse(response);
+        await expectCorrectUser(response.body);
+    });
+
+    it('Can POST /login', async () => {
+        let response;
+
+        // empty request
+        response = await request(server)
+            .post(`/v1/login`)
+            .send({});
+        await expectValidationError(response);
+
+        // can't login without phone tokens
+        response = await request(server)
+            .post(`/v1/login`)
+            .send({
+                email: credentials.email,
+                password: credentials.password,
+            });
+        await expectValidationError(response);
+
+        response = await request(server)
+            .post(`/v1/login`)
+            .send(credentials);
+        await expectSuccessResponse(response);
+        await expectCorrectUser(response.body);
     });
 
 });

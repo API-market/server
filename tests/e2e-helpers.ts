@@ -15,6 +15,18 @@ export async function expectCorrectCollection(items, checker) {
 
 export async function expectCorrectUser(user) {
     await expect(user).toBeDefined();
+    const fields = [
+        'firstName', 'lastName', 'email', 'dob', 'balance', 'followee_count', 'follower_count',
+        'answer_count', 'user_id', 'token',
+    ];
+    for (const field of fields){
+        await expect(user).toHaveProperty(field);
+        await expect(user[field]).toBeDefined();
+    }
+
+    await expect(user).not.toHaveProperty('password');
+    await expect(user).not.toHaveProperty('id');
+    await expect(user).not.toHaveProperty('createdAt');
 }
 
 export async function expectCorrectErrorMessage(error) {
@@ -42,6 +54,10 @@ export async function expectUnauthorizedError(response) {
 
 export async function expectBadRequestError(response) {
     await expectErrorResponse(response, 400);
+}
+
+export async function expectValidationError(response) {
+    await expectErrorResponse(response, 422);
 }
 
 export async function expectNotFoundError(response) {
