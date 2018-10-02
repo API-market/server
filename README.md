@@ -74,3 +74,10 @@ $ curl  -H "Authorization: Bearer some.hashed.token" localhost:3000/v1/users/1
 ### Docs
 Access only by Basic Auth
 [API Doc](http://localhost:8081/api-docs)
+
+## Tests
+Test runner uses your .env.test config file for environment options setup
+```bash
+# e2e tests
+$ npm run test:e2e
+```
