@@ -76,7 +76,8 @@ const UserBase = sequelize.define('user', {
                 model.verify_phone = false
             }
         }
-    }
+    },
+	timestamps: false,
 });
 
 class User extends UserBase {
