@@ -24,7 +24,7 @@
 
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
-const {events, token, model} = require('lumeos_utils');
+const {events, token, model, format} = require('lumeos_utils');
 const {mailService, UploadService, MessageService} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 const {usersValidate} = require('lumeos_controllers/validateSchemas');
@@ -158,7 +158,7 @@ userRouter.post('/users', [
     check('lastName').not().isEmpty().trim().escape().withMessage('Field \'lastName\' cannot be empty'),
     check('email').isEmail().normalizeEmail(),
     check('phone').optional().isMobilePhone('any'),
-    check('dob').isISO8601().withMessage('Invalid \'dob\' specified, ISO8601 required'),
+    // check('dob').isISO8601().withMessage('Invalid \'dob\' specified, ISO8601 required'),
     check('gender').optional().isIn(['male', 'female', 'other']),
     check('school').optional().trim().escape(),
     check('employer').optional().trim().escape(),
@@ -198,7 +198,7 @@ userRouter.post('/users', [
         if (error.message === 'Validation error') {
             const errors = error.errors.map(err => ({
                 param: err.path,
-                msg: `The ${err.message.replace('_', ' ')}.`
+                msg: format.messageValidate(err, err.path)
             }));
             return res.status(status).json({errors});
         }
@@ -698,7 +698,7 @@ userRouter.put('/users',
         if (err.message === 'Validation error') {
             const errors = err.errors.map(err => ({
                 param: err.path,
-                msg: `The ${err.message.replace('_', ' ')}.`
+                msg: format.messageValidate(err, err.path)
             }));
             const status = 422;
             return res.status(status).json({errors});
