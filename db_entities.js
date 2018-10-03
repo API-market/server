@@ -288,6 +288,8 @@ const CustomNotifications = sequelize.define('custom_notifications', {
     }
 }, {timestamps: true});
 
+exports.Tokens = Tokens;
+
 module.exports = {
   User: User,
   CustomNotifications: CustomNotifications,

@@ -1,5 +1,5 @@
 const {dbInstance} = require('../db_setup');
-const {Tokens, User} = require('../db_entities');
+const models = require(`../db_entities`);
 const {events} = require('lumeos_utils');
 
 /**
@@ -9,11 +9,15 @@ const {events} = require('lumeos_utils');
 
 class PollService {
 
+    constructor() {
+        this.models = models;
+    }
+
     /**
      * @this {PollService}
      */
     getNotAnswersPull() {
-        Tokens.findAll({
+        this.models.Tokens.findAll({
             attributes: ['user_id', 'token'].concat([
                 [dbInstance.literal(`(SELECT count(DISTINCT poll.id) 
                                             FROM polls AS poll 
@@ -24,7 +28,7 @@ class PollService {
                                             )`), 'participant_not_answered'],
             ]),
             include: [{
-                association: Tokens.User,
+                association: this.models.Tokens.User,
                 required: true,
                 attributes: ['all_notifications', 'not_answers_notifications', 'count_notifications']
             }]
