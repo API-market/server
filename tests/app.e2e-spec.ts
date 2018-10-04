@@ -9,7 +9,7 @@ import {
     expectCorrectCollection,
     expectCorrectCommunity,
     expectCorrectUser,
-    expectErrorResponse,
+    expectErrorResponse, expectNotFoundError,
     expectSuccessResponse,
     expectUnauthorizedError,
     expectValidationError,
@@ -178,6 +178,23 @@ describe('Global e2e tests', () => {
         let searchResult = response.body.data.find(communityEl => communityEl.id === community.id);
         await expect(searchResult).toBeDefined();
 
+        // can't get community with wrong id
+        response = await request(server)
+            .get(`/v1/community/0`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectNotFoundError(response);
+
+        // can't get community without auth
+        response = await request(server).get(`/v1/community/${community.id}`);
+        await expectUnauthorizedError(response);
+
+        // can get community by id
+        response = await request(server)
+            .get(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCommunity(response.body.data);
+
         // can delete community
         response = await request(server)
             .delete(`/v1/community/${community.id}`)
@@ -193,6 +210,12 @@ describe('Global e2e tests', () => {
 
         searchResult = response.body.data.find(communityEl => communityEl.id === community.id);
         await expect(searchResult).toBeUndefined();
+
+        // can't get community by id
+        response = await request(server)
+            .get(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectNotFoundError(response);
 
     });
 

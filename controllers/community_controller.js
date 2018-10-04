@@ -157,6 +157,22 @@ class CommunityController {
 		.then(() => res.sendResponse())
 		.catch(next);
 	}
+
+	get(req, res, next) {
+		return community.findById(req.params.communityId)
+		.then(communityEntity => {
+			if (!communityEntity) {
+				throw errors.notFound('Community not found');
+			}
+			if (communityEntity.creator_id !== req.auth.user_id) {
+				throw errors.badRequest('Only creator can delete community');
+			}
+
+			return communityEntity;
+		})
+		.then(res.sendResponse)
+		.catch(next);
+	}
 }
 
 module.exports = new CommunityController();

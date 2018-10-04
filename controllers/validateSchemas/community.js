@@ -95,6 +95,12 @@ class CommunityValidate {
 			communityId: Joi.number().integer().required(),
 		}))
 	}
+
+	get get() {
+		return requestValidator(Joi.object().keys({
+			communityId: Joi.number().integer().required(),
+		}))
+	}
 }
 
 module.exports = new CommunityValidate();

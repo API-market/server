@@ -9,7 +9,7 @@ const router = express.Router();
 /**
  * Create and control community
  */
-router.route('/community/:id?')
+router.route('/community')
     .all(auth)
     .get(communityValidate.list, communityController.list)
     .post([UploadService.middleware('image'), communityValidate.create], communityController.create)
@@ -17,7 +17,8 @@ router.route('/community/:id?')
 
 router.route('/community/:communityId')
 	.all(auth)
-	.delete(communityValidate.delete, communityController.delete);
+	.delete(communityValidate.delete, communityController.delete)
+	.get(communityValidate.get, communityController.get);
 
 router.route('/community/:community_id/join')
     .all(auth)
