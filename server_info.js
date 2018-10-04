@@ -23,7 +23,7 @@
 //
 
 const VERSION_NUMBER = 1;
-const PORT = 8081;
+const PORT = process.env.PORT || 8081;
 const SUPER_SECRET_JWT_KEY = process.env.SUPER_SECRET_JWT_KEY || "secret_test";
 const SEED_AUTH = process.env.SUPER_SECRET_KEY || "admintest1";
 const USER_MAIN_LUMEOS = process.env.USER_MAIN_LUMEOS || "lumeos@lumeos.io";
@@ -34,4 +34,4 @@ module.exports = {
   SUPER_SECRET_JWT_KEY: SUPER_SECRET_JWT_KEY,
   SEED_AUTH,
   USER_MAIN_LUMEOS
-}
+};

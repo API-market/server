@@ -76,7 +76,8 @@ const UserBase = sequelize.define('user', {
                 model.verify_phone = false
             }
         }
-    }
+    },
+	timestamps: true,
 });
 
 class User extends UserBase {
@@ -286,6 +287,8 @@ const CustomNotifications = sequelize.define('custom_notifications', {
         type: Sequelize.DATE,
     }
 }, {timestamps: true});
+
+exports.Tokens = Tokens;
 
 module.exports = {
   User: User,

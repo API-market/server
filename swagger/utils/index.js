@@ -13,7 +13,6 @@ exports.responseFormat = (data) => {
             items: data[0]
         };
     }
-    console.log(JSON.stringify(result, null, 5));
     return {
         type: 'object',
         properties: {

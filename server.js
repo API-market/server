@@ -39,16 +39,6 @@ const VERSION = serverInfo.VERSION;
 const PORT = serverInfo.PORT;
 const SUPER_SECRET_JWT_KEY = serverInfo.SUPER_SECRET_JWT_KEY;
 
-const stdin = process.openStdin();
-stdin.addListener("data", function(d) {
-    switch (d.toString().trim()) {
-        case "run-seed": {
-            // seed admin user
-            require('./seed');
-        }
-    }
-});
-
 if(!process.env.LUMEOS_SERVER_DB) {
     require('./seed');
 }
@@ -61,6 +51,7 @@ app.use('/v' + VERSION, function (req, res, next) {
     || req.url.match(/\/app/)
     || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
+    || req.url.match(/\/versions/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
     || req.url.endsWith("/faqs/")) {

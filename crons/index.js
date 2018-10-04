@@ -9,7 +9,7 @@ class CronJob {
         /**
          * Every tow days in 11:00 AM
          */
-        this.timePush = process.env.CRON_TIME_PUSH_NOTIFICATION ||  '0 11 * * 2,4';
+        this.timePush = process.env.CRON_TIME_PUSH_NOTIFICATION ||  '0 18 * * 2,4';
 
         this.pushNotificationsJob();
     }

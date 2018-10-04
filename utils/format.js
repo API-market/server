@@ -15,6 +15,17 @@ class Format {
 
         return str.replace(/_{1,5}/g, '_');
     }
+
+    messageValidate(err, field) {
+        switch (field) {
+            case 'phone':
+                return "That number is already registered";
+            case 'email':
+                return "That email is already registered";
+            default:
+                return `The ${err.message.replace('_', ' ')}.`
+        }
+    }
 }
 
 module.exports = Format;
