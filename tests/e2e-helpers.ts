@@ -31,7 +31,7 @@ export async function expectCorrectUser(user) {
 
 export async function expectCorrectErrorMessage(error) {
     await expect(error).toBeDefined();
-    const fields = ['errors'];
+    const fields = [];
     for (const field of fields) {
         await expect(error).toHaveProperty(field);
         await expect(error[field]).toBeDefined();
