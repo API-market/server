@@ -19,9 +19,9 @@ class Format {
     messageValidate(err, field) {
         switch (field) {
             case 'phone':
-                return "The mobile number you entered is already registered. Please enter a different mobile number";
+                return "That number is already registered";
             case 'email':
-                return "The email you entered is already registered. Please enter a different email";
+                return "That email is already registered";
             default:
                 return `The ${err.message.replace('_', ' ')}.`
         }
