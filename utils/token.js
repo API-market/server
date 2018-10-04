@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const {SUPER_SECRET_JWT_KEY} = require('../server_info.js');
+const crypto = require('crypto');
 
 class Token {
 
@@ -43,6 +44,10 @@ class Token {
                 resolve(data);
             });
         });
+    }
+
+    generateRandomStr() {
+        return crypto.randomBytes(12).toString('hex');
     }
 }
 
