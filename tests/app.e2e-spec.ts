@@ -1,6 +1,5 @@
 import * as request from 'supertest';
 import * as dotenv from 'dotenv';
-import * as path from 'path';
 
 // TODO: Move config loader to server loader
 dotenv.config({ silent: true });
@@ -9,7 +8,8 @@ import * as server from '../server';
 import {
     expectCorrectCollection,
     expectCorrectCommunity,
-    expectCorrectUser, expectErrorResponse,
+    expectCorrectUser,
+    expectErrorResponse,
     expectSuccessResponse,
     expectUnauthorizedError,
     expectValidationError,
@@ -150,14 +150,6 @@ describe('Global e2e tests', () => {
             .post(`/v1/community`)
             .send({});
         await expectUnauthorizedError(response);
-
-        // can't create community without all fields
-        response = await request(server)
-            .post(`/v1/community`)
-            .set('Authorization', `Bearer ${authToken}`)
-            .attach('image', path.normalize(__dirname + `/assets/community-image.png`));
-
-        await expectValidationError(response);
 
         // can't create community without all fields
         response = await request(server)
