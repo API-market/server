@@ -29,9 +29,18 @@ export async function expectCorrectUser(user) {
     await expect(user).not.toHaveProperty('createdAt');
 }
 
+export async function expectCorrectCommunity(community) {
+    await expect(community).toBeDefined();
+    const fields = ['image', 'id', 'name', 'description', 'created_at', 'polls_at'];
+    for (const field of fields){
+        await expect(community).toHaveProperty(field);
+        await expect(community[field]).toBeDefined();
+    }
+}
+
 export async function expectCorrectErrorMessage(error) {
     await expect(error).toBeDefined();
-    const fields = ['errors'];
+    const fields = [];
     for (const field of fields) {
         await expect(error).toHaveProperty(field);
         await expect(error[field]).toBeDefined();
