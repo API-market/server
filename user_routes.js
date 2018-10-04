@@ -825,7 +825,8 @@ userRouter
                 }
                 return token.generate({
                     user_id: user.id,
-                    verify: user.verify
+                    verify: user.verify,
+                    iat: Math.floor(new Date() / 1000)
                 }).then((token) => {
                     return mailService.send(user.email, mailService.constants.VERIFY_USER, {
                         link: `/app/?verifyToken=${token}`,
