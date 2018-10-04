@@ -9,7 +9,7 @@ import * as server from '../server';
 import {
     expectCorrectCollection,
     expectCorrectCommunity,
-    expectCorrectUser,
+    expectCorrectUser, expectErrorResponse,
     expectSuccessResponse,
     expectUnauthorizedError,
     expectValidationError,
@@ -37,6 +37,27 @@ describe('Global e2e tests', () => {
     it('Can GET /', async () => {
         const response = await request(server).get(`/`);
         await expect(response).toBeDefined();
+    });
+
+    it('Can GET /versions', async () => {
+        let response;
+
+        // invalid semver string
+        response = await request(server).get(`/v1/versions/0.0`);
+        await expectErrorResponse(response, 500);
+
+        // valid string, but old version
+        response = await request(server).get(`/v1/versions/0.0.0`);
+        await expectSuccessResponse(response);
+        await expect(response.body).toHaveProperty('supported');
+        await expect(response.body.supported).toBe(false);
+
+        // valid and supported version
+        response = await request(server).get(`/v1/versions/999.999.999`);
+        await expectSuccessResponse(response);
+        await expect(response.body).toHaveProperty('supported');
+        await expect(response.body.supported).toBe(true);
+
     });
 
     it('Can POST /users', async () => {
