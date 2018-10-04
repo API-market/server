@@ -844,7 +844,11 @@ userRouter
                 }
                 res.status(status).json({error: 'Error', message});
             });
-    }).put([
+    })
+
+userRouter
+    .route('/users/verify/check')
+    .post([
         check('verifyToken').not().isEmpty().trim().escape()
     ], function (req, res) {
         const errors = validationResult(req);
