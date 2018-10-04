@@ -850,7 +850,10 @@ userRouter
                 res.status(status).json({error: 'Error', message});
             });
     })
-    .put([
+
+userRouter
+    .route('/users/verify/check')
+    .post([
         check('verifyToken').custom((value, {req}) => {
             if (value) {
                 return token.verify(value).then(() => {
