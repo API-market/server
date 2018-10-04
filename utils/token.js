@@ -47,7 +47,7 @@ class Token {
     }
 
     generateRandomStr() {
-        return crypto.randomBytes(12).toString('hex');
+        return crypto.randomBytes(30).toString('hex');
     }
 }
 

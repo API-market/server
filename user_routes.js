@@ -823,23 +823,17 @@ userRouter
                 if (user.verify) {
                     throw new Error('User already verified.');
                 }
-                // return token.generate({
-                //     user_id: user.id,
-                //     verify: user.verify,
-                //     iat: Math.floor(new Date() / 1000)
-                // }).then((token) => {
-                    const verify_token = token.generateRandomStr();
-                    return mailService.send(user.email, mailService.constants.VERIFY_USER, {
-                        link: `/app/?verifyToken=${verify_token}`,
-                        username: `${user.firstName} ${user.lastName}`,
+                const verify_token = token.generateRandomStr();
+                return mailService.send(user.email, mailService.constants.VERIFY_USER, {
+                    link: `/app/?verifyToken=${verify_token}`,
+                    username: `${user.firstName} ${user.lastName}`,
+                }).then(() => {
+                    return user.update({
+                        verify_token
                     }).then(() => {
-                        return user.update({
-                            verify_token
-                        }).then(() => {
-                            res.status(204).json();
-                        });
+                        res.status(204).json();
                     });
-                // });
+                });
             })
             .catch((error) => {
                 let message = 'Some error.';
@@ -850,11 +844,7 @@ userRouter
                 }
                 res.status(status).json({error: 'Error', message});
             });
-    })
-
-userRouter
-    .route('/users/verify/check')
-    .post([
+    }).put([
         check('verifyToken').not().isEmpty().trim().escape()
     ], function (req, res) {
         const errors = validationResult(req);
