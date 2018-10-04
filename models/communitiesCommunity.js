@@ -39,7 +39,10 @@ module.exports = (sequelize, DataTypes) => {
     }, {
         schema: 'communities',
         tableName: 'community',
-        timestamps: false
+        timestamps: true,
+		updatedAt: 'updated_at',
+		createdAt: 'created_at',
+		paranoid: true,
     });
     CommunitiesCommunity.associate = (models) => {
         CommunitiesCommunity.belongsTo(models.users, {foreignKey: 'creator_id'});

@@ -15,6 +15,10 @@ router.route('/community/:id?')
     .post([UploadService.middleware('image'), communityValidate.create], communityController.create)
     .put([UploadService.middleware('image'), communityValidate.update], communityController.update);
 
+router.route('/community/:communityId')
+	.all(auth)
+	.delete(communityValidate.delete, communityController.delete);
+
 router.route('/community/:community_id/join')
     .all(auth)
     .post(communityValidate.joinFromCommunity, communityController.joinToCommunity);
