@@ -823,15 +823,20 @@ userRouter
                 if (user.verify) {
                     throw new Error('User already verified.');
                 }
-                const verify_token = token.generateRandomStr();
-                return mailService.send(user.email, mailService.constants.VERIFY_USER, {
-                    link: `/app/?verifyToken=${verify_token}`,
-                    username: `${user.firstName} ${user.lastName}`,
-                }).then(() => {
-                    return user.update({
-                        verify_token
+                return token.generate({
+                    user_id: user.id,
+                    verify: user.verify,
+                    iat: Math.floor(new Date() / 1000)
+                }).then((token) => {
+                    return mailService.send(user.email, mailService.constants.VERIFY_USER, {
+                        link: `/app/?verifyToken=${token}`,
+                        username: `${user.firstName} ${user.lastName}`,
                     }).then(() => {
-                        res.status(204).json();
+                        return user.update({
+                            verify_token: token
+                        }).then(() => {
+                            res.status(204).json();
+                        });
                     });
                 });
             })
@@ -845,11 +850,14 @@ userRouter
                 res.status(status).json({error: 'Error', message});
             });
     })
-
-userRouter
-    .route('/users/verify/check')
-    .post([
-        check('verifyToken').not().isEmpty().trim().escape()
+    .put([
+        check('verifyToken').custom((value, {req}) => {
+            if (value) {
+                return token.verify(value).then(() => {
+                    req.verifyToken = value;
+                });
+            }
+        })
     ], function (req, res) {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -857,7 +865,7 @@ userRouter
         }
         User.findOne({
             where: {
-                verify_token: req.body.verifyToken,
+                verify_token: req.verifyToken,
                 verify: false,
             }
         })
