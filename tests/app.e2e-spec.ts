@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ silent: true });
 
 import * as server from '../server';
-import {expectCorrectUser, expectSuccessResponse, expectValidationError, generateNewUserCredentials} from './e2e-helpers';
+import {expectCorrectUser, expectErrorResponse, expectSuccessResponse, expectValidationError, generateNewUserCredentials} from './e2e-helpers';
 
 jest.setTimeout(25000);
 
