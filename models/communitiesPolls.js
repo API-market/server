@@ -97,13 +97,26 @@ module.exports = (sequelize, DataTypes) => {
             return _.pick(data, ['question', 'price', 'answers', 'tags', 'creator_id', 'community_id']);
         };
         CommunitiesPolls.formatResponse = (data) => {
+
+        	const transformDataEntity = data => {
+				data = _.omit(data.toJSON(), ['updated_at', 'community_id']);
+
+				data[`createdAt`] = data[`created_at`]; delete data[`created_at`];
+				data[`poll_id`] = data[`id`]; delete data[`id`];
+				data[`avatar`] = data[`image`]; delete data[`image`];
+
+				return data;
+			};
+
             if (data instanceof Array) {
-                return data.map(d => _.omit(d.toJSON(), ['updated_at', 'community_id']));
+                return data.map(transformDataEntity);
             }
             if (data.toJSON) {
-                data = data.toJSON();
+				return transformDataEntity(data);
             }
-            return _.omit(data, ['updated_at', 'community_id']);
+
+
+            return data;
         };
     };
 
