@@ -6,6 +6,7 @@ dotenv.config({ silent: true });
 
 import * as server from '../server';
 import {
+    expectCorrectAddCommunityResponse,
     expectCorrectCollection,
     expectCorrectCommunity,
     expectCorrectUser,
@@ -164,7 +165,7 @@ describe('Global e2e tests', () => {
             .set('Authorization', `Bearer ${authToken}`)
             .send(communityOptions);
         await expectSuccessResponse(response);
-        await expectCorrectCommunity(response.body.data);
+        await expectCorrectAddCommunityResponse(response.body.data);
 
         const community = response.body.data;
 

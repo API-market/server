@@ -21,7 +21,7 @@ class CommunityController {
         }
         const {user_id} = req.auth;
 
-        return community.scope('defaultScope', 'relatedData').getList({}, {order, user_id})
+        return community.getList({}, {order, user_id})
             .then((data) => {
                 res.sendResponse(community.formatResponse(data));
             })

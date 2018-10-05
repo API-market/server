@@ -51,7 +51,7 @@ module.exports = (sequelize, DataTypes) => {
     };
     CommunitiesCommunity.methods = (models, _, db) => {
         CommunitiesCommunity.getList = (query, {order, user_id}) => {
-            return CommunitiesCommunity.findAll({
+            return CommunitiesCommunity.scope('defaultScope', 'relatedData').findAll({
                 attributes: Object.keys(CommunitiesCommunity.attributes)
                     .filter(e => e !== 'creator_id')
                     .concat([[
