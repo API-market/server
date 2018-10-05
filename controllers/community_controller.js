@@ -21,7 +21,7 @@ class CommunityController {
         }
         const {user_id} = req.auth;
 
-        return community.getList({}, {order, user_id})
+        return community.scope('defaultScope', 'relatedData').getList({}, {order, user_id})
             .then((data) => {
                 res.sendResponse(community.formatResponse(data));
             })
@@ -159,15 +159,11 @@ class CommunityController {
 	}
 
 	get(req, res, next) {
-		return community.findById(req.params.communityId)
+		return community.scope('defaultScope', 'relatedData').findById(req.params.communityId)
 		.then(communityEntity => {
 			if (!communityEntity) {
 				throw errors.notFound('Community not found');
 			}
-			if (communityEntity.creator_id !== req.auth.user_id) {
-				throw errors.badRequest('Only creator can delete community');
-			}
-
 			return communityEntity;
 		})
 		.then(res.sendResponse)
