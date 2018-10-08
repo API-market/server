@@ -298,9 +298,6 @@ pollRouter.post('/polls/:poll_id', [
   const userId = parseInt(req.body["user_id"]);
   User.findById(userId).then(user => {
     if (user) {
-      if (!user.verify) {
-        throw new Error('User must be verify')
-      }
       sequelize.sync()
         .then(() => {
           Poll.findById(parseInt(req.params["poll_id"])).then(poll => {

@@ -89,6 +89,18 @@ class CommunityValidate {
             community_id: Joi.number().integer().required(),
         }))
     }
+
+	get delete() {
+		return requestValidator(Joi.object().keys({
+			communityId: Joi.number().integer().required(),
+		}))
+	}
+
+	get get() {
+		return requestValidator(Joi.object().keys({
+			communityId: Joi.number().integer().required(),
+		}))
+	}
 }
 
 module.exports = new CommunityValidate();

@@ -1,4 +1,4 @@
-const {community, users, profileImages, countParticipantView, communityCountAnswersView, communityUsers, sequelize} = require('lumeos_models');
+const {community, communityUsers, sequelize} = require('lumeos_models');
 const {model} = require('lumeos_utils');
 const {UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
@@ -141,6 +141,34 @@ class CommunityController {
             })
             .catch(next);
     }
+
+	delete(req, res, next) {
+		return community.findById(req.params.communityId)
+		.then(communityEntity => {
+			if (!communityEntity) {
+				throw errors.notFound('Community not found');
+			}
+			if (communityEntity.creator_id !== req.auth.user_id) {
+				throw errors.badRequest('Only creator can delete community');
+			}
+
+			return communityEntity.destroy();
+		})
+		.then(() => res.sendResponse())
+		.catch(next);
+	}
+
+	get(req, res, next) {
+		return community.scope('defaultScope', 'relatedData').findById(req.params.communityId)
+		.then(communityEntity => {
+			if (!communityEntity) {
+				throw errors.notFound('Community not found');
+			}
+			return communityEntity;
+		})
+		.then(res.sendResponse)
+		.catch(next);
+	}
 }
 
 module.exports = new CommunityController();

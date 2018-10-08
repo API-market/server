@@ -41,6 +41,9 @@ Object.keys(db).forEach(modelName => {
        */
     db[modelName].methods(db, _, sequelize);
   }
+	if(db[modelName].scopes){
+		db[modelName].scopes(db, sequelize);
+	}
 });
 
 db.sequelize = sequelize;

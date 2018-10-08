@@ -5,13 +5,24 @@ import * as dotenv from 'dotenv';
 dotenv.config({ silent: true });
 
 import * as server from '../server';
-import {expectCorrectUser, expectSuccessResponse, expectValidationError, generateNewUserCredentials} from './e2e-helpers';
+import {
+    expectCorrectAddCommunityResponse,
+    expectCorrectCollection,
+    expectCorrectCommunity,
+    expectCorrectUser,
+    expectErrorResponse, expectNotFoundError,
+    expectSuccessResponse,
+    expectUnauthorizedError,
+    expectValidationError,
+    generateNewUserCredentials,
+} from './e2e-helpers';
 
 jest.setTimeout(25000);
 
 describe('Global e2e tests', () => {
 
     const credentials: any = generateNewUserCredentials();
+    let authToken;
 
     beforeAll(async () => {
     });
@@ -124,6 +135,89 @@ describe('Global e2e tests', () => {
             .send(credentials);
         await expectSuccessResponse(response);
         await expectCorrectUser(response.body);
+
+        authToken = response.body.token;
+    });
+
+    it('Can pass community flow', async () => {
+        let response;
+        const communityOptions = {
+            name: `Community for testing ` + Math.random().toString(36).slice(-8),
+            description: `Was created by test runner ` + Math.random().toString(36).slice(-8),
+        };
+
+        // unauthorized request
+        response = await request(server)
+            .post(`/v1/community`)
+            .send({});
+        await expectUnauthorizedError(response);
+
+        // can't create community without all fields
+        response = await request(server)
+            .post(`/v1/community`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({name: communityOptions.name});
+        await expectValidationError(response);
+
+        // well done
+        response = await request(server)
+            .post(`/v1/community`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send(communityOptions);
+        await expectSuccessResponse(response);
+        await expectCorrectAddCommunityResponse(response.body.data);
+
+        const community = response.body.data;
+
+        // can find created community in list
+        response = await request(server)
+            .get(`/v1/community?createdAt=desc`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectCommunity);
+
+        let searchResult = response.body.data.find(communityEl => communityEl.id === community.id);
+        await expect(searchResult).toBeDefined();
+
+        // can't get community with wrong id
+        response = await request(server)
+            .get(`/v1/community/0`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectNotFoundError(response);
+
+        // can't get community without auth
+        response = await request(server).get(`/v1/community/${community.id}`);
+        await expectUnauthorizedError(response);
+
+        // can get community by id
+        response = await request(server)
+            .get(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCommunity(response.body.data);
+
+        // can delete community
+        response = await request(server)
+            .delete(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+
+        // can't find deleted community in list
+        response = await request(server)
+            .get(`/v1/community?createdAt=desc`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectCommunity);
+
+        searchResult = response.body.data.find(communityEl => communityEl.id === community.id);
+        await expect(searchResult).toBeUndefined();
+
+        // can't get community by id
+        response = await request(server)
+            .get(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectNotFoundError(response);
+
     });
 
 });

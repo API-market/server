@@ -39,7 +39,10 @@ module.exports = (sequelize, DataTypes) => {
     }, {
         schema: 'communities',
         tableName: 'community',
-        timestamps: false
+        timestamps: true,
+		updatedAt: 'updated_at',
+		createdAt: 'created_at',
+		paranoid: true,
     });
     CommunitiesCommunity.associate = (models) => {
         CommunitiesCommunity.belongsTo(models.users, {foreignKey: 'creator_id'});
@@ -48,7 +51,7 @@ module.exports = (sequelize, DataTypes) => {
     };
     CommunitiesCommunity.methods = (models, _, db) => {
         CommunitiesCommunity.getList = (query, {order, user_id}) => {
-            return CommunitiesCommunity.findAll({
+            return CommunitiesCommunity.scope('defaultScope', 'relatedData').findAll({
                 attributes: Object.keys(CommunitiesCommunity.attributes)
                     .filter(e => e !== 'creator_id')
                     .concat([[
@@ -59,24 +62,6 @@ module.exports = (sequelize, DataTypes) => {
                             AND community.id = c_cu.community_id
                             )`), 'is_joined'
                     ]]),
-                include: [
-                    {
-                        model: models.users,
-                        include: [{
-                            model: models.profileImages,
-                            attributes: ['image']
-                        }],
-                        attributes: ['id', 'firstName', 'lastName']
-                    }, {
-                        model: models.countParticipantView,
-                        as: 'members',
-                        attributes: ['count']
-                    }, {
-                        model: models.communityCountAnswersView,
-                        as: 'answers',
-                        attributes: ['count_answers', 'rank']
-                    }
-                ],
                 order: order || [['id', 'desc']]
             });
         };
@@ -95,5 +80,28 @@ module.exports = (sequelize, DataTypes) => {
             return _.omit(data, ['updated_at']);
         };
     };
+    CommunitiesCommunity.scopes = (models, sequelize) => {
+    	CommunitiesCommunity.addScope('relatedData', {
+			include: [
+				{
+					model: models.users,
+					include: [{
+						model: models.profileImages,
+						attributes: ['image']
+					}],
+					attributes: ['id', 'firstName', 'lastName']
+				}, {
+					model: models.countParticipantView,
+					as: 'members',
+					attributes: ['count']
+				}, {
+					model: models.communityCountAnswersView,
+					as: 'answers',
+					attributes: ['count_answers', 'rank']
+				}
+			],
+		})
+	};
+
     return CommunitiesCommunity;
 };

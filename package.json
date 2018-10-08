@@ -58,8 +58,13 @@
     "translitit-cyrillic-russian-to-latin": "^0.1.1"
   },
   "devDependencies": {
+    "@types/express": "^4.16.0",
     "@types/jest": "^23.3.2",
-    "@types/node": "^10.11.3",
+    "@types/joi": "^13.6.0",
+    "@types/lodash": "^4.14.116",
+    "@types/node": "^10.11.4",
+    "@types/pg": "^7.4.10",
+    "@types/sequelize": "^4.27.27",
     "@types/supertest": "^2.0.6",
     "jest": "^23.6.0",
     "mocha": "^3.1.2",
