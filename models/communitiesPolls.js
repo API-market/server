@@ -121,7 +121,7 @@ module.exports = (sequelize, DataTypes) => {
 				data[`avatar`] = data[`image`]; delete data[`image`];
 
 				data[`creator_image`] =
-					data[`user`][`profileImage`]
+					data[`user`] && data[`user`][`profileImage`]
 						? data[`user`][`profileImage`][`image`]
 						: process.env.S3_DEFAULT_PROFILE_IMAGE || "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png"
 				;
