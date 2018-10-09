@@ -58,6 +58,7 @@ module.exports = (sequelize, DataTypes) => {
 		timestamps: true,
 		updatedAt: 'updated_at',
 		createdAt: 'created_at',
+		paranoid: true,
 		scopes: {
 			community: () => ({
 				include: [

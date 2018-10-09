@@ -28,6 +28,7 @@ class CommunityPollsController {
                             id,
                         }
                     }, {order}).then((communityPollsEntity) => {
+						if (!communityPollsEntity) throw errors.notFound('Unable to find poll');
                         res.sendResponse(communityPolls.formatResponse(communityPollsEntity));
                     })
                 }
@@ -37,6 +38,7 @@ class CommunityPollsController {
                     }
                 }, {order})
                     .then((communityPollsEntity) => {
+						if (!communityPollsEntity) throw errors.notFound('Unable to find poll');
                         res.sendResponse(communityPolls.formatResponse(communityPollsEntity));
                     });
             })
@@ -47,7 +49,7 @@ class CommunityPollsController {
         return sequelize.transaction((transaction) => {
             return community.findById(req.params.community_id, {transaction})
                 .then((communityEntity) => {
-                    if (!communityEntity) throw errors.notFound('Community not exists');
+                    if (!communityEntity) throw errors.notFound('CommunityS not exists');
 
                     Object.assign(req.body, {creator_id: req.auth.user_id, community_id: req.params.community_id});
                     return communityPolls
@@ -81,7 +83,7 @@ class CommunityPollsController {
 					throw errors.notFound();
 				}
 				if (req.auth.user_id !== communityPollsEntity.creator_id) {
-					throw errors.forbidden('This community not yours');
+					throw errors.forbidden('This poll is not yours');
 				}
 
 				community = communityPollsEntity;
@@ -125,6 +127,25 @@ class CommunityPollsController {
 				});
 			});
         })
+		.catch(next);
+    }
+
+    delete(req, res, next) {
+
+    	const {poll_id} = req.params;
+
+		return communityPolls.findById(poll_id)
+		.then(communityPollsEntity => {
+			if (!communityPollsEntity) {
+				throw errors.notFound();
+			}
+			if (req.auth.user_id !== communityPollsEntity.creator_id) {
+				throw errors.forbidden('This poll is not yours');
+			}
+
+			return communityPollsEntity.destroy();
+		})
+		.then(() => res.sendResponse())
 		.catch(next);
     }
 }

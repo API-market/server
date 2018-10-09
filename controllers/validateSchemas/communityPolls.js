@@ -109,8 +109,18 @@ class CommunityPollsValidate {
 
                 }),
             pollsSchema
-        ])
+        ]);
         return requestValidator(schemas);
+    }
+
+    get delete() {
+		return requestValidator(Joi
+			.object()
+			.keys({
+				community_id: Joi.number().integer().required(),
+				poll_id: Joi.number().integer().required(),
+			})
+		);
     }
 
 }

@@ -35,7 +35,8 @@ router.route('/community/:community_id/polls/:poll_id?')
     .all(auth)
     .get(communityPollsValidate.list, communityPollsController.list)
     .post([UploadService.middleware('image'), communityPollsValidate.create], communityPollsController.create)
-    .put([UploadService.middleware('image'), communityPollsValidate.update], communityPollsController.update);
+    .put([UploadService.middleware('image'), communityPollsValidate.update], communityPollsController.update)
+    .delete([communityPollsValidate.delete], communityPollsController.delete);
 
 /**
  * Answer the question
