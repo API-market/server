@@ -271,6 +271,8 @@ describe('Global e2e tests', () => {
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
         await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('participant_count');
+        await expect(response.body.data.participant_count).toBe(0);
 
         // can find new poll in list
         response = await request(server)
@@ -295,6 +297,15 @@ describe('Global e2e tests', () => {
             .set('Authorization', `Bearer ${authToken}`)
             .send({answer: 1});
         await expectSuccessResponse(response);
+
+        // participant_count should be +1 after 1 person voted
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('participant_count');
+        await expect(response.body.data.participant_count).toBe(1);
 
         // can't edit poll after somebody voted
         response = await request(server)
