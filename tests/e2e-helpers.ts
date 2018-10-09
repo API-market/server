@@ -47,6 +47,18 @@ export async function expectCorrectAddCommunityResponse(community) {
     }
 }
 
+export async function expectCorrectPoll(poll) {
+    await expect(poll).toBeDefined();
+    const fields = ['answers', 'avatar', 'creator_id', 'createdAt', 'creator_image', 'poll_id', 'price', 'question', 'tags'];
+    for (const field of fields){
+        await expect(poll).toHaveProperty(field);
+        await expect(poll[field]).toBeDefined();
+    }
+
+    await expect(Array.isArray(poll[`answers`])).toBe(true);
+    await expect(Array.isArray(poll[`tags`])).toBe(true);
+}
+
 export async function expectCorrectErrorMessage(error) {
     await expect(error).toBeDefined();
     const fields = [];
