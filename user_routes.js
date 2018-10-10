@@ -158,7 +158,7 @@ userRouter.post('/users', [
     check('lastName').not().isEmpty().trim().escape().withMessage('Field \'lastName\' cannot be empty'),
     check('email').isEmail().normalizeEmail(),
     check('phone').optional().isMobilePhone('any'),
-    // check('dob').isISO8601().withMessage('Invalid \'dob\' specified, ISO8601 required'),
+    check('dob').isISO8601().optional(),
     check('gender').optional().isIn(['male', 'female', 'other']),
     check('school').optional().trim().escape(),
     check('employer').optional().trim().escape(),
@@ -218,13 +218,13 @@ const addProfileImage = function (res, user, exclude) {
   const userId = user.dataValues["user_id"];
   return getProfileImage(userId).then(result => {
     user.dataValues["profile_image"] = result;
-    user = removeEmpty(user);
-    if(exclude) {
+    // user = removeEmpty(user); // code disabled to keep server response consistent
+	if(exclude) {
       user = omit(user.toJSON(), exclude)
     }
     res.json(user);
   });
-}
+;
 
 userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);

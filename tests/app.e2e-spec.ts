@@ -74,13 +74,11 @@ describe('Global e2e tests', () => {
         // some fields empty
         response = await request(server)
             .post(`/v1/users`)
-            .send(credentials);
+            .send({email: credentials.email});
         await expectValidationError(response);
 
-        credentials.dob = `2005-08-09T18:31:42+03:30`;
-        credentials.password = `password1`;
-
         // can't use common password
+        credentials.password = `password1`;
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
@@ -92,9 +90,9 @@ describe('Global e2e tests', () => {
             .post(`/v1/users`)
             .send(credentials);
         await expectValidationError(response);
-        credentials.password = `A1b2C+D0`;
 
         // can't create user without phone tokens
+        credentials.password = `A1b2C+D0`;
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
