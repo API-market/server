@@ -1,48 +1,89 @@
 'use strict';
 
 const {communityPolls, community, pollAnswers, sequelize} = require('lumeos_models');
+const {CommunityPollService} = require('lumeos_services');
 const {UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 
 class CommunityPollsController {
 
-    list(req, res, next) {
-        let order = null;
-        if (req.query) {
-            const {createdAt, question} = req.query;
-            if (createdAt && !question) {
-                order = [['created_at', createdAt]];
-            }
-            if (question && !createdAt) {
-                order = [['question', question]];
-            }
-        }
-        const {community_id, poll_id: id} = req.params;
-        return community.findById(community_id)
-            .then((communityEntity) => {
-                if (!communityEntity) throw errors.notFound('Community not exists');
-                if (id) {
-                    return communityPolls.getOne({
-                        where: {
-                            community_id,
-                            id,
-                        }
-                    }, {order}).then((communityPollsEntity) => {
-						if (!communityPollsEntity) throw errors.notFound('Unable to find poll');
-                        res.sendResponse(communityPolls.formatResponse(communityPollsEntity));
-                    })
-                }
-                return communityPolls.getList({
-                    where: {
-                        community_id: +req.params.community_id
-                    }
-                }, {order})
-                    .then((communityPollsEntity) => {
-						if (!communityPollsEntity) throw errors.notFound('Unable to find poll');
-                        res.sendResponse(communityPolls.formatResponse(communityPollsEntity));
-                    });
-            })
-            .catch(next);
+	constructor() {
+		this.handleGetCommunityPollRoute = this.handleGetCommunityPollRoute.bind(this);
+	}
+
+
+	getPoll(req, res, next){
+
+		const {community_id, poll_id: id} = req.params;
+
+		return CommunityPollService.getPollByCommunityIdByPollId(community_id, id)
+		.then((communityPollsEntity) => {
+			if (!communityPollsEntity) throw errors.notFound('Unable to find poll');
+			res.sendResponse(communityPolls.formatResponse(communityPollsEntity));
+		})
+		.catch(next);
+	}
+
+	getPollList(req, res, next){
+
+		let order = null;
+		if (req.query) {
+			const {createdAt, question} = req.query;
+			if (createdAt && !question) {
+				order = [['created_at', createdAt]];
+			}
+			if (question && !createdAt) {
+				order = [['question', question]];
+			}
+		}
+
+		return communityPolls.getList({
+			where: {
+				community_id: +req.params.community_id
+			}}, {order})
+		.then((communityPollsEntity) => {
+			if (!communityPollsEntity) throw errors.notFound('Unable to find poll');
+			res.sendResponse(communityPolls.formatResponse(communityPollsEntity));
+		})
+		.catch(next);
+	}
+
+	getIsAnswered(req, res, next){
+		const {community_id, poll_id: id} = req.params;
+		const {isAnswered}      = req.query;
+
+		return CommunityPollService.getPollIsAnswered(community_id, id, isAnswered)
+		.then(poll => res.sendResponse(communityPolls.formatResponse(poll)))
+		.catch(next)
+	}
+
+	getIsBought(req, res, next){
+		const {community_id, poll_id: id} = req.params;
+		const {isBought}      = req.query;
+
+		return CommunityPollService.getPollIsBought(community_id, id, isBought)
+		.then(poll => res.sendResponse(communityPolls.formatResponse(poll)))
+		.catch(next)
+	}
+
+	handleGetCommunityPollRoute(req, res, next) {
+
+		const {community_id, poll_id: id} = req.params;
+		const {isBought, isAnswered}      = req.query;
+
+		return community.findById(community_id)
+		.then((communityEntity) => {
+
+			if(!communityEntity) throw errors.notFound('Community not exists');
+
+			if(id && !isBought && !isAnswered) return this.getPoll(req, res, next);
+			if(id && isAnswered) return this.getIsAnswered(req, res, next);
+			if(id && isBought) return this.getIsBought(req, res, next);
+
+			else return this.getPollList(req, res, next);
+
+		})
+		.catch(next);
     }
 
     create(req, res, next) {

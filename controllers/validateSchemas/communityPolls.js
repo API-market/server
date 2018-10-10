@@ -52,6 +52,8 @@ class CommunityPollsValidate {
                 poll_id: Joi.number().integer(),
                 question: Joi.string().valid(['asc', 'desc']),
                 createdAt: Joi.string().valid(['asc', 'desc']),
+				isAnswered: Joi.number().integer(),
+				isBought: Joi.number().integer(),
             })
         );
     }
