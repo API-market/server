@@ -154,8 +154,8 @@ userRouter.post('/logout', usersValidate.logout, function (req, res, next) {
 });
 
 userRouter.post('/users', [
-    check('firstName').not().isEmpty().trim().escape().withMessage('Field \'firstName\' cannot be empty'),
-    check('lastName').not().isEmpty().trim().escape().withMessage('Field \'lastName\' cannot be empty'),
+    check('firstName').optional().trim(),
+    check('lastName').optional().trim(),
     check('email').isEmail().normalizeEmail(),
     check('phone').optional().isMobilePhone('any'),
     check('dob').isISO8601().optional(),
