@@ -215,16 +215,16 @@ userRouter.post('/users', [
 });
 
 const addProfileImage = function (res, user, exclude) {
-  const userId = user.dataValues["user_id"];
-  return getProfileImage(userId).then(result => {
-    user.dataValues["profile_image"] = result;
-    // user = removeEmpty(user); // code disabled to keep server response consistent
-	if(exclude) {
-      user = omit(user.toJSON(), exclude)
-    }
-    res.json(user);
-  });
-;
+    const userId = user.dataValues["user_id"];
+    return getProfileImage(userId).then(result => {
+        user.dataValues["profile_image"] = result;
+        // user = removeEmpty(user); // code disabled to keep server response consistent
+        if (exclude) {
+            user = omit(user.toJSON(), exclude)
+        }
+        res.json(user);
+    });
+};
 
 userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
