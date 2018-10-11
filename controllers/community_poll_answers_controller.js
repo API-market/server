@@ -33,6 +33,48 @@ class CommunityPollAnswersController {
             }).catch(next);
     }
 
+    results(req, res, next) {
+        const {poll_id} = req.params;
+
+        return communityPolls.findById(poll_id)
+            .then(communityPollEntity => {
+				const possibleAnswers = communityPollEntity.get(`answers`) || [];
+				const getPollResults = pollAnswers.findAll({
+					where: {poll_id}
+				});
+
+				return Promise.all([communityPollEntity.get(), possibleAnswers, getPollResults])
+			})
+			.then(([communityPoll, possibleAnswers, pollAnswersEntities]) => {
+
+				const totals = {};
+				possibleAnswers.forEach((el, i) => {
+					totals[i] = {
+						name: el,
+						count: 0,
+					};
+				});
+
+				pollAnswersEntities.forEach(pollAnswerEntity => {
+					const pollAnswer = pollAnswerEntity.get();
+					totals[pollAnswer.answer][`count`] ++;
+				});
+
+				const results = {};
+				possibleAnswers.forEach((answer, i) => {
+					results[totals[i][`name`]] = totals[i][`count`];
+				});
+
+				res.sendResponse({
+					poll_id: communityPoll.id,
+					question: communityPoll.question,
+					answers: results,
+				});
+
+            })
+			.catch(next);
+    }
+
     create(req, res, next) {
         const {poll_id} = req.params;
         const {user_id} = req.auth;

@@ -46,5 +46,8 @@ router.route('/community/:community_id/polls/:poll_id/answers')
     .get(communityPollAnswersController.result)
     .post([communityPollAnswersValidate.create], communityPollAnswersController.create);
 
+router.route('/community/:community_id/polls/:poll_id/results')
+	.all(auth)
+	.get(communityPollAnswersController.results);
 
 module.exports = router;
