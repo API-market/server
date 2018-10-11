@@ -31,7 +31,11 @@ class CommunityController {
     create(req, res, next) {
         return sequelize.transaction((transaction) => {
             Object.assign(req.body, {creator_id: req.auth.user_id});
-            return community.create(community.formatData(req.body), {transaction})
+            return community.findOne({where: {name: req.body.name}})
+				.then(_community => {
+					if(_community) throw errors.badRequest(`Community '${req.body.name}' already exists!`);
+					return community.create(community.formatData(req.body), {transaction})
+				})
                 .then((communityNew) => {
                     return communityUsers.create({
                         community_id: communityNew.id,

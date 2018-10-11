@@ -6,6 +6,7 @@ dotenv.config({ silent: true });
 
 import * as server from '../server';
 import {
+    expectBadRequestError,
     expectCorrectAddCommunityResponse,
     expectCorrectCollection,
     expectCorrectCommunity, expectCorrectPoll,
@@ -168,8 +169,14 @@ describe('Global e2e tests', () => {
             .send(communityOptions);
         await expectSuccessResponse(response);
         await expectCorrectAddCommunityResponse(response.body.data);
-
         community = response.body.data;
+
+        // can't create community with same name
+        response = await request(server)
+            .post(`/v1/community`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send(communityOptions);
+        await expectBadRequestError(response);
 
         // can find created community in list
         response = await request(server)
