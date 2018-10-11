@@ -1,8 +1,6 @@
 export function generateNewUserCredentials() {
     return {
         email: 'test' + Math.random().toString(36).slice(-8) + '@example.com',
-        firstName: Math.random().toString(36).slice(-8),
-        lastName: Math.random().toString(36).slice(-8),
     };
 }
 
