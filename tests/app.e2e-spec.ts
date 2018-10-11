@@ -22,6 +22,7 @@ jest.setTimeout(25000);
 describe('Global e2e tests', () => {
 
     const credentials: any = generateNewUserCredentials();
+    let user;
     let authToken;
     let community;
 
@@ -109,6 +110,8 @@ describe('Global e2e tests', () => {
             .send(credentials);
         await expectSuccessResponse(response);
         await expectCorrectUser(response.body);
+
+        user = response.body;
     });
 
     it('Valid login flow', async () => {
@@ -281,6 +284,24 @@ describe('Global e2e tests', () => {
         let searchResult = response.body.data.find(pollEl => pollEl.poll_id === poll.poll_id);
         await expect(searchResult).toBeDefined();
 
+        // isAnswered = 0 before user voted
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isAnswered=${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('is_answered');
+        await expect(response.body.data.is_answered).toBe(0);
+
+        // is_bought = 1 before transactions will be ready
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isBought=${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('is_bought');
+        await expect(response.body.data.is_bought).toBe(1);
+
         // can edit poll while nobody voted already
         response = await request(server)
             .put(`/v1/community/${community.id}/polls/${poll.poll_id}`)
@@ -304,6 +325,15 @@ describe('Global e2e tests', () => {
         await expectCorrectPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('participant_count');
         await expect(response.body.data.participant_count).toBe(1);
+
+        // isAnswered = 1 after user voted
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isAnswered=${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('is_answered');
+        await expect(response.body.data.is_answered).toBe(1);
 
         // can't edit poll after somebody voted
         response = await request(server)

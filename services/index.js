@@ -6,4 +6,6 @@ exports.PollService = require('./poll_service');
 exports.MailService = require('./mail_service');
 exports.MessageService = require('./message_service');
 
+exports.CommunityPollService = require('./communityPoll.service');
+
 exports.mailService = new exports.MailService();
