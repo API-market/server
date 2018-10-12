@@ -20,8 +20,7 @@ class CommunityPollService {
 			},
 		});
 
-		poll[`dataValues`][`is_answered`] = userAnswersCount;
-
+		poll.setDataValue('is_answered', userAnswersCount ? 1 : 0);
 		return poll;
 	}
 
@@ -30,7 +29,7 @@ class CommunityPollService {
 		const transaction = await communityTransactions.count({
 				where: {community_poll_id: pollId, user_id: parseInt(userId)}
 		});
-		poll.setDataValue('is_bought', Boolean(transaction));
+		poll.setDataValue('is_bought', transaction ? 1 : 0);
 		return poll;
 	}
 }
