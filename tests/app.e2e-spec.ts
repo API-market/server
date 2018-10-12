@@ -307,7 +307,7 @@ describe('Global e2e tests', () => {
         await expectSuccessResponse(response);
         await expectCorrectPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('is_bought');
-        await expect(response.body.data.is_bought).toBe(1);
+        await expect(response.body.data.is_bought).toBe(0);
 
         // can edit poll while nobody voted already
         response = await request(server)
