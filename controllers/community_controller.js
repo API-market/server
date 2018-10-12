@@ -1,6 +1,6 @@
 const {community, communityUsers, sequelize} = require('lumeos_models');
 const {model} = require('lumeos_utils');
-const {UploadS3Service} = require('lumeos_services');
+const {UploadService} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 
 class CommunityController {
@@ -45,7 +45,7 @@ class CommunityController {
                     });
                 })
                 .then((communityNew) => {
-                    return UploadS3Service
+                    return UploadService
                         .upload(req.body.image, 'community')
                         .then(({file}) => {
                             if (file) {
@@ -75,7 +75,7 @@ class CommunityController {
                     let oldImage = communityEntity.image;
                     return communityEntity.update(community.formatData(req.body), {transaction})
                         .then((communityUpdated) => {
-                            return UploadS3Service
+                            return UploadService
                                 .upload(req.body.image, 'community')
                                 .then(({file}) => {
                                     if (!file) {

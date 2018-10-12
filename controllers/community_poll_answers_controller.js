@@ -1,8 +1,7 @@
 'use strict';
 
-const {pollAnswers, communityPolls} = require('lumeos_models');
+const {pollAnswers, communityPolls, communityTransactions} = require('lumeos_models');
 const {errors} = require('lumeos_utils');
-const TransactionsModel = require("../db_entities.js").Transaction;
 
 class CommunityPollAnswersController {
 
@@ -36,49 +35,50 @@ class CommunityPollAnswersController {
 
     results(req, res, next) {
 
-    	const {poll_id} = req.params;
-		const {user_id} = req.auth;
+        const {poll_id} = req.params;
+        const {user_id} = req.auth;
 
-        return TransactionsModel.findOrCreate({
-			where: { community_poll_id: poll_id, user_id }
-		})
-		.then(result => communityPolls.findById(poll_id))
-		.then(communityPollEntity => {
-			const possibleAnswers = communityPollEntity.get(`answers`) || [];
-			const getPollResults  = pollAnswers.findAll({
-				where: {poll_id}
-			});
+        return communityTransactions
+            .findOrCreate({
+                where: {community_poll_id: poll_id, user_id}
+            })
+            .then(() => communityPolls.findById(poll_id))
+            .then(communityPollEntity => {
+                const possibleAnswers = communityPollEntity.get(`answers`) || [];
+                const getPollResults = pollAnswers.findAll({
+                    where: {poll_id}
+                });
 
-			return Promise.all([communityPollEntity.get(), possibleAnswers, getPollResults])
-		})
-		.then(([communityPoll, possibleAnswers, pollAnswersEntities]) => {
+                return Promise.all([communityPollEntity.get(), possibleAnswers, getPollResults]);
+            })
+            .then(([communityPoll, possibleAnswers, pollAnswersEntities]) => {
 
-			const totals = {};
-			possibleAnswers.forEach((el, i) => {
-				totals[i] = {
-					name: el,
-					count: 0,
-				};
-			});
+                const totals = {};
+                possibleAnswers.forEach((el, i) => {
+                    totals[i] = {
+                        name: el,
+                        count: 0,
+                    };
+                });
 
-			pollAnswersEntities.forEach(pollAnswerEntity => {
-				const pollAnswer = pollAnswerEntity.get();
-				totals[pollAnswer.answer][`count`]++;
-			});
+                pollAnswersEntities.forEach(pollAnswerEntity => {
+                    const pollAnswer = pollAnswerEntity.get();
+                    totals[pollAnswer.answer][`count`]++;
+                });
 
-			const results = {};
-			possibleAnswers.forEach((answer, i) => {
-				results[totals[i][`name`]] = totals[i][`count`];
-			});
+                const results = {};
+                possibleAnswers.forEach((answer, i) => {
+                    results[totals[i][`name`]] = totals[i][`count`];
+                });
 
-			res.sendResponse({
-				poll_id: communityPoll.id,
-				question: communityPoll.question,
-				answers: results,
-			});
+                res.sendResponse({
+                    poll_id: communityPoll.id,
+                    question: communityPoll.question,
+                    answers: results,
+                });
 
-		})
-		.catch(next);
+            })
+            .catch(next);
     }
 
     create(req, res, next) {
@@ -95,13 +95,14 @@ class CommunityPollAnswersController {
                     if (pollAnswersEntity) {
                         throw errors.badRequest('You already answered on this poll');
                     }
-                    console.log(!(communityPollsEntity.answers.length < req.body.answer));
+
                     if (!communityPollsEntity.answers[req.body.answer]) {
                         throw errors.badRequest('Answer not exist');
                     }
                     Object.assign(req.body, {user_id});
-                    console.log(pollAnswers.formatData(req.body), '<<<');
-                    return pollAnswers.create(pollAnswers.formatData(req.body))
+
+                    return pollAnswers
+                        .create(pollAnswers.formatData(req.body))
                         .then((pollAnswersNew) => {
                             res.sendResponse(pollAnswers.formatResponse(pollAnswersNew));
                         });

@@ -2,7 +2,7 @@
 
 const {communityPolls, community, pollAnswers, sequelize} = require('lumeos_models');
 const {CommunityPollService} = require('lumeos_services');
-const {UploadS3Service} = require('lumeos_services');
+const {UploadService} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 
 class CommunityPollsController {
@@ -96,7 +96,7 @@ class CommunityPollsController {
                     return communityPolls
                         .create(communityPolls.formatData(req.body), {transaction})
                         .then((communityPollsNew) => {
-                            return UploadS3Service
+                            return UploadService
                                 .upload(req.body.image, 'community_polls')
                                 .then(({file}) => {
                                     if (file) {
@@ -142,7 +142,7 @@ class CommunityPollsController {
 				let oldImage = communityPollsEntity.image;
 				return communityPollsEntity.update(communityPolls.formatData(req.body), {transaction})
 				.then((CommunitiesPollsUpdated) => {
-					return UploadS3Service
+					return UploadService
 					.upload(req.body.image, 'community_polls')
 					.then(({file}) => {
 						if(!file){
@@ -160,7 +160,7 @@ class CommunityPollsController {
 					if(!oldImage)
 						return res.sendResponse(communityPolls.formatResponse(CommunitiesPollsUpdated));
 
-					return UploadS3Service
+					return UploadService
 					.delete(oldImage)
 					.then(() => {
 						return res.sendResponse(communityPolls.formatResponse(CommunitiesPollsUpdated));
