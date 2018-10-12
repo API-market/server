@@ -37,7 +37,6 @@ module.exports = {
     CommunityPollResult: {
         type: 'object',
         properties: {
-
             poll_id: {
                 type: 'number'
             },
@@ -47,7 +46,7 @@ module.exports = {
             answers: {
                 type: 'object',
                 properties: {
-                    "[name_answer]": {
+                    '[name_answer]': {
                         type: 'number'
                     }
                 }
