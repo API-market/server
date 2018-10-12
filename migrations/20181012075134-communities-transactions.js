@@ -18,6 +18,7 @@ module.exports = {
             },
             user_id: {
                 type: Sequelize.INTEGER,
+                primaryKey: true,
             },
         }, {
             schema: db.schemaNames.communities

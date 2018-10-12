@@ -17,8 +17,12 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
         },
-        user_id: DataTypes.INTEGER,
+        user_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+        },
     }, {
+        id: false,
         tableName: 'transactions',
         schema: schemaNames.communities,
         timestamps: false
