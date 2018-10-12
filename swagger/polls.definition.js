@@ -33,5 +33,25 @@ module.exports = {
                 type: 'number'
             }
         }
+    },
+    CommunityPollResult: {
+        type: 'object',
+        properties: {
+
+            poll_id: {
+                type: 'number'
+            },
+            question: {
+                type: 'string'
+            },
+            answers: {
+                type: 'object',
+                properties: {
+                    "[name_answer]": {
+                        type: 'number'
+                    }
+                }
+            }
+        }
     }
 };
