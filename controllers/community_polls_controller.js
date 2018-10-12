@@ -2,7 +2,7 @@
 
 const {communityPolls, community, pollAnswers, sequelize} = require('lumeos_models');
 const {CommunityPollService} = require('lumeos_services');
-const {UploadService} = require('lumeos_services');
+const {UploadService, UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 
 class CommunityPollsController {
@@ -160,7 +160,7 @@ class CommunityPollsController {
 					if(!oldImage)
 						return res.sendResponse(communityPolls.formatResponse(CommunitiesPollsUpdated));
 
-					return UploadService
+					return UploadS3Service
 					.delete(oldImage)
 					.then(() => {
 						return res.sendResponse(communityPolls.formatResponse(CommunitiesPollsUpdated));
