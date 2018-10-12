@@ -1,4 +1,4 @@
-const { communityPolls, pollAnswers } = require('lumeos_models');
+const { communityPolls, pollAnswers, communityTransactions } = require('lumeos_models');
 
 class CommunityPollService {
 
@@ -27,7 +27,8 @@ class CommunityPollService {
 
 	static async getPollIsBought(communityId, pollId, userId){
 		const poll = await this.getPollByCommunityIdByPollId(communityId, pollId);
-		poll[`dataValues`][`is_bought`] = 1;
+		const transaction = await communityTransactions.findOne({community_poll_id: pollId, user_id: userId});
+		poll[`dataValues`][`is_bought`] = transaction ? 1 : 0;
 		return poll;
 	}
 }

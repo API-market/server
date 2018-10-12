@@ -1,8 +1,9 @@
 'use strict';
 const {migration} = require('lumeos_utils');
+const db = require('lumeos_models');
 const {count_participant, poll_answers, community_count_answers, constansts} = require('../migrations_views');
 
-const schemaName = 'communities';
+const schemaName = db.schemaNames.communities;
 module.exports = {
     up: (queryInterface, Sequelize) => {
         return queryInterface.createSchema(schemaName)
