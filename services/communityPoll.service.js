@@ -30,7 +30,7 @@ class CommunityPollService {
 		const transaction = await communityTransactions.count({
 				where: {community_poll_id: pollId, user_id: parseInt(userId)}
 		});
-		poll.setDataValue('is_bought', transaction);
+		poll.setDataValue('is_bought', Boolean(transaction));
 		return poll;
 	}
 }
