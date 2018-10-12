@@ -300,14 +300,14 @@ describe('Global e2e tests', () => {
         await expect(response.body.data).toHaveProperty('is_answered');
         await expect(response.body.data.is_answered).toBe(0);
 
-        // is_bought = 1 before transactions will be ready
+        // is_bought = 0 before user requested results
         response = await request(server)
             .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isBought=${user.user_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
         await expectCorrectPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('is_bought');
-        await expect(response.body.data.is_bought).toBe(1);
+        await expect(response.body.data.is_bought).toBe(0);
 
         // can edit poll while nobody voted already
         response = await request(server)
@@ -341,6 +341,19 @@ describe('Global e2e tests', () => {
         await expectCorrectPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('is_answered');
         await expect(response.body.data.is_answered).toBe(1);
+
+        // is_bought = 1 after user requested results
+        await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}/results`)
+            .set('Authorization', `Bearer ${authToken}`);
+
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isBought=${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('is_bought');
+        await expect(response.body.data.is_bought).toBe(1);
 
         // can't edit poll after somebody voted
         response = await request(server)

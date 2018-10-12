@@ -233,9 +233,10 @@ const ProfileImage = sequelize.define('profile_image', {
 
 const Transaction = sequelize.define('transaction', {
   poll_id: Sequelize.INTEGER,
+  community_poll_id: Sequelize.INTEGER,
   user_id: Sequelize.INTEGER,
   amount: Sequelize.DOUBLE
-});
+}, {timestamps: false});
 
 const DEFAULT_PROFILE_IMAGE = process.env.S3_DEFAULT_PROFILE_IMAGE || "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png";
 const getProfileImage = function (user_id) {

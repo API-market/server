@@ -2,6 +2,7 @@
 
 const {pollAnswers, communityPolls} = require('lumeos_models');
 const {errors} = require('lumeos_utils');
+const TransactionsModel = require("../db_entities.js").Transaction;
 
 class CommunityPollAnswersController {
 
@@ -34,45 +35,50 @@ class CommunityPollAnswersController {
     }
 
     results(req, res, next) {
-        const {poll_id} = req.params;
 
-        return communityPolls.findById(poll_id)
-            .then(communityPollEntity => {
-				const possibleAnswers = communityPollEntity.get(`answers`) || [];
-				const getPollResults = pollAnswers.findAll({
-					where: {poll_id}
-				});
+    	const {poll_id} = req.params;
+		const {user_id} = req.auth;
 
-				return Promise.all([communityPollEntity.get(), possibleAnswers, getPollResults])
-			})
-			.then(([communityPoll, possibleAnswers, pollAnswersEntities]) => {
+        return TransactionsModel.findOrCreate({
+			where: { community_poll_id: poll_id, user_id }
+		})
+		.then(result => communityPolls.findById(poll_id))
+		.then(communityPollEntity => {
+			const possibleAnswers = communityPollEntity.get(`answers`) || [];
+			const getPollResults  = pollAnswers.findAll({
+				where: {poll_id}
+			});
 
-				const totals = {};
-				possibleAnswers.forEach((el, i) => {
-					totals[i] = {
-						name: el,
-						count: 0,
-					};
-				});
+			return Promise.all([communityPollEntity.get(), possibleAnswers, getPollResults])
+		})
+		.then(([communityPoll, possibleAnswers, pollAnswersEntities]) => {
 
-				pollAnswersEntities.forEach(pollAnswerEntity => {
-					const pollAnswer = pollAnswerEntity.get();
-					totals[pollAnswer.answer][`count`] ++;
-				});
+			const totals = {};
+			possibleAnswers.forEach((el, i) => {
+				totals[i] = {
+					name: el,
+					count: 0,
+				};
+			});
 
-				const results = {};
-				possibleAnswers.forEach((answer, i) => {
-					results[totals[i][`name`]] = totals[i][`count`];
-				});
+			pollAnswersEntities.forEach(pollAnswerEntity => {
+				const pollAnswer = pollAnswerEntity.get();
+				totals[pollAnswer.answer][`count`]++;
+			});
 
-				res.sendResponse({
-					poll_id: communityPoll.id,
-					question: communityPoll.question,
-					answers: results,
-				});
+			const results = {};
+			possibleAnswers.forEach((answer, i) => {
+				results[totals[i][`name`]] = totals[i][`count`];
+			});
 
-            })
-			.catch(next);
+			res.sendResponse({
+				poll_id: communityPoll.id,
+				question: communityPoll.question,
+				answers: results,
+			});
+
+		})
+		.catch(next);
     }
 
     create(req, res, next) {

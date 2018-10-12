@@ -27,7 +27,8 @@ class CommunityPollService {
 
 	static async getPollIsBought(communityId, pollId, userId){
 		const poll = await this.getPollByCommunityIdByPollId(communityId, pollId);
-		poll[`dataValues`][`is_bought`] = 1;
+		const transaction = await require('../db_entities.js').Transaction.findOne({community_poll_id: pollId, user_id: userId});
+		poll[`dataValues`][`is_bought`] = transaction ? 1 : 0;
 		return poll;
 	}
 }
