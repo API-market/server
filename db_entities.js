@@ -233,7 +233,6 @@ const ProfileImage = sequelize.define('profile_image', {
 
 const Transaction = sequelize.define('transaction', {
   poll_id: Sequelize.INTEGER,
-  community_poll_id: Sequelize.INTEGER,
   user_id: Sequelize.INTEGER,
   amount: Sequelize.DOUBLE
 }, {timestamps: false});
