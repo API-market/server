@@ -19,7 +19,7 @@ class CommunityPollsValidate {
                     .array()
                     .items(Joi.string().required())
                     .required(),
-                image: Joi
+                avatar: Joi
                     .object()
                     .keys({
                         fieldname: Joi.string().required(),
@@ -73,7 +73,7 @@ class CommunityPollsValidate {
                     .array()
                     .items(Joi.string().required())
                     .required(),
-                image: Joi
+                avatar: Joi
                     .object()
                     .keys({
                         fieldname: Joi.string().required(),

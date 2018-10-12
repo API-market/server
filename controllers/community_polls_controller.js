@@ -97,7 +97,7 @@ class CommunityPollsController {
                         .create(communityPolls.formatData(req.body), {transaction})
                         .then((communityPollsNew) => {
                             return UploadService
-                                .upload(req.body.image, 'community_polls')
+                                .upload(req.body.avatar, 'community_polls')
                                 .then(({file}) => {
                                     if (file) {
                                         return communityPollsNew
@@ -143,7 +143,7 @@ class CommunityPollsController {
 				return communityPollsEntity.update(communityPolls.formatData(req.body), {transaction})
 				.then((CommunitiesPollsUpdated) => {
 					return UploadService
-					.upload(req.body.image, 'community_polls')
+					.upload(req.body.avatar, 'community_polls')
 					.then(({file}) => {
 						if(!file){
 							oldImage = null;

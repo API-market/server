@@ -34,8 +34,8 @@ router.route('/community/:community_id/unjoin')
 router.route('/community/:community_id/polls/:poll_id?')
     .all(auth)
     .get(communityPollsValidate.list, communityPollsController.handleGetCommunityPollRoute)
-    .post([UploadService.middleware('image'), communityPollsValidate.create], communityPollsController.create)
-    .put([UploadService.middleware('image'), communityPollsValidate.update], communityPollsController.update)
+    .post([UploadService.middleware('avatar'), communityPollsValidate.create], communityPollsController.create)
+    .put([UploadService.middleware('avatar'), communityPollsValidate.update], communityPollsController.update)
     .delete([communityPollsValidate.delete], communityPollsController.delete);
 
 /**
