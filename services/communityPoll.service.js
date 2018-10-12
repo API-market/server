@@ -27,8 +27,10 @@ class CommunityPollService {
 
 	static async getPollIsBought(communityId, pollId, userId){
 		const poll = await this.getPollByCommunityIdByPollId(communityId, pollId);
-		const transaction = await communityTransactions.findOne({community_poll_id: pollId, user_id: userId});
-		poll[`dataValues`][`is_bought`] = transaction ? 1 : 0;
+		const transaction = await communityTransactions.count({
+				where: {community_poll_id: pollId, user_id: parseInt(userId)}
+		});
+		poll.setDataValue('is_bought', transaction);
 		return poll;
 	}
 }
