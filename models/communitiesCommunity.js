@@ -40,9 +40,9 @@ module.exports = (sequelize, DataTypes) => {
         schema: 'communities',
         tableName: 'community',
         timestamps: true,
-		updatedAt: 'updated_at',
-		createdAt: 'created_at',
-		paranoid: true,
+        updatedAt: 'updated_at',
+        createdAt: 'created_at',
+        paranoid: true,
     });
     CommunitiesCommunity.associate = (models) => {
         CommunitiesCommunity.belongsTo(models.users, {foreignKey: 'creator_id'});
@@ -51,19 +51,22 @@ module.exports = (sequelize, DataTypes) => {
     };
     CommunitiesCommunity.methods = (models, _, db) => {
         CommunitiesCommunity.getList = (query, {order, user_id}) => {
-            return CommunitiesCommunity.scope('defaultScope', 'relatedData').findAll({
-                attributes: Object.keys(CommunitiesCommunity.attributes)
-                    .filter(e => e !== 'creator_id')
-                    .concat([[
-                        sequelize.literal(`(
+            return CommunitiesCommunity
+                .scope('defaultScope', 'relatedData')
+                .findAll({
+                    attributes: Object.keys([])
+                        .concat([sequelize.literal('DISTINCT "community"."id"')])
+                        .filter(e => e !== 'creator_id')
+                        .concat([[
+                            sequelize.literal(`(
                             SELECT CASE WHEN count(c_cu.community_id) > 0 THEN TRUE ELSE FALSE END
                             FROM communities.community_users AS c_cu
                             WHERE c_cu.user_id = ${user_id} 
                             AND community.id = c_cu.community_id
                             )`), 'is_joined'
-                    ]]),
-                order: order || [['id', 'desc']]
-            });
+                        ]]).concat(Object.keys(CommunitiesCommunity.attributes)),
+                    order: order || [['id', 'desc']]
+                });
         };
     };
     CommunitiesCommunity.formatter = (models, _) => {
@@ -82,7 +85,7 @@ module.exports = (sequelize, DataTypes) => {
     };
     CommunitiesCommunity.scopes = (models, sequelize) => {
     	CommunitiesCommunity.addScope('relatedData', {
-			include: [
+      include: [
 				{
 					model: models.users,
 					include: [{
