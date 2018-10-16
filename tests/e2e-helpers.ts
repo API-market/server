@@ -101,3 +101,11 @@ export async function expectSuccessResponse(response, expectedCode = 200) {
     await expect(response.error).toBeFalsy();
     await expect(response.status).toBe(expectedCode);
 }
+
+export function delay(duration) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve();
+        }, duration);
+    });
+}

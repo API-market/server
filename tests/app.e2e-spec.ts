@@ -6,6 +6,7 @@ dotenv.config({ silent: true });
 
 import * as server from '../server';
 import {
+    delay,
     expectBadRequestError,
     expectCorrectAddCommunityResponse,
     expectCorrectCollection,
@@ -318,6 +319,7 @@ describe('Global e2e tests', () => {
         await expectCorrectPoll(response.body.data);
 
         // can vote
+        await delay(2000);
         response = await request(server)
             .post(`/v1/community/${community.id}/polls/${poll.poll_id}/answers`)
             .set('Authorization', `Bearer ${authToken}`)
