@@ -287,63 +287,75 @@ userRouter.get('/users/:id', function (req, res) {
   });
 });
 
-userRouter.get('/users', function (req, res) {
-  let orderParams = [];
-  let limit = 10e3;
-  if (req.query["orderBy"]) {
-    orderParams.push([sequelize.col(req.query["orderBy"]), 'DESC'])
-  }
-  if (req.query["limit"]) {
-    limit = req.query["limit"];
-  }
-  var where_params = [];
-  if (req.query["queryName"]) {
-    where_params.push({
-      [Op.or]: [
-        {firstName: {[Op.like]: "%" + req.query["queryName"] + "%"}},
-        {lastName: {[Op.like]: "%" + req.query["queryName"] + "%"}}
-      ]
-    });
-  }
-  if (req.query["querySchool"]) {
-    where_params.push({
-      school: {[Op.like]: "%" + req.query["querySchool"] + "%"}
-    });
-  }
-  if (req.query["queryEmployer"]) {
-    where_params.push({
-      employer: {[Op.like]: "%" + req.query["queryEmployer"] + "%"}
-    });
-  }
-  if (req.query["queryEmail"]) {
-    where_params.push({
-      email: req.query["queryEmail"]
-    });
-  }
-  if (req.query["queryPhone"]) {
-    where_params.push({
-      phone: req.query["queryPhone"]
-    });
-  }
-  var where_object = {
-    where: Object.assign({}, ...where_params),
-    order: orderParams,
-    limit: limit,
-    attributes: STANDARD_USER_ATTR
-  };
-  User.findAll(where_object).then(users => {
-    if (users) {
-      return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
-        users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-        res.json(removeEmpty(users));
-      });
-    }
-    else {
-      res.status(404).json({error: "Not Found", message: "User not found"})
-    }
-  }).catch(error => {
-    res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
-  });
+userRouter.get('/users', function(req, res) {
+	const orderParams = [];
+	let limit       = req.query["limit"] || 100;
+
+	if(req.query["orderBy"]){
+
+		const orderString = req.query["orderBy"];
+
+		if (!orderString.match(/((balance|follower_count):(asc|desc)(,)?)+/gi)){
+			throw errors.badRequest();
+		}else{
+			orderString.split(`,`).forEach(option => {
+				if (option) {
+					const [field, direction] = option.split(`:`);
+					orderParams.push([sequelize.col(field), direction.toUpperCase()])
+				}
+			});
+		}
+
+	}
+
+	const where_params = [];
+	if(req.query["queryName"]){
+		where_params.push({
+			[Op.or]: [
+				{firstName: {[Op.like]: "%" + req.query["queryName"] + "%"}},
+				{lastName: {[Op.like]: "%" + req.query["queryName"] + "%"}}
+			]
+		});
+	}
+	if(req.query["querySchool"]){
+		where_params.push({
+			school: {[Op.like]: "%" + req.query["querySchool"] + "%"}
+		});
+	}
+	if(req.query["queryEmployer"]){
+		where_params.push({
+			employer: {[Op.like]: "%" + req.query["queryEmployer"] + "%"}
+		});
+	}
+	if(req.query["queryEmail"]){
+		where_params.push({
+			email: req.query["queryEmail"]
+		});
+	}
+	if(req.query["queryPhone"]){
+		where_params.push({
+			phone: req.query["queryPhone"]
+		});
+	}
+	var where_object = {
+		where: Object.assign({}, ...where_params),
+		order: orderParams,
+		limit: limit,
+		attributes: STANDARD_USER_ATTR
+	};
+	User.findAll(where_object).then(users => {
+		if(users){
+			return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
+				users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
+				res.json(removeEmpty(users));
+			});
+		}
+		else{
+			res.status(404).json({error: "Not Found", message: "User not found"})
+		}
+	}).catch(error => {
+		res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
+	});
 });
 
 
