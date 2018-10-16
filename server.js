@@ -25,7 +25,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const {basicAuth} = require('lumeos_middlewares')
+const {responseFormatter, basicAuth} = require('lumeos_middlewares')
 const bodyParser = require('body-parser');
 const {join} = require('path');
 app.use(bodyParser.json({limit: '5mb'}));
@@ -39,20 +39,10 @@ const VERSION = serverInfo.VERSION;
 const PORT = serverInfo.PORT;
 const SUPER_SECRET_JWT_KEY = serverInfo.SUPER_SECRET_JWT_KEY;
 
-const stdin = process.openStdin();
-stdin.addListener("data", function(d) {
-    switch (d.toString().trim()) {
-        case "run-seed": {
-            // seed admin user
-            require('./seed');
-        }
-    }
-});
-
 if(!process.env.LUMEOS_SERVER_DB) {
     require('./seed');
 }
-
+app.use(responseFormatter.init);
 app.use('/v' + VERSION, function (req, res, next) {
   if (req.url.endsWith("/login")
     || (req.url.match(/\/users\/?$/) && ['post'].includes(req.method.toLowerCase()))
@@ -61,6 +51,7 @@ app.use('/v' + VERSION, function (req, res, next) {
     || req.url.match(/\/app/)
     || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
+    || req.url.match(/\/versions/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
     || req.url.endsWith("/faqs/")) {
@@ -105,6 +96,7 @@ app.use('/v' + VERSION, basicRoutes);
 app.use('/v' + VERSION, userRoutes);
 app.use('/v' + VERSION, pollRoutes);
 app.use('/v' + VERSION, notificationsRoutes);
+app.use(require('./routes'));
 
 /**
  * Web notifications
@@ -125,6 +117,12 @@ app.use(function (req, res, next) {
     next()
 });
 app.use(process.env.ADMIN_ROUTER, require('./routes/web'));
+
+const swaggerUi = require('swagger-ui-express');
+app.use('/api-docs', basicAuth.init, swaggerUi.serve, swaggerUi.setup(require('./swagger')));
+
+app.use(responseFormatter.error404);
+app.use(responseFormatter.errors);
 
 /**
  * Cron

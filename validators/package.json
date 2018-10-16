@@ -1,0 +1,4 @@
+{
+  "name": "lumeos_validators",
+  "main": "./index.js"
+}

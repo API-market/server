@@ -24,10 +24,11 @@
 
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
-const {events, token, model} = require('lumeos_utils');
+const {events, token, model, format} = require('lumeos_utils');
 const {mailService, UploadService, MessageService} = require('lumeos_services');
+const {errors} = require('lumeos_utils');
+const {usersValidate} = require('lumeos_controllers/validateSchemas');
 const {omit} = require('lodash');
-
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -59,6 +60,7 @@ const STANDARD_USER_ATTR = [
   "dob",
   "gender",
   "school",
+  "address",
   "employer",
   "balance",
   "follower_count",
@@ -137,58 +139,78 @@ userRouter.post('/login', [
   })
 });
 
-userRouter.post('/logout', function (req, res) {
-  res.status(501).json();
+userRouter.post('/logout', usersValidate.logout, function (req, res, next) {
+    Tokens.destroy({
+        where: {
+            user_id: req.auth.user_id,
+            token: req.body.token_phone,
+        },
+    }).then((data) => {
+        if (!data) {
+            throw errors.notFound();
+        }
+        res.status(205).json();
+    }).catch(next)
 });
 
 userRouter.post('/users', [
-  check("firstName").not().isEmpty().trim().escape().withMessage("Field 'firstName' cannot be empty"),
-  check("lastName").not().isEmpty().trim().escape().withMessage("Field 'lastName' cannot be empty"),
-  check("email").isEmail().normalizeEmail(),
-  check("phone").optional().isMobilePhone("any"),
-  check("dob").isISO8601().withMessage("Invalid 'dob' specified, ISO8601 required"),
-  check("gender").optional().isIn(["male", "female", "other"]),
-  check("school").optional().trim().escape(),
-  check("employer").optional().trim().escape(),
-  check('password', 'The password must be 8+ chars long and contain a number')
-    .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
-    .isLength({min: 8})
-    .matches(/\d/)
+    check('firstName').not().isEmpty().trim().escape().withMessage('Field \'firstName\' cannot be empty'),
+    check('lastName').not().isEmpty().trim().escape().withMessage('Field \'lastName\' cannot be empty'),
+    check('email').isEmail().normalizeEmail(),
+    check('phone').optional().isMobilePhone('any'),
+    // check('dob').isISO8601().withMessage('Invalid \'dob\' specified, ISO8601 required'),
+    check('gender').optional().isIn(['male', 'female', 'other']),
+    check('school').optional().trim().escape(),
+    check('employer').optional().trim().escape(),
+    check('password', 'The password must be 8+ chars long and contain a number')
+        .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+        .isLength({min: 8})
+        .matches(/\d/)
 ], (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({errors: errors.array()});
-  }
-  sequelize.sync()
-    .then(() => {
-      User.create(req.body, {
-        include: [{
-          association: User.Address
-        }]
-      })
-        .then(user => {
-            return Tokens.upsert({
-                user_id: user.id,
-                token: req.body.token_phone,
-                name: req.body.name_phone,
-                platform: req.body.platform,
-            }).then((data) => {
-                console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
-                const dataUser = {
-                    user_id: user['id'],
-                    token: getToken(user)
-                };
-                Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
-                return addProfileImage(res, user, EXCLUDE_USER_ATTR);
-            });
-        })
-        .catch(error => {
-          console.log("error: " + error);
-          res.status(400).json({
-            error: "Bad Request",
-            message: "Could not create user with " + JSON.stringify(req.body)
-          })
-        })
+    if (!errors.isEmpty()) {
+        return res.status(422).json({errors: errors.array()});
+    }
+
+    User.create(req.body, {
+        // include: [{
+        //   association: User.Address
+        // }]
+    })
+    .then(user => {
+        return Tokens.upsert({
+            user_id: user.id,
+            token: req.body.token_phone,
+            name: req.body.name_phone,
+            platform: req.body.platform,
+        }).then((data) => {
+            console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+            const dataUser = {
+                user_id: user['id'],
+                token: getToken(user)
+            };
+            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+            return addProfileImage(res, user, EXCLUDE_USER_ATTR);
+        });
+    })
+    .catch((error) => {
+        const status = 422;
+        if (error.message === 'Validation error') {
+            const errors = error.errors.map(err => ({
+                param: err.path,
+                msg: format.messageValidate(err, err.path)
+            }));
+            return res.status(status).json({errors});
+        }
+        if (error.name === 'SequelizeDatabaseError') {
+            return res.status(status).json({errors: [{
+                    msg: error.message
+            }]});
+        }
+        res.status(400).json({
+            error: 'Bad Request',
+            message: 'Could not create user with ' + JSON.stringify(req.body)
+        });
     });
 });
 
@@ -208,9 +230,9 @@ userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
   User.findById(userId, {
     attributes: STANDARD_USER_ATTR,
-    include: [
-      {association: User.Address, as: 'address'}
-    ],
+    // include: [
+    //   {association: User.Address, as: 'address'}
+    // ],
   }).then(user => {
     if (user) {
       if (req.query["isFollowerOf"]) {
@@ -673,9 +695,15 @@ userRouter.put('/users',
             res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
         });
     }).catch((err) => {
-        console.log(err);
-        res.status(500).json({error: 'Error', message: 'Some error.'});
-    });
+        if (err.message === 'Validation error') {
+            const errors = err.errors.map(err => ({
+                param: err.path,
+                msg: format.messageValidate(err, err.path)
+            }));
+            const status = 422;
+            return res.status(status).json({errors});
+        }
+        res.status(500).json({error: 'Error', message: 'Some error.'});    });
 });
 
 userRouter.delete('/users/:id', function (req, res) {
@@ -797,7 +825,8 @@ userRouter
                 }
                 return token.generate({
                     user_id: user.id,
-                    verify: user.verify
+                    verify: user.verify,
+                    iat: Math.floor(new Date() / 1000)
                 }).then((token) => {
                     return mailService.send(user.email, mailService.constants.VERIFY_USER, {
                         link: `/app/?verifyToken=${token}`,
@@ -842,7 +871,7 @@ userRouter
         })
             .then(function (user) {
                 if (!user) {
-                    throw new Error('User not found');
+                    throw new Error('User was verify');
                 }
                 return user.update(model.formattingValue({
                     verifyToken: null,
@@ -874,11 +903,11 @@ userRouter
             return res.status(422).json({errors: errors.array()});
         }
         const {phone, phoneCountryCode} = req.body;
-        User.findOne({where: model.formattingValue({
+        User.findOne({where: {
                 id: req.auth.user_id,
                 phone: phone,
-                phoneCountryCode: phoneCountryCode,
-            }, [], {phoneCountryCode: 'phoneCode'})})
+                phone_code: phoneCountryCode,
+            }})
             .then((user) => {
                 if (!user) {
                     throw new Error('User not found');

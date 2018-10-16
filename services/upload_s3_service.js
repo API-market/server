@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 const crypto = require('crypto');
-const {resolve} = require('url');
+const {resolve, parse} = require('url');
 const Format = require('lumeos_utils/format');
 
 class UploadS3Service {
@@ -44,6 +44,24 @@ class UploadS3Service {
     }
 
     /**
+     *
+     * @param file
+     * @returns {{Bucket: string | undefined | string | *, Delete: {Objects: *[]}}}
+     */
+    formatDataForDelete(file) {
+        return {
+            Bucket: this.bucketName,
+            Delete: {
+                Objects: [
+                    {
+                        Key: file
+                    }
+                ],
+            },
+        };
+    }
+
+    /**
      * Upload file to S3
      * @param file
      * @param dir
@@ -53,8 +71,24 @@ class UploadS3Service {
 
     upload(file, dir) {
         return new Promise((resolve, reject) => {
+            if (!file) resolve({file: null});
             const data = this.formatData(file, dir);
             return this.bucket.putObject(data, (error, result) => {
+                if (error) {
+                    reject(error);
+                }
+                resolve(Object.assign(data, {bucket: this.bucketName, file: data.Key}, {S3: result}));
+            });
+        });
+    }
+
+    delete(fileUrl) {
+        if (fileUrl)
+            fileUrl = parse(fileUrl).path.replace(`/${this.bucketName}/`, '');
+
+        return new Promise((resolve, reject) => {
+            const data = this.formatDataForDelete(fileUrl);
+            return this.bucket.deleteObjects(data, (error, result) => {
                 if (error) {
                     reject(error);
                 }

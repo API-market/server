@@ -10,6 +10,7 @@ test_database.sqlite
 export_credentials
 .idea
 .env
+.env.test
 *-lock.json
 *.log
 *.zip
