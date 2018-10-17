@@ -26,10 +26,22 @@
                 <a href="/web/notifications/delete/<%= user.id %>" data-delete class="btn btn-danger">
                     <i class="fas fa-trash-alt"></i>
                 </a>
-                <a href="/web/notifications/send/<%= user.id %>" data-send class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Send Message Notification">
+                <a href="/web/notifications/send/<%= user.id %>" data-send
+                   class="btn btn-info"
+                   data-toggle="tooltip"
+                   data-placement="top"
+                   title="Send Message Notification"
+                   data-helper="Message sended"
+                >
                     <i class="fas fa-envelope"></i>
                 </a>
-                <a href="/web/notifications/send/<%= user.id %>/push" data-send class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Send Push Notification">
+                <a href="/web/notifications/send/<%= user.id %>/push" data-send
+                   class="btn btn-info"
+                   data-toggle="tooltip"
+                   data-placement="top"
+                   title="Send Push Notification"
+                   data-helper="Message push sended"
+                >
                     <i class="fas fa-mobile-alt"></i>
                 </a>
             </td>

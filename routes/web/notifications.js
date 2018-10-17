@@ -144,9 +144,7 @@ notificationsWebRouter.post('/notifications/send/:id/:type?', function (req, res
                                             count_notifications,
                                         });
                                     });
-                                    setTimeout(() => {
-                                        return res.json({});
-                                    }, 1000)
+                                    return res.json({});
                                 })
                         }));
                     }
@@ -158,9 +156,7 @@ notificationsWebRouter.post('/notifications/send/:id/:type?', function (req, res
                             description
                         });
                     });
-                    setTimeout(() => {
-                        return res.json({});
-                    }, 1000)
+                    return res.json({});
                 });
             })
 
