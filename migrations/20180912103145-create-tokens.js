@@ -14,7 +14,7 @@ module.exports = {
             },
             name: {type: Sequelize.STRING},
             token: {
-                type: Sequelize.STRING,
+                type: Sequelize.STRING(511),
                 allowNull: false
             },
             platform: {type: Sequelize.STRING},
