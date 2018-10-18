@@ -4,7 +4,7 @@ exports.constansts = {
     pollAnswers: 'poll_answers',
     communityCountAnswers: 'community_count_answers',
     communityCountPolls: 'community_count_polls',
-	communityCountAnswersUpdated: 'community_count_answers_updated',
+    communityCountAnswersUpdated: 'community_count_answers_updated',
 };
 /**
  * Count user in community (joined users or members community)
