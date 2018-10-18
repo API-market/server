@@ -9,6 +9,11 @@ module.exports = {
     },
 
     down: (queryInterface, Sequelize) => {
-        return queryInterface.removeColumn('polls', 'avatar');
+        return queryInterface.describeTable('polls')
+            .then(tableDefinition => {
+                if (tableDefinition) return queryInterface.removeColumn('polls', 'avatar');
+
+                return Promise.resolve();
+            });
     }
 };
