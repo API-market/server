@@ -90,53 +90,63 @@ const getToken = (user) => {
         },
         require('./server_info.js').SUPER_SECRET_JWT_KEY
     )
-}
+};
 
 const emailValidate = check("email").isEmail().normalizeEmail();
 
 userRouter.post('/login', [
-    emailValidate,
-    check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
-    check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
-    check("name_phone").isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
-    check('password', 'The password must be 8+ chars long and contain a number')
-        .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
-        .isLength({min: 8})
-        .matches(/\d/)
-], function (req, res) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-      return res.status(422).json({errors: errors.array()});
-  }
-    User.findOne(
-        {where: {email: req.body['email']}},
-        {include: [{association: User.Tokens}]}
-    ).then(function (user) {
-        if (user && user.verifyPassword(req.body['password'])) {
-            Tokens.upsert({
-                user_id: user.id,
-                token: req.body.token_phone,
-                name: req.body.name_phone,
-                platform: req.body.platform,
-            }).then((data) => {
-            console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
-          }).catch((err) => {
-            console.log(err, '<<<');
-            // return res.status(400).json({error: "Bad Request", message: err.message})
-          })
-            const dataUser = {
-                user_id: user['id'],
-                token: getToken(user)
-            };
-            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
-            addProfileImage(res, user, EXCLUDE_USER_ATTR);
-    } else {
-      res.status(404).json({error: "Not Found", message: "User not found or password is incorrect."})
-    }
-  }).catch((err) => {
-    console.log(err);
-    res.status(500).json({error: "Error", message: "Some error."})
-  })
+	emailValidate,
+	check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
+	check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
+	check("name_phone").isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
+	check('password', 'The password must be 8+ chars long and contain a number')
+		.not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+		.isLength({min: 8})
+		.matches(/\d/)
+], function(req, res) {
+
+	const errors = validationResult(req);
+
+	if(!errors.isEmpty()){
+		return res.status(422).json({errors: errors.array()});
+	}
+
+	User.findOne(
+		{where: {email: req.body['email']}},
+		{include: [{association: User.Tokens}]}
+	).then(function(user) {
+		if(user && user.verifyPassword(req.body['password'])){
+			Tokens.destroy({ where: {
+				user_id: user.id,
+				name: req.body.name_phone,
+				platform: req.body.platform,
+			}})
+			.then(() =>
+				Tokens.upsert({
+					user_id: user.id,
+					token: req.body.token_phone,
+					name: req.body.name_phone,
+					platform: req.body.platform,
+				}).then((data) => {
+					console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+				}).catch((err) => {
+					console.log(err, '<<<');
+				})
+			);
+
+			const dataUser = {
+				user_id: user['id'],
+				token: getToken(user)
+			};
+			Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+			addProfileImage(res, user, EXCLUDE_USER_ATTR);
+		}else{
+			res.status(404).json({error: "Not Found", message: "User not found or password is incorrect."})
+		}
+	}).catch((err) => {
+		console.log(err);
+		res.status(500).json({error: "Error", message: "Some error."})
+	})
 });
 
 userRouter.post('/logout', usersValidate.logout, function (req, res, next) {
@@ -181,21 +191,29 @@ userRouter.post('/users', [
         // }]
     })
     .then(user => {
-        return Tokens.upsert({
-            user_id: user.id,
-            token: req.body.token_phone,
-            name: req.body.name_phone,
-            platform: req.body.platform,
-        }).then((data) => {
-            console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
-            const dataUser = {
-                user_id: user['id'],
-                token: getToken(user)
-            };
-            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
-            return addProfileImage(res, user, EXCLUDE_USER_ATTR);
-        });
-    })
+		return Tokens.destroy({
+			where: {
+				user_id: user.id,
+				name: req.body.name_phone,
+				platform: req.body.platform,
+			}
+		})
+		.then(() => Tokens.upsert({
+			user_id: user.id,
+			token: req.body.token_phone,
+			name: req.body.name_phone,
+			platform: req.body.platform,
+		}))
+		.then(data => {
+			console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+			const dataUser = {
+				user_id: user['id'],
+				token: getToken(user)
+			};
+			Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+			return addProfileImage(res, user, EXCLUDE_USER_ATTR);
+		});
+	})
     .catch((error) => {
         const status = 422;
         if (error.message === 'Validation error') {
@@ -285,6 +303,43 @@ userRouter.get('/users/:id', function (req, res) {
     console.log("error: " + error);
     res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
   });
+});
+
+userRouter.get('/users/:id/rank', function(req, res, next) {
+
+	const userId = parseInt(req.params[`id`]);
+	if(!userId) return res.status(400).json({error: "Bad request", message: "Bad request"});
+
+	User.findOne({
+		where: {id: userId}
+	})
+	.then(user => {
+		if(!user) throw errors.notFound('Unable to find user');
+
+		return 	User.findAndCountAll({
+			where: {
+				[Op.or]:
+					[
+						{ balance: {[Op.gt]: user.balance} },
+						{
+							balance: user.balance,
+							follower_count: {[Op.gt]: user.follower_count},
+						},
+						{
+							balance: user.balance,
+							follower_count: user.follower_count,
+							createdAt: {[Op.lt]: user.createdAt},
+						},
+					]
+			},
+			limit: 0,
+		})
+	})
+	.then(result => {
+		const {count} = result;
+		return res.json({rank: count + 1});
+	})
+	.catch(next);
 });
 
 userRouter.get('/users', function(req, res) {

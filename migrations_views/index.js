@@ -3,6 +3,7 @@ exports.constansts = {
     countParticipant: 'count_participant',
     pollAnswers: 'poll_answers',
     communityCountAnswers: 'community_count_answers',
+    communityCountPolls: 'community_count_polls',
 };
 /**
  * Count user in community (joined users or members community)
@@ -46,4 +47,15 @@ exports[exports.constansts.communityCountAnswers]= () => {
             JOIN communities.community c_ct ON ((c_ct.id = c_pl.community_id)))
             INNER JOIN communities.polls_answers c_pa ON ((c_pa.poll_id = c_pl.id)))
           GROUP BY c_ct.id, c_pa.poll_id)`;
+};
+
+exports[exports.constansts.communityCountPolls]= () => {
+	return `(
+				SELECT
+					  communities.community.id as "community_id",
+					  count(communities.polls.id) as count_polls
+				FROM communities.community
+					   LEFT JOIN communities.polls ON communities.community.id = communities.polls.community_id
+				GROUP BY communities.community.id
+			)`;
 };

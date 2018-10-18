@@ -48,11 +48,12 @@ module.exports = (sequelize, DataTypes) => {
         CommunitiesCommunity.belongsTo(models.users, {foreignKey: 'creator_id'});
         CommunitiesCommunity.belongsTo(models.countParticipantView, {foreignKey: 'id', as: 'members'});
         CommunitiesCommunity.belongsTo(models.communityCountAnswersView, {foreignKey: 'id', as: 'answers'});
+        CommunitiesCommunity.belongsTo(models.communityCountPollsView, {foreignKey: 'id', as: 'polls'});
     };
     CommunitiesCommunity.methods = (models, _, db) => {
         CommunitiesCommunity.getList = (query, {order, user_id}) => {
             return CommunitiesCommunity
-                .scope('defaultScope', 'relatedData')
+                .scope(['defaultScope', 'relatedData'])
                 .findAll({
                     attributes: Object.keys([])
                         .concat([sequelize.literal('DISTINCT "community"."id"')])
@@ -83,9 +84,9 @@ module.exports = (sequelize, DataTypes) => {
             return _.omit(data, ['updated_at']);
         };
     };
-    CommunitiesCommunity.scopes = (models, sequelize) => {
-    	CommunitiesCommunity.addScope('relatedData', {
-      include: [
+	CommunitiesCommunity.scopes = (models, sequelize) => {
+		CommunitiesCommunity.addScope('relatedData', {
+			include: [
 				{
 					model: models.users,
 					include: [{
@@ -101,6 +102,11 @@ module.exports = (sequelize, DataTypes) => {
 					model: models.communityCountAnswersView,
 					as: 'answers',
 					attributes: ['count_answers', 'rank']
+				},
+				{
+					model: models.communityCountPollsView,
+					as: 'polls',
+					attributes: ['count_polls'],
 				}
 			],
 		})

@@ -143,6 +143,19 @@ describe('Global e2e tests', () => {
         authToken = response.body.token;
     });
 
+    it('Valid users flow', async () => {
+        let response;
+
+        response = await request(server)
+            .get(`/v1/users/${user.user_id}/rank`)
+            .set('Authorization', `Bearer ${authToken}`);
+
+        await expectSuccessResponse(response);
+        await expect(response.body).toHaveProperty('rank');
+        await expect(response.body.rank).toBeDefined();
+
+    });
+
     it('Valid community flow', async () => {
         let response;
         const communityOptions = {
@@ -205,6 +218,8 @@ describe('Global e2e tests', () => {
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
         await expectCorrectCommunity(response.body.data);
+        await expect(response.body.data.polls).toHaveProperty('count_polls');
+        await expect(parseInt(response.body.data.polls.count_polls, 10)).toBe(0);
 
         // can delete community
         response = await request(server)
@@ -282,6 +297,15 @@ describe('Global e2e tests', () => {
         await expectCorrectPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('participant_count');
         await expect(response.body.data.participant_count).toBe(0);
+
+        // polls count incremented after poll added
+        response = await request(server)
+            .get(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCommunity(response.body.data);
+        await expect(response.body.data.polls).toHaveProperty('count_polls');
+        await expect(parseInt(response.body.data.polls.count_polls, 10)).toBe(1);
 
         // can find new poll in list
         response = await request(server)
