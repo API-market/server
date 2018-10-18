@@ -220,6 +220,7 @@ describe('Global e2e tests', () => {
         await expectCorrectCommunity(response.body.data);
         await expect(response.body.data.polls).toHaveProperty('count_polls');
         await expect(parseInt(response.body.data.polls.count_polls, 10)).toBe(0);
+        await expect(response.body.data.answers).toBe(null);
 
         // can delete community
         response = await request(server)
@@ -358,6 +359,15 @@ describe('Global e2e tests', () => {
         await expectCorrectPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('participant_count');
         await expect(response.body.data.participant_count).toBe(1);
+
+        // community answers_count count incremented after somebody voted
+        response = await request(server)
+            .get(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCommunity(response.body.data);
+        await expect(response.body.data.answers).toHaveProperty('count_answers');
+        await expect(parseInt(response.body.data.answers.count_answers, 10)).toBe(1);
 
         // isAnswered = 1 after user voted
         response = await request(server)
