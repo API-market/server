@@ -4,6 +4,7 @@ exports.constansts = {
     pollAnswers: 'poll_answers',
     communityCountAnswers: 'community_count_answers',
     communityCountPolls: 'community_count_polls',
+	communityCountAnswersUpdated: 'community_count_answers_updated',
 };
 /**
  * Count user in community (joined users or members community)
@@ -40,6 +41,20 @@ exports[exports.constansts.communityCountAnswers]= () => {
         SELECT
             c_ct.id,
             count(DISTINCT c_pa.poll_id) AS count_answers,
+            rank()
+          OVER (
+            ORDER BY count(DISTINCT c_pa.poll_id) ASC ) AS rank
+          FROM ((communities.polls c_pl
+            JOIN communities.community c_ct ON ((c_ct.id = c_pl.community_id)))
+            INNER JOIN communities.polls_answers c_pa ON ((c_pa.poll_id = c_pl.id)))
+          GROUP BY c_ct.id, c_pa.poll_id)`;
+};
+
+exports[exports.constansts.communityCountAnswersUpdated]= () => {
+	return `(
+        SELECT
+            c_ct.id,
+            count(c_pa.poll_id) AS count_answers,
             rank()
           OVER (
             ORDER BY count(DISTINCT c_pa.poll_id) ASC ) AS rank
