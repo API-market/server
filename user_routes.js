@@ -318,13 +318,17 @@ userRouter.get('/users/:id/rank', function(req, res, next) {
 
 		return 	User.findAndCountAll({
 			where: {
-				[Op.and]:
+				[Op.or]:
 					[
-						{ balance: {[Op.gte]: user.balance} },
+						{ balance: {[Op.gt]: user.balance} },
 						{
-							balance: {[Op.gte]: user.balance},
-							followee_count: {[Op.gte]: user.followee_count},
-							createdAt: {[Op.lte]: user.createdAt},
+							balance: user.balance,
+							follower_count: {[Op.gt]: user.follower_count},
+						},
+						{
+							balance: user.balance,
+							follower_count: user.follower_count,
+							createdAt: {[Op.lt]: user.createdAt},
 						},
 					]
 			},
@@ -333,7 +337,7 @@ userRouter.get('/users/:id/rank', function(req, res, next) {
 	})
 	.then(result => {
 		const {count} = result;
-		return res.json({rank: count});
+		return res.json({rank: count + 1});
 	})
 	.catch(next);
 });
