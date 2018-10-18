@@ -305,6 +305,39 @@ userRouter.get('/users/:id', function (req, res) {
   });
 });
 
+userRouter.get('/users/:id/rank', function(req, res, next) {
+
+	const userId = parseInt(req.params[`id`]);
+	if(!userId) return res.status(400).json({error: "Bad request", message: "Bad request"});
+
+	User.findOne({
+		where: {id: userId}
+	})
+	.then(user => {
+		if(!user) throw errors.notFound('Unable to find user');
+
+		return 	User.findAndCountAll({
+			where: {
+				[Op.and]:
+					[
+						{ balance: {[Op.gte]: user.balance} },
+						{
+							balance: {[Op.gte]: user.balance},
+							followee_count: {[Op.gte]: user.followee_count},
+							createdAt: {[Op.lte]: user.createdAt},
+						},
+					]
+			},
+			limit: 0,
+		})
+	})
+	.then(result => {
+		const {count} = result;
+		return res.json({rank: count});
+	})
+	.catch(next);
+});
+
 userRouter.get('/users', function(req, res) {
 	const orderParams = [];
 	let limit       = req.query["limit"] || 100;

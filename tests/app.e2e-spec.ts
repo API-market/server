@@ -143,6 +143,19 @@ describe('Global e2e tests', () => {
         authToken = response.body.token;
     });
 
+    it('Valid users flow', async () => {
+        let response;
+
+        response = await request(server)
+            .get(`/v1/users/${user.user_id}/rank`)
+            .set('Authorization', `Bearer ${authToken}`);
+
+        await expectSuccessResponse(response);
+        await expect(response.body).toHaveProperty('rank');
+        await expect(response.body.rank).toBeDefined();
+
+    });
+
     it('Valid community flow', async () => {
         let response;
         const communityOptions = {
