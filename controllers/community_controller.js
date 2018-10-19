@@ -163,7 +163,9 @@ class CommunityController {
 	}
 
 	get(req, res, next) {
-		return community.scope('defaultScope', 'relatedData').findById(req.params.communityId)
+		const {user_id} = req.auth;
+
+		return community.getOne(req.params.communityId, user_id)
 		.then(communityEntity => {
 			if (!communityEntity) {
 				throw errors.notFound('Community not found');
