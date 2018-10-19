@@ -53,15 +53,17 @@ exports[exports.constansts.communityCountAnswers]= () => {
 exports[exports.constansts.communityCountAnswersUpdated]= () => {
 	return `(
         SELECT
-            c_ct.id,
-            count(c_pa.poll_id) AS count_answers,
-            rank()
+          c_ct.id                                     AS community_id,
+          count((SELECT count(c_pa.poll_id)
+                 FROM communities.poll_answers c_pa
+                 WHERE c_pa.poll_id = c_pl.id
+                 LIMIT 1))                            AS count_answers,
+          rank()
           OVER (
-            ORDER BY count(DISTINCT c_pa.poll_id) ASC ) AS rank
-          FROM ((communities.polls c_pl
-            JOIN communities.community c_ct ON ((c_ct.id = c_pl.community_id)))
-            INNER JOIN communities.polls_answers c_pa ON ((c_pa.poll_id = c_pl.id)))
-          GROUP BY c_ct.id, c_pa.poll_id)`;
+            ORDER BY (count(DISTINCT c_pl.id)) DESC ) AS rank
+        FROM communities.polls c_pl
+          JOIN communities.community c_ct ON ((c_ct.id = c_pl.community_id))
+        GROUP BY c_ct.id))`;
 };
 
 exports[exports.constansts.communityCountPolls]= () => {
