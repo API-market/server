@@ -1,6 +1,6 @@
 const {community, communityUsers, sequelize} = require('lumeos_models');
 const {model} = require('lumeos_utils');
-const {UploadService} = require('lumeos_services');
+const {UploadService, UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 
 class CommunityController {
