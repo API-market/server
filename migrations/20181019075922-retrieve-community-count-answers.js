@@ -6,7 +6,9 @@ const {community_count_answers_updated, constansts} = require('../migrations_vie
 const schemaName = db.schemaNames.communities;
 module.exports = {
     up: (queryInterface) => {
-        return migration.createView(queryInterface, constansts.communityCountAnswers, community_count_answers_updated(), {schema: schemaName});
+        return migration.dropView(queryInterface, `community_count_answers`, '', {schema: schemaName}).then(() => {
+            return migration.createView(queryInterface, `community_count_answers`, community_count_answers_updated(), {schema: schemaName});
+        });
     },
 
     down: (queryInterface) => {
