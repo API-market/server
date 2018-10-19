@@ -69,6 +69,24 @@ module.exports = (sequelize, DataTypes) => {
                     order: order || [['id', 'desc']]
                 });
         };
+
+        CommunitiesCommunity.getOne = (id, user_id) => {
+            return CommunitiesCommunity
+                .scope(['defaultScope', 'relatedData'])
+                .findById(id, {
+                    attributes: Object.keys([])
+                        .concat([sequelize.literal('DISTINCT "community"."id"')])
+                        .filter(e => e !== 'creator_id')
+                        .concat([[
+                            sequelize.literal(`(
+                            SELECT CASE WHEN count(c_cu.community_id) > 0 THEN TRUE ELSE FALSE END
+                            FROM communities.community_users AS c_cu
+                            WHERE c_cu.user_id = ${user_id} 
+                            AND community.id = c_cu.community_id
+                            )`), 'is_joined'
+                        ]]).concat(Object.keys(CommunitiesCommunity.attributes)),
+                });
+        };
     };
     CommunitiesCommunity.formatter = (models, _) => {
         CommunitiesCommunity.formatData = (data) => {
