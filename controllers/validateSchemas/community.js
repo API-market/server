@@ -49,7 +49,7 @@ class CommunityValidate {
             .object()
             .keys({
                 communityId: Joi
-                    .string()
+                    .number()
                     .required(),
                 name: Joi
                     .string()
