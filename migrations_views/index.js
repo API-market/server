@@ -54,7 +54,7 @@ exports[exports.constansts.communityCountAnswersUpdated]= () => {
     return `(
         SELECT
           c_ct.id,
-          count((SELECT count(c_pa.poll_id)
+          SUM((SELECT count(c_pa.poll_id)
                  FROM communities.poll_answers c_pa
                  WHERE c_pa.poll_id = c_pl.id
                  LIMIT 1))                            AS count_answers,
