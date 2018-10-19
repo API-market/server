@@ -82,7 +82,7 @@ module.exports = (sequelize, DataTypes) => {
 
 			participants: () => ({
 				include: [{
-					model: sequelize.models.pollAnswers, as: 'participants',
+					model: sequelize.models.communityPollCountAnswersView, as: 'participants',
 				}]
 			}),
 
@@ -92,7 +92,7 @@ module.exports = (sequelize, DataTypes) => {
 	CommunitiesPolls.associate = function (models) {
 		CommunitiesPolls.belongsTo(models.users, {as: 'user', foreignKey: 'creator_id'});
 		CommunitiesPolls.belongsTo(models.community, {as: 'community', foreignKey: 'community_id'});
-		CommunitiesPolls.hasMany(models.pollAnswers, {as: 'participants', foreignKey: 'poll_id'});
+		CommunitiesPolls.belongsTo(models.communityPollCountAnswersView, {as: 'participants', foreignKey: 'id'});
 	};
 
 	CommunitiesPolls.methods = (models, _, db) => {
@@ -136,9 +136,8 @@ module.exports = (sequelize, DataTypes) => {
 				;
 				delete data[`user`];
 
-				// FIXME: need way to avoid selecting all answers
-				data[`participant_count`] = data[`participants`]
-					? data[`participants`].length
+				data[`participant_count`] = data[`participants`] && data[`participants`][`count_answers`]
+					? parseInt(data[`participants`][`count_answers`], 10)
 					: 0;
 				delete data[`participants`];
 
