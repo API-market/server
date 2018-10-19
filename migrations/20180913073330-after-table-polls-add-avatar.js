@@ -9,6 +9,8 @@ module.exports = {
     },
 
     down: (queryInterface, Sequelize) => {
-        return queryInterface.removeColumn('polls', 'avatar');
+        return Promise.resolve()
+        // TODO temp fix for test
+        // return queryInterface.removeColumn('polls', 'avatar');
     }
 };

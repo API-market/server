@@ -1,8 +1,6 @@
 export function generateNewUserCredentials() {
     return {
         email: 'test' + Math.random().toString(36).slice(-8) + '@example.com',
-        firstName: Math.random().toString(36).slice(-8),
-        lastName: Math.random().toString(36).slice(-8),
     };
 }
 
@@ -31,7 +29,8 @@ export async function expectCorrectUser(user) {
 
 export async function expectCorrectCommunity(community) {
     await expect(community).toBeDefined();
-    const fields = ['image', 'id', 'name', 'description', 'created_at', 'polls_at', 'members', 'answers', 'user'];
+    const fields = ['image', 'id', 'name', 'description', 'created_at', 'polls_at',
+                        'members', 'answers', 'user', 'polls', 'is_joined'];
     for (const field of fields){
         await expect(community).toHaveProperty(field);
         await expect(community[field]).toBeDefined();
@@ -45,6 +44,18 @@ export async function expectCorrectAddCommunityResponse(community) {
         await expect(community).toHaveProperty(field);
         await expect(community[field]).toBeDefined();
     }
+}
+
+export async function expectCorrectPoll(poll) {
+    await expect(poll).toBeDefined();
+    const fields = ['answers', 'avatar', 'creator_id', 'createdAt', 'creator_image', 'poll_id', 'price', 'question', 'tags'];
+    for (const field of fields){
+        await expect(poll).toHaveProperty(field);
+        await expect(poll[field]).toBeDefined();
+    }
+
+    await expect(Array.isArray(poll[`answers`])).toBe(true);
+    await expect(Array.isArray(poll[`tags`])).toBe(true);
 }
 
 export async function expectCorrectErrorMessage(error) {
@@ -90,4 +101,12 @@ export async function expectSuccessResponse(response, expectedCode = 200) {
     }
     await expect(response.error).toBeFalsy();
     await expect(response.status).toBe(expectedCode);
+}
+
+export function delay(duration) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve();
+        }, duration);
+    });
 }

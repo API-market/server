@@ -77,5 +77,20 @@ module.exports = {
                 }
             }
         },
+    },
+    '/community/:community_id/polls/:poll_id/results': {
+        get: {
+            tags: [
+                'Community'
+            ],
+            description: 'Get poll result in community',
+            summary: 'Get poll result in community',
+            responses: {
+                200: {
+                    description: 'OK',
+                    ...responseFormat({$ref: '#/definitions/CommunityPollResult'})
+                }
+            }
+        },
     }
 };
