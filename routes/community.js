@@ -12,13 +12,13 @@ const router = express.Router();
 router.route('/community')
     .all(auth)
     .get(communityValidate.list, communityController.list)
-    .post([UploadService.middleware('image'), communityValidate.create], communityController.create)
-    .put([UploadService.middleware('image'), communityValidate.update], communityController.update);
+    .post([UploadService.middleware('image'), communityValidate.create], communityController.create);
 
 router.route('/community/:communityId')
 	.all(auth)
 	.delete(communityValidate.delete, communityController.delete)
-	.get(communityValidate.get, communityController.get);
+	.get(communityValidate.get, communityController.get)
+	.put([UploadService.middleware('image'), communityValidate.update], communityController.update);
 
 router.route('/community/:community_id/join')
     .all(auth)

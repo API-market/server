@@ -63,8 +63,9 @@ class CommunityController {
     }
 
     update(req, res, next) {
+        const {communityId} = req.body;
         return sequelize.transaction((transaction) => {
-            return community.findById(req.body.id)
+            return community.findById(communityId)
                 .then((communityEntity) => {
                     if (!communityEntity) {
                         throw errors.notFound();
