@@ -1,5 +1,5 @@
 
-exports.constansts = {
+exports.constants = {
     countParticipant: 'count_participant',
     pollAnswers: 'poll_answers',
     communityCountAnswers: 'community_count_answers',
@@ -10,7 +10,7 @@ exports.constansts = {
  * Count user in community (joined users or members community)
  * @returns {string}
  */
-exports[exports.constansts.countParticipant] = () => {
+exports[exports.constants.countParticipant] = () => {
     return `(
         SELECT
             c_cc.community_id,
@@ -23,7 +23,7 @@ exports[exports.constansts.countParticipant] = () => {
  * Count answers by each polls
  * @returns {string}
  */
-exports[exports.constansts.pollAnswers] = () => {
+exports[exports.constants.pollAnswers] = () => {
     return `(
         SELECT
             c_pa.poll_id,
@@ -36,7 +36,7 @@ exports[exports.constansts.pollAnswers] = () => {
  * Count answers by unique poll_id for community
  * @returns {string}
  */
-exports[exports.constansts.communityCountAnswers]= () => {
+exports[exports.constants.communityCountAnswers]= () => {
     return `(
         SELECT
             c_ct.id,
@@ -50,7 +50,7 @@ exports[exports.constansts.communityCountAnswers]= () => {
           GROUP BY c_ct.id, c_pa.poll_id)`;
 };
 
-exports[exports.constansts.communityCountAnswersUpdated]= () => {
+exports[exports.constants.communityCountAnswersUpdated]= () => {
     return `(
         SELECT
           c_ct.id,
@@ -66,7 +66,7 @@ exports[exports.constansts.communityCountAnswersUpdated]= () => {
         GROUP BY c_ct.id)`;
 };
 
-exports[exports.constansts.communityCountPolls]= () => {
+exports[exports.constants.communityCountPolls]= () => {
 	return `(
 				SELECT
 					  communities.community.id as "community_id",

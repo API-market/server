@@ -1,7 +1,7 @@
 'use strict';
 const {migration} = require('lumeos_utils');
 const db = require('lumeos_models');
-const {community_count_answers_updated, constansts} = require('../migrations_views');
+const {community_count_answers_updated, constants} = require('../migrations_views');
 
 const schemaName = db.schemaNames.communities;
 module.exports = {
@@ -12,6 +12,6 @@ module.exports = {
     },
 
     down: (queryInterface) => {
-        return migration.createView(queryInterface, constansts.communityCountAnswers, community_count_answers_updated(), {schema: schemaName});
+        return migration.dropView(queryInterface, constants.communityCountAnswers, '', {schema: schemaName});
     }
 };
