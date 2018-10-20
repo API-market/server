@@ -12,13 +12,13 @@ const router = express.Router();
 router.route('/community')
     .all(auth)
     .get(communityValidate.list, communityController.list)
-    .post([UploadService.middleware('image'), communityValidate.create], communityController.create)
-    .put([UploadService.middleware('image'), communityValidate.update], communityController.update);
+    .post([UploadService.middleware('image'), communityValidate.create], communityController.create);
 
 router.route('/community/:communityId')
 	.all(auth)
 	.delete(communityValidate.delete, communityController.delete)
-	.get(communityValidate.get, communityController.get);
+	.get(communityValidate.get, communityController.get)
+	.put([UploadService.middleware('image'), communityValidate.update], communityController.update);
 
 router.route('/community/:community_id/join')
     .all(auth)
@@ -33,9 +33,10 @@ router.route('/community/:community_id/unjoin')
  */
 router.route('/community/:community_id/polls/:poll_id?')
     .all(auth)
-    .get(communityPollsValidate.list, communityPollsController.list)
-    .post([UploadService.middleware('image'), communityPollsValidate.create], communityPollsController.create)
-    .put([UploadService.middleware('image'), communityPollsValidate.update], communityPollsController.update);
+    .get(communityPollsValidate.list, communityPollsController.handleGetCommunityPollRoute)
+    .post([UploadService.middleware('avatar'), communityPollsValidate.create], communityPollsController.create)
+    .put([UploadService.middleware('avatar'), communityPollsValidate.update], communityPollsController.update)
+    .delete([communityPollsValidate.delete], communityPollsController.delete);
 
 /**
  * Answer the question
@@ -45,5 +46,8 @@ router.route('/community/:community_id/polls/:poll_id/answers')
     .get(communityPollAnswersController.result)
     .post([communityPollAnswersValidate.create], communityPollAnswersController.create);
 
+router.route('/community/:community_id/polls/:poll_id/results')
+	.all(auth)
+	.get(communityPollAnswersController.results);
 
 module.exports = router;

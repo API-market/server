@@ -6,9 +6,11 @@ dotenv.config({ silent: true });
 
 import * as server from '../server';
 import {
+    delay,
+    expectBadRequestError,
     expectCorrectAddCommunityResponse,
     expectCorrectCollection,
-    expectCorrectCommunity,
+    expectCorrectCommunity, expectCorrectPoll,
     expectCorrectUser,
     expectErrorResponse, expectNotFoundError,
     expectSuccessResponse,
@@ -22,7 +24,9 @@ jest.setTimeout(25000);
 describe('Global e2e tests', () => {
 
     const credentials: any = generateNewUserCredentials();
+    let user;
     let authToken;
+    let community;
 
     beforeAll(async () => {
     });
@@ -40,7 +44,7 @@ describe('Global e2e tests', () => {
         await expect(response).toBeDefined();
     });
 
-    it('Can GET /versions', async () => {
+    it('Valid /versions flow', async () => {
         let response;
 
         // invalid semver string
@@ -61,7 +65,7 @@ describe('Global e2e tests', () => {
 
     });
 
-    it('Can POST /users', async () => {
+    it('Valid registration flow', async () => {
         let response;
 
         // empty request
@@ -73,13 +77,11 @@ describe('Global e2e tests', () => {
         // some fields empty
         response = await request(server)
             .post(`/v1/users`)
-            .send(credentials);
+            .send({email: credentials.email});
         await expectValidationError(response);
 
-        credentials.dob = `2005-08-09T18:31:42+03:30`;
-        credentials.password = `password1`;
-
         // can't use common password
+        credentials.password = `password1`;
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
@@ -91,9 +93,9 @@ describe('Global e2e tests', () => {
             .post(`/v1/users`)
             .send(credentials);
         await expectValidationError(response);
-        credentials.password = `A1b2C+D0`;
 
         // can't create user without phone tokens
+        credentials.password = `A1b2C+D0`;
         response = await request(server)
             .post(`/v1/users`)
             .send(credentials);
@@ -110,9 +112,11 @@ describe('Global e2e tests', () => {
             .send(credentials);
         await expectSuccessResponse(response);
         await expectCorrectUser(response.body);
+
+        user = response.body;
     });
 
-    it('Can POST /login', async () => {
+    it('Valid login flow', async () => {
         let response;
 
         // empty request
@@ -139,7 +143,20 @@ describe('Global e2e tests', () => {
         authToken = response.body.token;
     });
 
-    it('Can pass community flow', async () => {
+    it('Valid users flow', async () => {
+        let response;
+
+        response = await request(server)
+            .get(`/v1/users/${user.user_id}/rank`)
+            .set('Authorization', `Bearer ${authToken}`);
+
+        await expectSuccessResponse(response);
+        await expect(response.body).toHaveProperty('rank');
+        await expect(response.body.rank).toBeDefined();
+
+    });
+
+    it('Valid community flow', async () => {
         let response;
         const communityOptions = {
             name: `Community for testing ` + Math.random().toString(36).slice(-8),
@@ -166,8 +183,14 @@ describe('Global e2e tests', () => {
             .send(communityOptions);
         await expectSuccessResponse(response);
         await expectCorrectAddCommunityResponse(response.body.data);
+        community = response.body.data;
 
-        const community = response.body.data;
+        // can't create community with same name
+        response = await request(server)
+            .post(`/v1/community`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send(communityOptions);
+        await expectBadRequestError(response);
 
         // can find created community in list
         response = await request(server)
@@ -195,6 +218,9 @@ describe('Global e2e tests', () => {
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
         await expectCorrectCommunity(response.body.data);
+        await expect(response.body.data.polls).toHaveProperty('count_polls');
+        await expect(parseInt(response.body.data.polls.count_polls, 10)).toBe(0);
+        await expect(response.body.data.answers).toBe(null);
 
         // can delete community
         response = await request(server)
@@ -217,6 +243,181 @@ describe('Global e2e tests', () => {
             .get(`/v1/community/${community.id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectNotFoundError(response);
+
+        // creating community for other suites flow
+        response = await request(server)
+            .post(`/v1/community`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({
+                name: communityOptions.name + `+1`,
+                description: communityOptions.description + `+2`,
+            });
+        await expectSuccessResponse(response);
+        await expectCorrectAddCommunityResponse(response.body.data);
+
+        community = response.body.data;
+    });
+
+    it('Valid community polls flow', async () => {
+        let response;
+        const pollOptions = {
+            question: Math.random().toString(36).slice(-8),
+            answers: [Math.random().toString(36).slice(-8), Math.random().toString(36).slice(-8), Math.random().toString(36).slice(-8)],
+            tags: [Math.random().toString(36).slice(-8), Math.random().toString(36).slice(-8), Math.random().toString(36).slice(-8)],
+            community_id: community.id,
+        };
+
+        // unauthorized request
+        response = await request(server)
+            .post(`/v1/community/${community.id}/polls/`)
+            .send({});
+        await expectUnauthorizedError(response);
+
+        // empty body request
+        response = await request(server)
+            .post(`/v1/community/${community.id}/polls/`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({});
+        await expectValidationError(response);
+
+        // can add poll
+        response = await request(server)
+            .post(`/v1/community/${community.id}/polls/`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send(pollOptions);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+
+        const poll = response.body.data;
+
+        // can get poll
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('participant_count');
+        await expect(response.body.data.participant_count).toBe(0);
+
+        // polls count incremented after poll added
+        response = await request(server)
+            .get(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCommunity(response.body.data);
+        await expect(response.body.data.polls).toHaveProperty('count_polls');
+        await expect(parseInt(response.body.data.polls.count_polls, 10)).toBe(1);
+
+        // can find new poll in list
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectPoll);
+        let searchResult = response.body.data.find(pollEl => pollEl.poll_id === poll.poll_id);
+        await expect(searchResult).toBeDefined();
+
+        // isAnswered = 0 before user voted
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isAnswered=${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('is_answered');
+        await expect(response.body.data.is_answered).toBe(0);
+
+        // is_bought = 0 before user requested results
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isBought=${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('is_bought');
+        await expect(response.body.data.is_bought).toBe(0);
+
+        // can edit poll while nobody voted already
+        response = await request(server)
+            .put(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({poll_id: poll.poll_id, ...pollOptions});
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+
+        // can vote
+        await delay(2000);
+        response = await request(server)
+            .post(`/v1/community/${community.id}/polls/${poll.poll_id}/answers`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({answer: 1});
+        await expectSuccessResponse(response);
+
+        // participant_count should be +1 after 1 person voted
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('participant_count');
+        await expect(response.body.data.participant_count).toBe(1);
+
+        // community answers_count count incremented after somebody voted
+        response = await request(server)
+            .get(`/v1/community/${community.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCommunity(response.body.data);
+        await expect(response.body.data.answers).toHaveProperty('count_answers');
+        await expect(parseInt(response.body.data.answers.count_answers, 10)).toBe(1);
+
+        // isAnswered = 1 after user voted
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isAnswered=${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('is_answered');
+        await expect(response.body.data.is_answered).toBe(1);
+
+        // is_bought = 1 after user requested results
+        await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}/results`)
+            .set('Authorization', `Bearer ${authToken}`);
+
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isBought=${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body.data);
+        await expect(response.body.data).toHaveProperty('is_bought');
+        await expect(response.body.data.is_bought).toBe(1);
+
+        // can't edit poll after somebody voted
+        response = await request(server)
+            .put(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({poll_id: poll.poll_id, ...pollOptions});
+        await expectErrorResponse(response, 403);
+
+        // can delete poll
+        response = await request(server)
+            .delete(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+
+        // can't get deleted poll
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectNotFoundError(response);
+
+        // can find deleted poll in list
+        response = await request(server)
+            .get(`/v1/community/${community.id}/polls/`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectPoll);
+        searchResult = response.body.data.find(pollEl => pollEl.poll_id === poll.poll_id);
+        await expect(searchResult).toBeUndefined();
 
     });
 

@@ -52,7 +52,7 @@ class MigrationUtils {
             query = '';
         }
 
-        return queryInterface.sequelize.query(`DROP VIEW IF EXISTS ${this.viewName} ${query};`, options);
+        return queryInterface.sequelize.query(`DROP VIEW IF EXISTS ${this.viewName};`, options);
     }
 
     _checkSchema(options) {
