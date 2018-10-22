@@ -40,6 +40,7 @@ module.exports = (sequelize, DataTypes) => {
         follows_you_notifications: {type: DataTypes.BOOLEAN, defaultValue: true},
         custom_notifications: {type: DataTypes.BOOLEAN, defaultValue: true},
         count_notifications: {type: DataTypes.INTEGER, defaultValue: 0},
+		schoolId: { type: DataTypes.INTEGER, allowNull: true },
     }, {
         tableName: 'users'
     });

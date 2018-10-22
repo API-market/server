@@ -31,6 +31,7 @@ const {usersValidate} = require('lumeos_controllers/validateSchemas');
 const {omit} = require('lodash');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
+const { schools } = require('lumeos_models');
 
 const dbObjects = require("./db_setup.js");
 const sequelize = dbObjects.dbInstance;
@@ -93,6 +94,26 @@ const getToken = (user) => {
 };
 
 const emailValidate = check("email").isEmail().normalizeEmail();
+
+const validateSchoolEmail = (req, res, next) => {
+	const userEmail = req.body.email || '';
+	const schoolId = req.body.schoolId;
+	const userEmailDomain = userEmail.trim().toLowerCase().split(`@`)[1];
+
+
+	if(schoolId){
+		schools.findById(schoolId)
+		.then(school => {
+			if(!school) throw errors.notFound(`School ${schoolId} not found`);
+
+			const schoolEmailDomain = school.emailDomain.trim().toLowerCase();
+
+			if(userEmailDomain !== schoolEmailDomain) throw errors.badRequest(`Please provide your @${schoolEmailDomain} email to register as ${school.name} student`);
+			else return next();
+		})
+		.catch(next)
+	}else return next();
+};
 
 userRouter.post('/login', [
 	emailValidate,
@@ -179,7 +200,7 @@ userRouter.post('/users', [
         .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
         .isLength({min: 8})
         .matches(/\d/)
-], (req, res) => {
+], validateSchoolEmail, (req, res) => {
   const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({errors: errors.array()});
@@ -739,6 +760,7 @@ userRouter.put('/users',
             .isBoolean()
             .withMessage('Field "custom_notifications" must be boolean.')
     ],
+	validateSchoolEmail,
     function (req, res) {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
