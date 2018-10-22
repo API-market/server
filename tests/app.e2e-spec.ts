@@ -10,7 +10,7 @@ import {
     expectBadRequestError,
     expectCorrectAddCommunityResponse,
     expectCorrectCollection,
-    expectCorrectCommunity, expectCorrectPoll,
+    expectCorrectCommunity, expectCorrectPoll, expectCorrectSchool,
     expectCorrectUser,
     expectErrorResponse, expectNotFoundError,
     expectSuccessResponse,
@@ -62,6 +62,16 @@ describe('Global e2e tests', () => {
         await expectSuccessResponse(response);
         await expect(response.body).toHaveProperty('supported');
         await expect(response.body.supported).toBe(true);
+
+    });
+
+    it('Valid /schools flow', async () => {
+        let response;
+
+        // valid request-response
+        response = await request(server).get(`/v1/schools`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectSchool, 1);
 
     });
 
