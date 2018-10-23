@@ -90,7 +90,7 @@ class CommunityPollsController {
         return sequelize.transaction((transaction) => {
             return community.findById(req.params.community_id, {transaction})
                 .then((communityEntity) => {
-                    if (!communityEntity) throw errors.notFound('CommunityS not exists');
+                    if (!communityEntity) throw errors.notFound(`Community ${req.params.community_id} don't exists`);
 
                     Object.assign(req.body, {creator_id: req.auth.user_id, community_id: req.params.community_id});
                     return communityPolls

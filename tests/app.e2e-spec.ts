@@ -10,13 +10,13 @@ import {
     expectBadRequestError,
     expectCorrectAddCommunityResponse,
     expectCorrectCollection,
-    expectCorrectCommunity, expectCorrectPoll,
-    expectCorrectUser,
+    expectCorrectCommunity, expectCorrectPoll, expectCorrectSchool,
+    expectCorrectUser, expectCorrectUserUpdate,
     expectErrorResponse, expectNotFoundError,
     expectSuccessResponse,
     expectUnauthorizedError,
     expectValidationError,
-    generateNewUserCredentials,
+    generateNewUserCredentials, generateRandomString,
 } from './e2e-helpers';
 
 jest.setTimeout(25000);
@@ -27,6 +27,7 @@ describe('Global e2e tests', () => {
     let user;
     let authToken;
     let community;
+    let schools;
 
     beforeAll(async () => {
     });
@@ -62,6 +63,18 @@ describe('Global e2e tests', () => {
         await expectSuccessResponse(response);
         await expect(response.body).toHaveProperty('supported');
         await expect(response.body.supported).toBe(true);
+
+    });
+
+    it('Valid /schools flow', async () => {
+        let response;
+
+        // valid request-response
+        response = await request(server).get(`/v1/schools`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectSchool, 2);
+
+        schools = response.body.data;
 
     });
 
@@ -116,6 +129,33 @@ describe('Global e2e tests', () => {
         user = response.body;
     });
 
+    it('Valid schools validation on registration flow', async () => {
+        let response;
+        const school = schools[0];
+
+        const schoolsTestingCredentials = Object.assign(
+            { schoolId: school[`schoolId`]},
+            credentials,
+            {email: `new_new` + credentials.email},
+        );
+
+        // can't register with non-school domain while using schoolId
+        response = await request(server)
+            .post(`/v1/users`)
+            .send(schoolsTestingCredentials);
+        await expectBadRequestError(response);
+
+        // can register with school email domain
+        schoolsTestingCredentials[`email`] = generateRandomString() + `@${school.emailDomain}`;
+        response = await request(server)
+            .post(`/v1/users`)
+            .send(schoolsTestingCredentials);
+        await expectSuccessResponse(response);
+        await expectCorrectUser(response.body);
+        await expect(response.body.schoolId).toBe(school.schoolId);
+
+    });
+
     it('Valid login flow', async () => {
         let response;
 
@@ -141,6 +181,53 @@ describe('Global e2e tests', () => {
         await expectCorrectUser(response.body);
 
         authToken = response.body.token;
+    });
+
+    it('Valid user update flow', async () => {
+        let response;
+
+        // unauthorized
+        response = await request(server)
+            .put(`/v1/users`)
+            .send({firstName: `TEST STRING`});
+        await expectUnauthorizedError(response);
+
+        // empty request
+        response = await request(server)
+            .put(`/v1/users`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({});
+        await expectSuccessResponse(response);
+
+        // well done
+        response = await request(server)
+            .put(`/v1/users`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({firstName: `TEST STRING`});
+        await expectSuccessResponse(response);
+        await expectCorrectUserUpdate(response.body);
+        await expect(response.body[`firstName`]).toBe(`TEST STRING`);
+
+        // can't update email if using schoolId without valid email domain
+        const school = schools[0];
+        response = await request(server)
+            .put(`/v1/users`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({schoolId: school.schoolId});
+        await expectBadRequestError(response);
+
+        // can update email using valid email domain
+        response = await request(server)
+            .put(`/v1/users`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({
+                schoolId: school.schoolId,
+                email: generateRandomString() + `@` + school.emailDomain,
+            });
+        await expectSuccessResponse(response);
+        await expectCorrectUserUpdate(response.body);
+        await expect(response.body.schoolId).toBe(school.schoolId);
+
     });
 
     it('Valid users flow', async () => {

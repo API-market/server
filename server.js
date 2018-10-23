@@ -52,6 +52,7 @@ app.use('/v' + VERSION, function (req, res, next) {
     || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
     || req.url.match(/\/versions/)
+    || req.url.match(/\/schools/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
     || req.url.endsWith("/faqs/")) {

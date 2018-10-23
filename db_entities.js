@@ -66,6 +66,7 @@ const UserBase = sequelize.define('user', {
   follows_you_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   custom_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   count_notifications: {type: Sequelize.INTEGER},
+  schoolId: { type: Sequelize.INTEGER, allowNull: true },
 }, {
     hooks: {
         beforeUpdate(model) {

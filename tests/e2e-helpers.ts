@@ -4,8 +4,13 @@ export function generateNewUserCredentials() {
     };
 }
 
-export async function expectCorrectCollection(items, checker) {
+export function generateRandomString() {
+    return Math.random().toString(36).slice(-8);
+}
+
+export async function expectCorrectCollection(items, checker, expectingMinimalCollectionSize = 0) {
     await expect(Array.isArray(items)).toBe(true);
+    await expect(items.length).toBeGreaterThanOrEqual(expectingMinimalCollectionSize);
     for (const item of items) {
         await checker(item);
     }
@@ -15,7 +20,7 @@ export async function expectCorrectUser(user) {
     await expect(user).toBeDefined();
     const fields = [
         'firstName', 'lastName', 'email', 'dob', 'balance', 'followee_count', 'follower_count',
-        'answer_count', 'user_id', 'token',
+        'answer_count', 'user_id', 'token', 'schoolId',
     ];
     for (const field of fields){
         await expect(user).toHaveProperty(field);
@@ -25,6 +30,30 @@ export async function expectCorrectUser(user) {
     await expect(user).not.toHaveProperty('password');
     await expect(user).not.toHaveProperty('id');
     await expect(user).not.toHaveProperty('createdAt');
+}
+
+export async function expectCorrectUserUpdate(user) {
+    await expect(user).toBeDefined();
+    const fields = [
+        'firstName', 'lastName', 'email', 'dob', 'balance', 'followee_count', 'follower_count', 'schoolId',
+    ];
+    for (const field of fields){
+        await expect(user).toHaveProperty(field);
+        await expect(user[field]).toBeDefined();
+    }
+
+    await expect(user).not.toHaveProperty('password');
+    await expect(user).not.toHaveProperty('id');
+    await expect(user).not.toHaveProperty('createdAt');
+}
+
+export async function expectCorrectSchool(user) {
+    await expect(user).toBeDefined();
+    const fields = ['schoolId', 'name', 'emailDomain'];
+    for (const field of fields){
+        await expect(user).toHaveProperty(field);
+        await expect(user[field]).toBeDefined();
+    }
 }
 
 export async function expectCorrectCommunity(community) {
