@@ -14,13 +14,13 @@ const schools = [
 	{name: 'University of California, Berkeley', emailDomain: 'berkeley.edu'},
 	{name: 'Cornell', emailDomain: 'cornell.edu'},
 	{name: 'Oxford Univ. (UK School)', emailDomain: 'ox.ac.uk'},
+	{name: 'Princeton', emailDomain: 'princeton.edu'},
 ];
 
 module.exports = {
 	up: (queryInterface, Sequelize) => {
 
-		return queryInterface.bulkDelete('schools', {}, {})
-			.then(() => queryInterface.bulkInsert('schools', schools, {ignoreDuplicates: true}))
+		return queryInterface.bulkInsert('schools', schools, {ignoreDuplicates: true})
 			.catch(console.error)
 	},
 
