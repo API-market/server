@@ -6,7 +6,8 @@ module.exports = (sequelize, DataTypes) => {
 	const Images = sequelize.define('images', {
 		imageId: {
 			type: DataTypes.INTEGER,
-			primaryKey: true
+			primaryKey: true,
+			autoIncrement: true,
 		},
 
 		userId: DataTypes.INTEGER,
@@ -14,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
 		entityId: DataTypes.INTEGER,
 		entityType: DataTypes.STRING,
 
+		name: DataTypes.STRING,
 		imageUrl: DataTypes.STRING,
 		originalImageUrl: DataTypes.STRING,
 

@@ -1,5 +1,7 @@
 const express = require('express');
 const {imagesController} = require('lumeos_controllers');
+const {auth} = require('lumeos_middlewares');
+const {UploadService} = require('lumeos_services');
 
 const router = express.Router();
 
@@ -12,6 +14,8 @@ router.route('/images/:imageId').get(
 );
 
 router.route('/images').post(
+	auth,
+	UploadService.middleware('image'),
 	imagesController.create,
 );
 

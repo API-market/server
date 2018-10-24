@@ -5,7 +5,6 @@ module.exports = {
 		return queryInterface.createTable('images', {
 
 			imageId: {
-				allowNull: false,
 				autoIncrement: true,
 				primaryKey: true,
 				type: Sequelize.INTEGER
@@ -19,10 +18,11 @@ module.exports = {
 			imageUrl: {type: Sequelize.STRING, allowNull: true},
 			originalImageUrl: {type: Sequelize.STRING, allowNull: true},
 			key: {type: Sequelize.STRING, allowNull: true},
+			name: {type: Sequelize.STRING, allowNull: true},
 
 			createdAt: {type: Sequelize.DATE},
 			updatedAt: {type: Sequelize.DATE},
-			deletedAt: {type: Sequelize.DATE},
+			deletedAt: {type: Sequelize.DATE, allowNull: true},
 
 		});
 	},
