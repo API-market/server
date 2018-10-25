@@ -1,5 +1,7 @@
 import * as request from 'supertest';
 import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as superagent from 'superagent';
 
 // TODO: Move config loader to server loader
 dotenv.config({ silent: true });
@@ -10,7 +12,7 @@ import {
     expectBadRequestError,
     expectCorrectAddCommunityResponse,
     expectCorrectCollection,
-    expectCorrectCommunity, expectCorrectPoll, expectCorrectSchool,
+    expectCorrectCommunity, expectCorrectImage, expectCorrectPoll, expectCorrectSchool,
     expectCorrectUser, expectCorrectUserUpdate,
     expectErrorResponse, expectNotFoundError,
     expectSuccessResponse,
@@ -19,7 +21,7 @@ import {
     generateNewUserCredentials, generateRandomString,
 } from './e2e-helpers';
 
-jest.setTimeout(25000);
+jest.setTimeout(45000);
 
 describe('Global e2e tests', () => {
 
@@ -243,6 +245,66 @@ describe('Global e2e tests', () => {
 
     });
 
+    it('Valid images flow', async () => {
+        let response;
+
+        response = await request(server)
+            .post(`/v1/images`)
+            .attach(`image`, path.normalize(__dirname + '/assets/test-image.jpg'));
+        await expectUnauthorizedError(response);
+
+        response = await request(server)
+            .post(`/v1/images`)
+            .set('Authorization', `Bearer ${authToken}`);
+        // await expectBadRequestError(response);
+
+        response = await request(server)
+            .post(`/v1/images`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .attach(`image`, path.normalize(__dirname + '/assets/test-image.jpg'));
+        await expectSuccessResponse(response);
+        await expectCorrectImage(response.body.data);
+
+        const image = response.body.data;
+
+        response = await superagent.get(image.imageUrl);
+        await expectSuccessResponse(response);
+
+        response = await superagent.get(image.originalImageUrl);
+        await expectSuccessResponse(response);
+
+        response = await request(server)
+            .get(`/v1/images/${image.imageId}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectImage(response.body.data);
+
+        response = await request(server)
+            .delete(`/v1/images/${image.imageId}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+
+        response = await request(server)
+            .get(`/v1/images/${image.imageId}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectNotFoundError(response);
+
+        try {
+            response = await superagent.get(image.imageUrl);
+            await expectNotFoundError(response);
+        }catch (err) {
+            await expect(err.status).toBe(403);
+        }
+
+        try {
+            response = await superagent.get(image.originalImageUrl);
+            await expectNotFoundError(response);
+        }catch (err) {
+            await expect(err.status).toBe(403);
+        }
+
+    });
+
     it('Valid community flow', async () => {
         let response;
         const communityOptions = {
@@ -431,7 +493,7 @@ describe('Global e2e tests', () => {
         await expectCorrectPoll(response.body.data);
 
         // can vote
-        await delay(2000);
+        await delay(4000);
         response = await request(server)
             .post(`/v1/community/${community.id}/polls/${poll.poll_id}/answers`)
             .set('Authorization', `Bearer ${authToken}`)

@@ -34,6 +34,25 @@ class UploadService {
         return Promise.resolve({file: null});
     }
 
+	uploadCroppedAndOriginal(file, dir) {
+		if (typeof file === "object") {
+			const original = Object.assign({}, file);
+
+			return new Promise((resolve, reject) => {
+				this.crop(file)
+				.then(file => Promise.all([
+					UploadS3Service.upload(original, dir),
+					UploadS3Service.upload(file, dir)
+				]))
+				.then(([original, cropped]) => resolve({cropped, original}))
+				.catch(reject)
+			});
+		}
+
+		//TODO if image not required
+		return Promise.resolve({cropped: {file: null}, original: {file: null}});
+	}
+
     crop(file) {
         return new Promise((resolve, reject) => {
             this.file = file;

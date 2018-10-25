@@ -28,7 +28,7 @@ const {check, validationResult} = require('express-validator/check');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const {events} = require('lumeos_utils');
-const {UploadService} = require('lumeos_services');
+const {UploadService, ImagesService} = require('lumeos_services');
 
 const dbSetup = require("./db_setup.js");
 const sequelize = dbSetup.dbInstance;
@@ -68,45 +68,53 @@ function updatePollPrice(poll) {
 }
 
 pollRouter.post('/polls', UploadService.middleware('avatar'), [
-    check("question").isLength({ max: 255 }).not().isEmpty().trim().withMessage("Field 'question' cannot be empty"),
-    check("answers").isArray().withMessage("Field 'answers' must be an array."),
-    check("tags").optional().isArray().withMessage("Field 'tags' must be an array."),
-    check("creator_id").custom((value, {req}) => {
-      if (typeof req.auth.user_id === "undefined") {
-          throw new Error("Field 'creator_id' must be.")
-      }
-      req.body.creator_id = req.auth.user_id;
-      return true
-    }),
-    // check("avatar").custom((value, {req}) => {
-    //   if (typeof req.file === "undefined") {
-    //     throw new Error("Field 'avatar' must be image.")
-    //   }
-    //   return true;
-    // })
-  ],
-  (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({errors: errors.array()});
-    }
-    sequelize.sync()
-      .then(() => {
-        return UploadService.upload(req.file).then(({file}) => {
-          Object.assign(req.body, {avatar: file});
-            return Poll
-                .build(req.body)
-                .save()
-                .then(poll => {
-                    poll.setDataValue('poll_id', poll.id);
-                    res.json(removeEmpty(poll));
-                });
-        });
-      }).catch((error) => {
-          console.log(error);
-          res.status(500).json({error: error, message: "Some error."})
-      })
-  });
+		check("question").isLength({max: 255}).not().isEmpty().trim().withMessage("Field 'question' cannot be empty"),
+		check("answers").isArray().withMessage("Field 'answers' must be an array."),
+		check("tags").optional().isArray().withMessage("Field 'tags' must be an array."),
+		check("creator_id").custom((value, {req}) => {
+			if(typeof req.auth.user_id === "undefined"){
+				throw new Error("Field 'creator_id' must be.")
+			}
+			req.body.creator_id = req.auth.user_id;
+			return true
+		}),
+	],
+	(req, res) => {
+		const errors = validationResult(req);
+		if(!errors.isEmpty()){
+			return res.status(422).json({errors: errors.array()});
+		}
+		sequelize.sync()
+		.then(() => {
+			return UploadService.uploadCroppedAndOriginal(req.file)
+			.then(({cropped, original}) => {
+				Object.assign(req.body, {avatar: cropped.file});
+				return Poll
+					.build(req.body)
+					.save()
+					.then(poll => {
+						return Promise.all([
+							poll,
+							ImagesService.createImage({
+								userId: req.auth.user_id,
+								entityId: poll.id,
+								entityType: 'poll',
+								name: 'PollImage',
+								imageUrl: cropped.file,
+								originalImageUrl: original.file,
+							})
+						])
+					})
+					.then(([poll, image]) => {
+						poll.setDataValue('poll_id', poll.id);
+						res.json(removeEmpty(poll));
+					});
+			});
+		}).catch((error) => {
+			console.log(error);
+			res.status(500).json({error: error, message: "Some error."})
+		})
+	});
 
 pollRouter.get('/polls/:id', function (req, res) {
   Poll.find({
