@@ -93,17 +93,19 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
 					.build(req.body)
 					.save()
 					.then(poll => {
-						return Promise.all([
-							poll,
-							ImagesService.createImage({
+
+						if(cropped.file && original.file){
+							return Promise.all([poll, ImagesService.createImage({
 								userId: req.auth.user_id,
 								entityId: poll.id,
-								entityType: 'poll',
+								entityType: 'Poll',
 								name: 'PollImage',
 								imageUrl: cropped.file,
 								originalImageUrl: original.file,
-							})
-						])
+							})])
+						}else{
+							return Promise.all([poll, {}])
+						}
 					})
 					.then(([poll, image]) => {
 						poll.setDataValue('poll_id', poll.id);
