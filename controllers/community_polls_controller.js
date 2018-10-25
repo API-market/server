@@ -99,7 +99,7 @@ class CommunityPollsController {
                             return UploadService
                                 .uploadCroppedAndOriginal(req.body.avatar, 'community_polls')
                                 .then(({cropped, original}) => {
-                                    if (cropped) {
+                                    if (cropped.file) {
                                         return ImagesService.createImage({
 											userId: req.auth.user_id,
 											entityId: communityPollsNew.id,

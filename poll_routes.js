@@ -93,17 +93,19 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
 					.build(req.body)
 					.save()
 					.then(poll => {
-						return Promise.all([
-							poll,
-							ImagesService.createImage({
+
+						if(cropped.file && original.file){
+							return Promise.all([poll, ImagesService.createImage({
 								userId: req.auth.user_id,
 								entityId: poll.id,
-								entityType: 'poll',
+								entityType: 'Poll',
 								name: 'PollImage',
 								imageUrl: cropped.file,
 								originalImageUrl: original.file,
-							})
-						])
+							})])
+						}else{
+							return Promise.all([poll, {}])
+						}
 					})
 					.then(([poll, image]) => {
 						poll.setDataValue('poll_id', poll.id);
@@ -133,7 +135,12 @@ pollRouter.get('/polls/:id', function (req, res) {
     ]
   }).then(poll => {
     if (poll) {
-      getProfileImage(poll["creator_id"]).then(result => {
+    	ImagesService.getImagesForEntity('Poll', parseInt(req.params["id"]))
+		.then(images => {
+			poll.dataValues["images"] = images;
+    		return getProfileImage(poll["creator_id"])
+		})
+      .then(result => {
         poll.dataValues["creator_image"] = result;
 
         if (req.query["isAnswered"]) {
@@ -148,11 +155,11 @@ pollRouter.get('/polls/:id', function (req, res) {
             if (result) {
               poll.dataValues["is_answered"] = 1;
             }
-            res.json(removeEmpty(poll));
+            res.json(poll);
           }).catch(error => {
             console.log("I guess this is a first vote ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
             console.log(error);
-            res.json(removeEmpty(poll));
+            res.json(poll);
           });
         } else if (req.query["isBought"]) {
           poll.dataValues["is_bought"] = 0;
@@ -166,14 +173,14 @@ pollRouter.get('/polls/:id', function (req, res) {
             if (result) {
               poll.dataValues["is_bought"] = 1;
             }
-            res.json(removeEmpty(poll));
+            res.json(poll);
           }).catch(error => {
             console.log("I guess this is a first vote ever? user_id: " + req.query["isBought"] + ", poll_id: " + req.param["id"]);
             console.log(error);
-            res.json(removeEmpty(poll));
+            res.json(poll);
           });
         } else {
-          res.json(removeEmpty(poll));
+          res.json(poll);
         }
       });
     } else {
