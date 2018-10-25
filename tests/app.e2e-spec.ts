@@ -243,6 +243,18 @@ describe('Global e2e tests', () => {
         await expect(response.body).toHaveProperty('rank');
         await expect(response.body.rank).toBeDefined();
 
+        response = await request(server)
+            .get(`/v1/users/`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body, expectCorrectUserShortForm, 1);
+
+        response = await request(server)
+            .get(`/v1/users/${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectUserShortForm(response.body);
+
     });
 
     it('Valid images flow', async () => {
@@ -252,11 +264,6 @@ describe('Global e2e tests', () => {
             .post(`/v1/images`)
             .attach(`image`, path.normalize(__dirname + '/assets/test-image.jpg'));
         await expectUnauthorizedError(response);
-
-        response = await request(server)
-            .post(`/v1/images`)
-            .set('Authorization', `Bearer ${authToken}`);
-        // await expectBadRequestError(response);
 
         response = await request(server)
             .post(`/v1/images`)
