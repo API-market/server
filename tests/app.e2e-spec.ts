@@ -12,13 +12,13 @@ import {
     expectBadRequestError,
     expectCorrectAddCommunityResponse,
     expectCorrectCollection,
-    expectCorrectCommunity, expectCorrectPoll, expectCorrectSchool, expectCorrectImage,
+    expectCorrectCommunity, expectCorrectCommunityPoll, expectCorrectSchool, expectCorrectImage,
     expectCorrectUser, expectCorrectUserShortForm, expectCorrectUserUpdate,
     expectErrorResponse, expectNotFoundError,
     expectSuccessResponse,
     expectUnauthorizedError,
     expectValidationError,
-    generateNewUserCredentials, generateRandomString,
+    generateNewUserCredentials, generateRandomString, expectCorrectPoll, expectCorrectAddPollResponse,
 } from './e2e-helpers';
 
 jest.setTimeout(45000);
@@ -30,6 +30,7 @@ describe('Global e2e tests', () => {
     let authToken;
     let community;
     let schools;
+    let poll;
 
     beforeAll(async () => {
     });
@@ -460,16 +461,16 @@ describe('Global e2e tests', () => {
             .set('Authorization', `Bearer ${authToken}`)
             .send(pollOptions);
         await expectSuccessResponse(response);
-        await expectCorrectPoll(response.body.data);
+        await expectCorrectCommunityPoll(response.body.data);
 
-        const poll = response.body.data;
+        const newPoll = response.body.data;
 
         // can get poll
         response = await request(server)
-            .get(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .get(`/v1/community/${community.id}/polls/${newPoll.poll_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
-        await expectCorrectPoll(response.body.data);
+        await expectCorrectCommunityPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('participant_count');
         await expect(response.body.data.participant_count).toBe(0);
 
@@ -487,50 +488,50 @@ describe('Global e2e tests', () => {
             .get(`/v1/community/${community.id}/polls/`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
-        await expectCorrectCollection(response.body.data, expectCorrectPoll);
-        let searchResult = response.body.data.find(pollEl => pollEl.poll_id === poll.poll_id);
+        await expectCorrectCollection(response.body.data, expectCorrectCommunityPoll);
+        let searchResult = response.body.data.find(pollEl => pollEl.poll_id === newPoll.poll_id);
         await expect(searchResult).toBeDefined();
 
         // isAnswered = 0 before user voted
         response = await request(server)
-            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isAnswered=${user.user_id}`)
+            .get(`/v1/community/${community.id}/polls/${newPoll.poll_id}?isAnswered=${user.user_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
-        await expectCorrectPoll(response.body.data);
+        await expectCorrectCommunityPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('is_answered');
         await expect(response.body.data.is_answered).toBe(0);
 
         // is_bought = 0 before user requested results
         response = await request(server)
-            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isBought=${user.user_id}`)
+            .get(`/v1/community/${community.id}/polls/${newPoll.poll_id}?isBought=${user.user_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
-        await expectCorrectPoll(response.body.data);
+        await expectCorrectCommunityPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('is_bought');
         await expect(response.body.data.is_bought).toBe(0);
 
         // can edit poll while nobody voted already
         response = await request(server)
-            .put(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .put(`/v1/community/${community.id}/polls/${newPoll.poll_id}`)
             .set('Authorization', `Bearer ${authToken}`)
-            .send({poll_id: poll.poll_id, ...pollOptions});
+            .send({poll_id: newPoll.poll_id, ...pollOptions});
         await expectSuccessResponse(response);
-        await expectCorrectPoll(response.body.data);
+        await expectCorrectCommunityPoll(response.body.data);
 
         // can vote
         await delay(4000);
         response = await request(server)
-            .post(`/v1/community/${community.id}/polls/${poll.poll_id}/answers`)
+            .post(`/v1/community/${community.id}/polls/${newPoll.poll_id}/answers`)
             .set('Authorization', `Bearer ${authToken}`)
             .send({answer: 1});
         await expectSuccessResponse(response);
 
         // participant_count should be +1 after 1 person voted
         response = await request(server)
-            .get(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .get(`/v1/community/${community.id}/polls/${newPoll.poll_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
-        await expectCorrectPoll(response.body.data);
+        await expectCorrectCommunityPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('participant_count');
         await expect(response.body.data.participant_count).toBe(1);
 
@@ -545,42 +546,42 @@ describe('Global e2e tests', () => {
 
         // isAnswered = 1 after user voted
         response = await request(server)
-            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isAnswered=${user.user_id}`)
+            .get(`/v1/community/${community.id}/polls/${newPoll.poll_id}?isAnswered=${user.user_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
-        await expectCorrectPoll(response.body.data);
+        await expectCorrectCommunityPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('is_answered');
         await expect(response.body.data.is_answered).toBe(1);
 
         // is_bought = 1 after user requested results
         await request(server)
-            .get(`/v1/community/${community.id}/polls/${poll.poll_id}/results`)
+            .get(`/v1/community/${community.id}/polls/${newPoll.poll_id}/results`)
             .set('Authorization', `Bearer ${authToken}`);
 
         response = await request(server)
-            .get(`/v1/community/${community.id}/polls/${poll.poll_id}?isBought=${user.user_id}`)
+            .get(`/v1/community/${community.id}/polls/${newPoll.poll_id}?isBought=${user.user_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
-        await expectCorrectPoll(response.body.data);
+        await expectCorrectCommunityPoll(response.body.data);
         await expect(response.body.data).toHaveProperty('is_bought');
         await expect(response.body.data.is_bought).toBe(1);
 
         // can't edit poll after somebody voted
         response = await request(server)
-            .put(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .put(`/v1/community/${community.id}/polls/${newPoll.poll_id}`)
             .set('Authorization', `Bearer ${authToken}`)
-            .send({poll_id: poll.poll_id, ...pollOptions});
+            .send({poll_id: newPoll.poll_id, ...pollOptions});
         await expectErrorResponse(response, 403);
 
         // can delete poll
         response = await request(server)
-            .delete(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .delete(`/v1/community/${community.id}/polls/${newPoll.poll_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
 
         // can't get deleted poll
         response = await request(server)
-            .get(`/v1/community/${community.id}/polls/${poll.poll_id}`)
+            .get(`/v1/community/${community.id}/polls/${newPoll.poll_id}`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectNotFoundError(response);
 
@@ -589,9 +590,99 @@ describe('Global e2e tests', () => {
             .get(`/v1/community/${community.id}/polls/`)
             .set('Authorization', `Bearer ${authToken}`);
         await expectSuccessResponse(response);
-        await expectCorrectCollection(response.body.data, expectCorrectPoll);
-        searchResult = response.body.data.find(pollEl => pollEl.poll_id === poll.poll_id);
+        await expectCorrectCollection(response.body.data, expectCorrectCommunityPoll);
+        searchResult = response.body.data.find(pollEl => pollEl.poll_id === newPoll.poll_id);
         await expect(searchResult).toBeUndefined();
+
+    });
+
+    it('Valid polls flow', async () => {
+        let response;
+        const pollOptions = {
+            question: Math.random().toString(36).slice(-8),
+            answers: [Math.random().toString(36).slice(-8), Math.random().toString(36).slice(-8), Math.random().toString(36).slice(-8)],
+            tags: [Math.random().toString(36).slice(-8), Math.random().toString(36).slice(-8), Math.random().toString(36).slice(-8)],
+        };
+
+        // unauthorized request
+        response = await request(server)
+            .post(`/v1/polls/`)
+            .send({});
+        await expectUnauthorizedError(response);
+
+        // empty body request
+        response = await request(server)
+            .post(`/v1/polls/`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({});
+        await expectValidationError(response);
+
+        // can add poll
+        response = await request(server)
+            .post(`/v1/polls/`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send(pollOptions);
+        await expectSuccessResponse(response);
+        await expectCorrectAddPollResponse(response.body);
+
+        poll = response.body;
+
+        // can get poll
+        response = await request(server)
+            .get(`/v1/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body);
+
+    });
+
+    it('Valid images for polls flow', async () => {
+        let response;
+
+        // can get poll
+        response = await request(server)
+            .get(`/v1/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body);
+        await expect(response.body.images.length).toBe(0);
+
+        response = await request(server)
+            .post(`/v1/images`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .attach(`image`, path.normalize(__dirname + '/assets/test-image.jpg'));
+        await expectSuccessResponse(response);
+        await expectCorrectImage(response.body.data);
+
+        const imageId = response.body.data.imageId;
+
+        response = await request(server)
+            .put(`/v1/images/${imageId}`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({entityType: `Poll`, entityId: poll.poll_id});
+        await expectSuccessResponse(response);
+        await expectCorrectImage(response.body.data);
+
+        response = await request(server)
+            .get(`/v1/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body);
+
+        await expect(response.body.images.length).toBe(1);
+        await expectCorrectCollection(response.body.images, expectCorrectImage, 1);
+
+        response = await request(server)
+            .delete(`/v1/images/${imageId}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+
+        response = await request(server)
+            .get(`/v1/polls/${poll.poll_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectPoll(response.body);
+        await expect(response.body.images.length).toBe(0);
 
     });
 

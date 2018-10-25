@@ -26,6 +26,14 @@ class ImagesService {
 
 	}
 
+	static async getImagesForEntity(entityType, entityId){
+		const imagesEntities = await images.findAll({
+			where: { entityType, entityId }
+		}) || [];
+
+		return imagesEntities.map(imageEntity => imageEntity.get());
+	}
+
 }
 
 module.exports = ImagesService;
