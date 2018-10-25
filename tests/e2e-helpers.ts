@@ -103,6 +103,16 @@ export async function expectCorrectPoll(poll) {
     await expect(Array.isArray(poll[`tags`])).toBe(true);
 }
 
+export async function expectCorrectImage(image) {
+    await expect(image).toBeDefined();
+    const fields = ['imageId', 'userId', 'entityType', 'entityId', 'imageUrl', 'originalImageUrl', 'key', 'name', 'createdAt'];
+    for (const field of fields){
+        await expect(image).toHaveProperty(field);
+        await expect(image[field]).toBeDefined();
+    }
+
+}
+
 export async function expectCorrectErrorMessage(error) {
     await expect(error).toBeDefined();
     const fields = [];
