@@ -1,10 +1,14 @@
 const { images } = require('lumeos_models');
-const { UploadS3Service, UploadService } = require('lumeos_services');
+const { UploadS3Service } = require('lumeos_services');
 
 class ImagesService {
 
-	static async updateImage(imageEntity) {
-		return await images.update(imageEntity);
+	static async getImageById(imageId){
+		return await images.findById(imageId);
+	}
+
+	static async updateImage(imageId, updateParams) {
+		return await images.update(imageId, updateParams);
 	}
 
 	static async createImage(imageParams) {

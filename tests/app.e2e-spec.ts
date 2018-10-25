@@ -286,6 +286,24 @@ describe('Global e2e tests', () => {
         await expectSuccessResponse(response);
         await expectCorrectImage(response.body.data);
 
+        // can update image
+        const newName = generateRandomString();
+        response = await request(server)
+            .put(`/v1/images/${image.imageId}`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({name: newName, entityType: `TestImage`, entityId: 1});
+        await expectSuccessResponse(response);
+        await expectCorrectImage(response.body.data);
+
+        response = await request(server)
+            .get(`/v1/images/${image.imageId}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectImage(response.body.data);
+        await expect(response.body.data[`name`]).toBe(newName);
+        await expect(response.body.data[`entityType`]).toBe(`TestImage`);
+        await expect(response.body.data[`entityId`]).toBe(1);
+
         response = await request(server)
             .delete(`/v1/images/${image.imageId}`)
             .set('Authorization', `Bearer ${authToken}`);
