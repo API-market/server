@@ -11,7 +11,7 @@ import {
     expectCorrectAddCommunityResponse,
     expectCorrectCollection,
     expectCorrectCommunity, expectCorrectPoll, expectCorrectSchool,
-    expectCorrectUser, expectCorrectUserUpdate,
+    expectCorrectUser, expectCorrectUserShortForm, expectCorrectUserUpdate,
     expectErrorResponse, expectNotFoundError,
     expectSuccessResponse,
     expectUnauthorizedError,
@@ -240,6 +240,18 @@ describe('Global e2e tests', () => {
         await expectSuccessResponse(response);
         await expect(response.body).toHaveProperty('rank');
         await expect(response.body.rank).toBeDefined();
+
+        response = await request(server)
+            .get(`/v1/users/`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body, expectCorrectUserShortForm, 1);
+
+        response = await request(server)
+            .get(`/v1/users/${user.user_id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectUserShortForm(response.body);
 
     });
 

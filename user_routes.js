@@ -75,6 +75,7 @@ const STANDARD_USER_ATTR = [
   "verify_token",
   "verify_phone",
   "verify",
+  "schoolId",
 ];
 
 const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
@@ -423,7 +424,7 @@ userRouter.get('/users', function(req, res) {
 		if(users){
 			return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
 				users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-				res.json(removeEmpty(users));
+				res.json(users);
 			});
 		}
 		else{
@@ -557,7 +558,7 @@ userRouter.get('/followers/:user_id', function (req, res) {
             }).then(followers => {
               Promise.all(followers.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
                 followers.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-                res.json(removeEmpty(followers));
+                res.json(followers);
               });
             });
           }) // followshipt.findAll
@@ -591,7 +592,7 @@ userRouter.get('/followees/:user_id', function (req, res) {
             }).then(followees => {
               Promise.all(followees.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
                 followees.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-                res.json(removeEmpty(followees));
+                res.json(followees);
               });
             });
           }) // followshipt.findAll
