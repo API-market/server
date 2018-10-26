@@ -230,7 +230,7 @@ const ProfileImage = sequelize.define('profile_image', {
         return this.getDataValue('image') && UploadS3Service.getImage(this.getDataValue('image'));
     }
   },
-});
+}, {timestamps: false});
 
 const Transaction = sequelize.define('transaction', {
   poll_id: Sequelize.INTEGER,
