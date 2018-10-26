@@ -370,17 +370,17 @@ userRouter.get('/users', function(req, res) {
 
 	if(req.query["orderBy"]){
 
-		const orderString = req.query["orderBy"];
+		const orderString = req.query["orderBy"] || ``;
 
-		if (!orderString.match(/((balance|follower_count):(asc|desc)(,)?)+/gi)){
-			throw errors.badRequest();
-		}else{
+		if (orderString.match(/((balance|follower_count):(asc|desc)(,)?)+/gi)){
 			orderString.split(`,`).forEach(option => {
 				if (option) {
 					const [field, direction] = option.split(`:`);
 					orderParams.push([sequelize.col(field), direction.toUpperCase()])
 				}
 			});
+		}else if ([`balance`, `follower_count`].indexOf(orderString) >= 0){
+			orderParams.push([sequelize.col(req.query["orderBy"]), 'DESC'])
 		}
 
 	}
