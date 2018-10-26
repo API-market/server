@@ -97,23 +97,37 @@ const getToken = (user) => {
 const emailValidate = check("email").isEmail().normalizeEmail();
 
 const validateSchoolEmail = (req, res, next) => {
-	const userEmail = req.body.email || '';
-	const schoolId = req.body.schoolId;
-	const userEmailDomain = userEmail.trim().toLowerCase().split(`@`)[1];
 
+	// skip if user won't change email or school
+	if(!(`schoolId` in req.body) && !(`email` in req.body)) return next();
 
-	if(schoolId){
-		schools.findById(schoolId)
-		.then(school => {
-			if(!school) throw errors.notFound(`School ${schoolId} not found`);
+	const userId = req.auth ? req.auth.user_id : null;
 
-			const schoolEmailDomain = school.emailDomain.trim().toLowerCase();
+	User.findById(userId)
+	.then(userEntity => {
 
-			if(userEmailDomain !== schoolEmailDomain) throw errors.badRequest(`Please provide your @${schoolEmailDomain} email to register as ${school.name} student`);
-			else return next();
-		})
-		.catch(next)
-	}else return next();
+		userEntity = userEntity || {};
+
+		const userEmail = (`email` in req.body) ? req.body.email : userEntity.email;
+		const schoolId = (`schoolId` in req.body) ? req.body.schoolId : userEntity.schoolId;
+
+		return Promise.all([
+			userEmail, schoolId, schools.findById(schoolId)
+		])
+	})
+	.then(([userEmail, schoolId, school]) => {
+
+		if(!schoolId) return next(); // no need to verify email domain if user has no school chosen
+		if(!school) throw errors.notFound(`School ${schoolId} not found`);
+
+		const userEmailDomain = userEmail.trim().toLowerCase().split(`@`)[1];
+		const schoolEmailDomain = school.emailDomain.trim().toLowerCase();
+
+		if(userEmailDomain !== schoolEmailDomain) throw errors.badRequest(`Please provide your @${schoolEmailDomain} email to register as ${school.name} student`);
+		else return next();
+	})
+	.catch(next)
+
 };
 
 userRouter.post('/login', [
@@ -774,29 +788,35 @@ userRouter.put('/users',
             return user;
         });
 
-    userDoc.then((user) => {
-        if (
-            req.body.not_answers_notifications
-            || req.body.follows_you_notifications
-            || req.body.custom_notifications
-        ) {
-            Object.assign(req.body, {
-              all_notifications: false
-            });
-        }
-        return user.update(req.body).then((userUpdated) => {
-            res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
-        });
-    }).catch((err) => {
-        if (err.message === 'Validation error') {
-            const errors = err.errors.map(err => ({
-                param: err.path,
-                msg: format.messageValidate(err, err.path)
-            }));
-            const status = 422;
-            return res.status(status).json({errors});
-        }
-        res.status(500).json({error: 'Error', message: 'Some error.'});    });
+		userDoc.then((user) => {
+			if (
+				req.body.not_answers_notifications
+				|| req.body.follows_you_notifications
+				|| req.body.custom_notifications
+			) {
+				Object.assign(req.body, {
+				  all_notifications: false
+				});
+			}
+
+			if(req.body.email){
+				// if user changes email, he have to re-verify it once more
+				req.body.verify = false;
+			}
+
+			return user.update(req.body).then((userUpdated) => {
+				res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
+			});
+		}).catch((err) => {
+			if (err.message === 'Validation error') {
+				const errors = err.errors.map(err => ({
+					param: err.path,
+					msg: format.messageValidate(err, err.path)
+				}));
+				const status = 422;
+				return res.status(status).json({errors});
+			}
+			res.status(500).json({error: 'Error', message: 'Some error.'});    });
 });
 
 userRouter.delete('/users/:id', function (req, res) {
