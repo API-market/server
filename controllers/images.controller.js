@@ -47,14 +47,13 @@ class ImagesController {
 	}
 
 	async update(req, res, next) {
-
-    	const userId = req.auth.user_id;
-		const imageEntity = await ImagesService.getImageById(req.params.imageId);
-
-		if(!imageEntity) throw errors.notFound(`Image ${req.params.imageId} not exists`);
-		if(imageEntity.userId !== userId) throw errors.forbidden(`You can edit only your own images`);
-
 		try{
+			const userId = req.auth.user_id;
+			const imageEntity = await ImagesService.getImageById(req.params.imageId);
+
+			if(!imageEntity) throw errors.notFound(`Image ${req.params.imageId} not exists`);
+			if(imageEntity.userId !== userId) throw errors.forbidden(`You can edit only your own images`);
+
 			await imageEntity.update(req.body);
 			return res.sendResponse(imageEntity)
 		}catch(e){
