@@ -1,9 +1,9 @@
 'use strict';
 
-const {communityPolls, community, pollAnswers, sequelize} = require('lumeos_models');
-const {CommunityPollService} = require('lumeos_services');
-const {UploadService, UploadS3Service} = require('lumeos_services');
-const {errors} = require('lumeos_utils');
+const { communityPolls, community, pollAnswers, sequelize } = require('lumeos_models');
+const { CommunityPollService, ImagesService } = require('lumeos_services');
+const { UploadService, UploadS3Service } = require('lumeos_services');
+const { errors } = require('lumeos_utils');
 
 class CommunityPollsController {
 
@@ -90,23 +90,32 @@ class CommunityPollsController {
         return sequelize.transaction((transaction) => {
             return community.findById(req.params.community_id, {transaction})
                 .then((communityEntity) => {
-                    if (!communityEntity) throw errors.notFound('CommunityS not exists');
+                    if (!communityEntity) throw errors.notFound(`Community ${req.params.community_id} don't exists`);
 
                     Object.assign(req.body, {creator_id: req.auth.user_id, community_id: req.params.community_id});
                     return communityPolls
                         .create(communityPolls.formatData(req.body), {transaction})
                         .then((communityPollsNew) => {
                             return UploadService
-                                .upload(req.body.avatar, 'community_polls')
-                                .then(({file}) => {
-                                    if (file) {
-                                        return communityPollsNew
-                                            .update({image: file}, {transaction})
-                                            .then((communityUpdated) => {
-                                                res.sendResponse(communityPolls.formatResponse(communityUpdated));
-                                            });
-                                    }
-                                    return res.sendResponse(communityPolls.formatResponse(communityPollsNew));
+                                .uploadCroppedAndOriginal(req.body.avatar, 'community_polls')
+                                .then(({cropped, original}) => {
+                                    if (cropped.file) {
+                                        return ImagesService.createImage({
+											userId: req.auth.user_id,
+											entityId: communityPollsNew.id,
+											entityType: 'communityPoll',
+											name: 'PollImage',
+											imageUrl: cropped.file,
+											originalImageUrl: original.file,
+										})
+										.then(image => communityPollsNew.update({image: cropped.file}, {transaction}))
+										.then((communityUpdated) => {
+											res.sendResponse(communityPolls.formatResponse(communityUpdated));
+										});
+                                    }else{
+										return res.sendResponse(communityPolls.formatResponse(communityPollsNew));
+									}
+
                                 });
                         });
                 });

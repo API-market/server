@@ -31,6 +31,7 @@ const {usersValidate} = require('lumeos_controllers/validateSchemas');
 const {omit} = require('lodash');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
+const { schools } = require('lumeos_models');
 
 const dbObjects = require("./db_setup.js");
 const sequelize = dbObjects.dbInstance;
@@ -74,6 +75,7 @@ const STANDARD_USER_ATTR = [
   "verify_token",
   "verify_phone",
   "verify",
+  "schoolId",
 ];
 
 const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
@@ -93,6 +95,40 @@ const getToken = (user) => {
 };
 
 const emailValidate = check("email").isEmail().normalizeEmail();
+
+const validateSchoolEmail = (req, res, next) => {
+
+	// skip if user won't change email or school
+	if(!(`schoolId` in req.body) && !(`email` in req.body)) return next();
+
+	const userId = req.auth ? req.auth.user_id : null;
+
+	User.findById(userId)
+	.then(userEntity => {
+
+		userEntity = userEntity || {};
+
+		const userEmail = (`email` in req.body) ? req.body.email : userEntity.email;
+		const schoolId = (`schoolId` in req.body) ? req.body.schoolId : userEntity.schoolId;
+
+		return Promise.all([
+			userEmail, schoolId, schools.findById(schoolId)
+		])
+	})
+	.then(([userEmail, schoolId, school]) => {
+
+		if(!schoolId) return next(); // no need to verify email domain if user has no school chosen
+		if(!school) throw errors.notFound(`School ${schoolId} not found`);
+
+		const userEmailDomain = userEmail.trim().toLowerCase().split(`@`)[1];
+		const schoolEmailDomain = school.emailDomain.trim().toLowerCase();
+
+		if(userEmailDomain !== schoolEmailDomain) throw errors.badRequest(`Please provide your @${schoolEmailDomain} email to register as ${school.name} student`);
+		else return next();
+	})
+	.catch(next)
+
+};
 
 userRouter.post('/login', [
 	emailValidate,
@@ -179,7 +215,7 @@ userRouter.post('/users', [
         .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
         .isLength({min: 8})
         .matches(/\d/)
-], (req, res) => {
+], validateSchoolEmail, (req, res) => {
   const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({errors: errors.array()});
@@ -348,17 +384,17 @@ userRouter.get('/users', function(req, res) {
 
 	if(req.query["orderBy"]){
 
-		const orderString = req.query["orderBy"];
+		const orderString = req.query["orderBy"] || ``;
 
-		if (!orderString.match(/((balance|follower_count):(asc|desc)(,)?)+/gi)){
-			throw errors.badRequest();
-		}else{
+		if (orderString.match(/((balance|follower_count):(asc|desc)(,)?)+/gi)){
 			orderString.split(`,`).forEach(option => {
 				if (option) {
 					const [field, direction] = option.split(`:`);
 					orderParams.push([sequelize.col(field), direction.toUpperCase()])
 				}
 			});
+		}else if ([`balance`, `follower_count`].indexOf(orderString) >= 0){
+			orderParams.push([sequelize.col(req.query["orderBy"]), 'DESC'])
 		}
 
 	}
@@ -402,7 +438,7 @@ userRouter.get('/users', function(req, res) {
 		if(users){
 			return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
 				users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-				res.json(removeEmpty(users));
+				res.json(users);
 			});
 		}
 		else{
@@ -536,7 +572,7 @@ userRouter.get('/followers/:user_id', function (req, res) {
             }).then(followers => {
               Promise.all(followers.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
                 followers.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-                res.json(removeEmpty(followers));
+                res.json(followers);
               });
             });
           }) // followshipt.findAll
@@ -570,7 +606,7 @@ userRouter.get('/followees/:user_id', function (req, res) {
             }).then(followees => {
               Promise.all(followees.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
                 followees.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-                res.json(removeEmpty(followees));
+                res.json(followees);
               });
             });
           }) // followshipt.findAll
@@ -603,7 +639,7 @@ userRouter.post('/profile_images/', UploadService.middleware('image'), [
                 throw new Error('Image exist for current user');
             }
             return UploadService.upload(req.file, 'users').then(({file: image}) => {
-                Object.assign(req.body, {image});
+                Object.assign(req.body, {image, createdAt: new Date().toLocaleString(), updatedAt: new Date().toLocaleString()});
                 return ProfileImage.create(req.body)
                     .then((profile) => {
                         res.json(profile.toJSON())
@@ -739,6 +775,7 @@ userRouter.put('/users',
             .isBoolean()
             .withMessage('Field "custom_notifications" must be boolean.')
     ],
+	validateSchoolEmail,
     function (req, res) {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -751,29 +788,35 @@ userRouter.put('/users',
             return user;
         });
 
-    userDoc.then((user) => {
-        if (
-            req.body.not_answers_notifications
-            || req.body.follows_you_notifications
-            || req.body.custom_notifications
-        ) {
-            Object.assign(req.body, {
-              all_notifications: false
-            });
-        }
-        return user.update(req.body).then((userUpdated) => {
-            res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
-        });
-    }).catch((err) => {
-        if (err.message === 'Validation error') {
-            const errors = err.errors.map(err => ({
-                param: err.path,
-                msg: format.messageValidate(err, err.path)
-            }));
-            const status = 422;
-            return res.status(status).json({errors});
-        }
-        res.status(500).json({error: 'Error', message: 'Some error.'});    });
+		userDoc.then((user) => {
+			if (
+				req.body.not_answers_notifications
+				|| req.body.follows_you_notifications
+				|| req.body.custom_notifications
+			) {
+				Object.assign(req.body, {
+				  all_notifications: false
+				});
+			}
+
+			if(req.body.email && req.body.email !== user.email){
+				// if user changes email, he have to re-verify it once more
+				req.body.verify = false;
+			}
+
+			return user.update(req.body).then((userUpdated) => {
+				res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
+			});
+		}).catch((err) => {
+			if (err.message === 'Validation error') {
+				const errors = err.errors.map(err => ({
+					param: err.path,
+					msg: format.messageValidate(err, err.path)
+				}));
+				const status = 422;
+				return res.status(status).json({errors});
+			}
+			res.status(500).json({error: 'Error', message: 'Some error.'});    });
 });
 
 userRouter.delete('/users/:id', function (req, res) {

@@ -16,7 +16,9 @@
     "seed:generate": "sequelize seed:generate --name",
     "seed": "sequelize db:seed:all",
     "seed:rollback": "sequelize db:seed:undo",
-    "prestart": "npm run migrate && npm run seed"
+    "prestart": "npm run migrate && npm run seed",
+    "pretest:e2e": "npm run migrate --env=test && npm run seed --env=test",
+    "posttest:e2e": "npm run migrate:rollback:all --env=test"
   },
   "repository": {
     "type": "git",

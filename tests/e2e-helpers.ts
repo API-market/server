@@ -4,8 +4,13 @@ export function generateNewUserCredentials() {
     };
 }
 
-export async function expectCorrectCollection(items, checker) {
+export function generateRandomString() {
+    return Math.random().toString(36).slice(-8);
+}
+
+export async function expectCorrectCollection(items, checker, expectingMinimalCollectionSize = 0) {
     await expect(Array.isArray(items)).toBe(true);
+    await expect(items.length).toBeGreaterThanOrEqual(expectingMinimalCollectionSize);
     for (const item of items) {
         await checker(item);
     }
@@ -15,7 +20,7 @@ export async function expectCorrectUser(user) {
     await expect(user).toBeDefined();
     const fields = [
         'firstName', 'lastName', 'email', 'dob', 'balance', 'followee_count', 'follower_count',
-        'answer_count', 'user_id', 'token',
+        'answer_count', 'user_id', 'token', 'schoolId',
     ];
     for (const field of fields){
         await expect(user).toHaveProperty(field);
@@ -25,6 +30,46 @@ export async function expectCorrectUser(user) {
     await expect(user).not.toHaveProperty('password');
     await expect(user).not.toHaveProperty('id');
     await expect(user).not.toHaveProperty('createdAt');
+}
+
+export async function expectCorrectUserShortForm(user) {
+    await expect(user).toBeDefined();
+    const fields = [
+        'firstName', 'lastName', 'email', 'dob', 'balance', 'followee_count', 'follower_count',
+        'answer_count', 'user_id', 'schoolId',
+    ];
+    for (const field of fields){
+        await expect(user).toHaveProperty(field);
+        await expect(user[field]).toBeDefined();
+    }
+
+    await expect(user).not.toHaveProperty('password');
+    await expect(user).not.toHaveProperty('id');
+    await expect(user).not.toHaveProperty('createdAt');
+}
+
+export async function expectCorrectUserUpdate(user) {
+    await expect(user).toBeDefined();
+    const fields = [
+        'firstName', 'lastName', 'email', 'dob', 'balance', 'followee_count', 'follower_count', 'schoolId',
+    ];
+    for (const field of fields){
+        await expect(user).toHaveProperty(field);
+        await expect(user[field]).toBeDefined();
+    }
+
+    await expect(user).not.toHaveProperty('password');
+    await expect(user).not.toHaveProperty('id');
+    await expect(user).not.toHaveProperty('createdAt');
+}
+
+export async function expectCorrectSchool(user) {
+    await expect(user).toBeDefined();
+    const fields = ['schoolId', 'name', 'emailDomain'];
+    for (const field of fields){
+        await expect(user).toHaveProperty(field);
+        await expect(user[field]).toBeDefined();
+    }
 }
 
 export async function expectCorrectCommunity(community) {
@@ -46,7 +91,32 @@ export async function expectCorrectAddCommunityResponse(community) {
     }
 }
 
+export async function expectCorrectAddPollResponse(poll) {
+    await expect(poll).toBeDefined();
+    const fields = ['answers', 'creator_id', 'createdAt', 'updatedAt', 'poll_id', 'price', 'question', 'tags'];
+    for (const field of fields){
+        await expect(poll).toHaveProperty(field);
+        await expect(poll[field]).toBeDefined();
+    }
+
+    await expect(Array.isArray(poll[`answers`])).toBe(true);
+    await expect(Array.isArray(poll[`tags`])).toBe(true);
+}
+
 export async function expectCorrectPoll(poll) {
+    await expect(poll).toBeDefined();
+    const fields = ['answers', 'creator_id', 'createdAt', 'poll_id', 'price', 'question', 'tags', 'images'];
+    for (const field of fields){
+        await expect(poll).toHaveProperty(field);
+        await expect(poll[field]).toBeDefined();
+    }
+
+    await expect(Array.isArray(poll[`answers`])).toBe(true);
+    await expect(Array.isArray(poll[`tags`])).toBe(true);
+    await expect(Array.isArray(poll[`images`])).toBe(true);
+}
+
+export async function expectCorrectCommunityPoll(poll) {
     await expect(poll).toBeDefined();
     const fields = ['answers', 'avatar', 'creator_id', 'createdAt', 'creator_image', 'poll_id', 'price', 'question', 'tags'];
     for (const field of fields){
@@ -56,6 +126,16 @@ export async function expectCorrectPoll(poll) {
 
     await expect(Array.isArray(poll[`answers`])).toBe(true);
     await expect(Array.isArray(poll[`tags`])).toBe(true);
+}
+
+export async function expectCorrectImage(image) {
+    await expect(image).toBeDefined();
+    const fields = ['imageId', 'userId', 'entityType', 'entityId', 'imageUrl', 'originalImageUrl', 'key', 'name', 'createdAt'];
+    for (const field of fields){
+        await expect(image).toHaveProperty(field);
+        await expect(image[field]).toBeDefined();
+    }
+
 }
 
 export async function expectCorrectErrorMessage(error) {

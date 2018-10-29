@@ -66,6 +66,7 @@ const UserBase = sequelize.define('user', {
   follows_you_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   custom_notifications: {type: Sequelize.BOOLEAN, defaultValue: true},
   count_notifications: {type: Sequelize.INTEGER},
+  schoolId: { type: Sequelize.INTEGER, allowNull: true },
 }, {
     hooks: {
         beforeUpdate(model) {
@@ -219,6 +220,12 @@ const Followship = sequelize.define('followship', {
 });
 
 const ProfileImage = sequelize.define('profile_image', {
+  createdAt: {
+    type: Sequelize.STRING,
+  },
+  updatedAt: {
+    type: Sequelize.STRING,
+  },
   user_id: {
     type: Sequelize.INTEGER,
     primaryKey: true
@@ -229,7 +236,7 @@ const ProfileImage = sequelize.define('profile_image', {
         return this.getDataValue('image') && UploadS3Service.getImage(this.getDataValue('image'));
     }
   },
-});
+}, {timestamps: false});
 
 const Transaction = sequelize.define('transaction', {
   poll_id: Sequelize.INTEGER,
