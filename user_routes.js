@@ -639,7 +639,7 @@ userRouter.post('/profile_images/', UploadService.middleware('image'), [
                 throw new Error('Image exist for current user');
             }
             return UploadService.upload(req.file, 'users').then(({file: image}) => {
-                Object.assign(req.body, {image});
+                Object.assign(req.body, {image, createdAt: new Date().toLocaleString(), updatedAt: new Date().toLocaleString()});
                 return ProfileImage.create(req.body)
                     .then((profile) => {
                         res.json(profile.toJSON())

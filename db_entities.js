@@ -220,6 +220,12 @@ const Followship = sequelize.define('followship', {
 });
 
 const ProfileImage = sequelize.define('profile_image', {
+  createdAt: {
+    type: Sequelize.STRING,
+  },
+  updatedAt: {
+    type: Sequelize.STRING,
+  },
   user_id: {
     type: Sequelize.INTEGER,
     primaryKey: true
