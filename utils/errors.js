@@ -21,10 +21,10 @@ class ErrorsUtils extends Error {
         return this;
     }
 
-    badRequest(message = '', {customField = 'message'}) {
+    badRequest(message = '') {
         this.message = 'Bad request';
         this.status = 400;
-        this.errors =  message instanceof String && [{[customField]: message}] || [].concat(message);
+        this.errors =  message instanceof String && [{message}] || [].concat(message);
 
         return this;
     }
