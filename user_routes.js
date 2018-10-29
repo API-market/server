@@ -799,7 +799,7 @@ userRouter.put('/users',
 				});
 			}
 
-			if(req.body.email){
+			if(req.body.email && req.body.email !== user.email){
 				// if user changes email, he have to re-verify it once more
 				req.body.verify = false;
 			}
