@@ -123,7 +123,7 @@ const validateSchoolEmail = (req, res, next) => {
 		const userEmailDomain = userEmail.trim().toLowerCase().split(`@`)[1];
 		const schoolEmailDomain = school.emailDomain.trim().toLowerCase();
 
-		if(userEmailDomain !== schoolEmailDomain) throw errors.badRequest(`Please provide your @${schoolEmailDomain} email to register as ${school.name} student`);
+		if(userEmailDomain !== schoolEmailDomain) throw errors.badRequest(`Please provide your @${schoolEmailDomain} email to register as ${school.name} student`, {customField: 'msg'});
 		else return next();
 	})
 	.catch(next)
