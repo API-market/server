@@ -31,9 +31,9 @@ class ImagesController {
 			const {original, cropped} = await UploadService.uploadCroppedAndOriginal(req.file, `images/${userId}`);
 			const image = await ImagesService.createImage({
 				userId,
-				entityId: req.entityId || 0,
-				entityType: req.entityType || 'Image',
-				name: req.name || 'Name',
+				entityId: req.body.entityId || 0,
+				entityType: req.body.entityType || 'Image',
+				name: req.body.name || 'Name',
 				key: 'crop',
 				imageUrl: UploadS3Service.getImage(cropped.file),
 				originalImageUrl: UploadS3Service.getImage(original.file),
