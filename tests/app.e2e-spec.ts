@@ -647,6 +647,14 @@ describe('Global e2e tests', () => {
         await expectCorrectPoll(response.body);
         await expect(response.body.images.length).toBe(0);
 
+        // empty images list for poll
+        response = await request(server)
+            .get(`/v1/images?entityId=${poll.poll_id}&entityType=Poll`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectImage, 0);
+        await expect(response.body.data.length).toBe(0);
+
         response = await request(server)
             .post(`/v1/images`)
             .set('Authorization', `Bearer ${authToken}`)
@@ -662,6 +670,13 @@ describe('Global e2e tests', () => {
             .send({entityType: `Poll`, entityId: poll.poll_id});
         await expectSuccessResponse(response);
         await expectCorrectImage(response.body.data);
+
+        // have at least 1 image for poll
+        response = await request(server)
+            .get(`/v1/images?entityId=${poll.poll_id}&entityType=Poll`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectImage, 1);
 
         response = await request(server)
             .get(`/v1/polls/${poll.poll_id}`)

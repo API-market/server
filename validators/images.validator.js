@@ -37,6 +37,20 @@ class ImagesValidate {
             }));
     }
 
+    get list() {
+        return requestValidator(Joi
+            .object()
+            .keys({
+				entityType: Joi
+                    .string()
+                    .optional(),
+				entityId: Joi
+					.number()
+					.optional(),
+            })
+		);
+    }
+
     get update() {
 		return requestValidator(Joi
 			.object()
