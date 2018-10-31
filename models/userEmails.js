@@ -51,7 +51,7 @@ module.exports = (sequelize, DataTypes) => {
 	});
 
 	UserEmail.associate = function (models) {
-		UserEmail.belongsTo(models.users, {as: 'user', foreignKey: 'user_id'});
+		UserEmail.belongsTo(models.users, {as: 'user', foreignKey: 'userId'});
 	};
 
 	UserEmail.methods = (models, _, db) => {

@@ -4,3 +4,4 @@ exports.communityPollAnswersController = require('./community_poll_answers_contr
 exports.versionsController = require('./versions.controller');
 exports.schoolsController = require('./schools.controller');
 exports.imagesController = require('./images.controller');
+exports.userEmailsController = require('./userEmails.controller');
