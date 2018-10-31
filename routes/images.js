@@ -7,6 +7,7 @@ const {imagesValidator} = require('lumeos_validators');
 const router = express.Router();
 
 router.route('/images').get(
+	imagesValidator.list,
 	imagesController.list,
 );
 

@@ -8,7 +8,27 @@ module.exports = {
             ],
             description: 'Get images list',
             summary: 'Get images list',
-			parameters: [],
+			parameters: [
+				{
+					name: 'Authorization',
+					in: 'header',
+					description: 'Auth (Authorization: Bearer XXX)',
+				},
+				{
+					name: 'entityType',
+					in: 'query',
+					required: false,
+					description: 'Type of entity (Poll, CommunityPoll, etc)',
+					type: 'string'
+				},
+				{
+					name: 'entityId',
+					in: 'query',
+					required: false,
+					description: 'Entity id',
+					type: 'number'
+				},
+			],
             responses: {
                 200: {
                     description: 'OK',
