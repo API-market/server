@@ -22,8 +22,8 @@ class UserEmailsController {
     async create(req, res, next) {
         const userId = req.auth.user_id;
 
-        const { type, email, name } = req.body;
-        const createEmailParams = { email, userId, type, name };
+        const { type, email } = req.body;
+        const createEmailParams = { email, userId, type };
 
         try {
 

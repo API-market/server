@@ -14,7 +14,6 @@ module.exports = {
 			userId: {type: Sequelize.INTEGER, allowNull: false},
 
 			email: {type: Sequelize.STRING, allowNull: false, unique: true},
-			name: {type: Sequelize.STRING, allowNull: true},
 			type: {type: Sequelize.STRING, allowNull: false},
 
 			verify: {type: Sequelize.BOOLEAN, allowNull: false, default: false},
