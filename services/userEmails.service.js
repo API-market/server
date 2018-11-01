@@ -19,6 +19,10 @@ class UserEmailsService {
         return await userEmail.create(createEmailParams);
     }
 
+    static async update(emailId, updateParams){
+        return await userEmail.update(emailId, updateParams);
+    }
+
     static async generateEmailVerifyToken(userId){
 
         const { token } = require('lumeos_utils');
@@ -27,7 +31,7 @@ class UserEmailsService {
             user_id: userId,
             verify: false,
             iat: Math.floor(new Date() / 1000)
-        }, { expiresIn: 0 });
+        }, {});
 
 	}
 
@@ -40,6 +44,10 @@ class UserEmailsService {
             username: `${user.firstName} ${user.lastName}`,
         })
 	}
+
+	static async getUnverifiedEmailByVerifyToken(verify_token){
+	    return await userEmail.findOne({where: { verify_token, verify: false }})
+    }
 
 }
 

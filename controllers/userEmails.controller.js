@@ -53,6 +53,8 @@ class UserEmailsController {
 
             await userEmailsService.sendEmailVerifyLink(req.auth, emailEntity);
 
+            res.status(204).json();
+
         } catch (e) {
             next(e)
         }

@@ -25,7 +25,7 @@
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 const {events, token, model, format} = require('lumeos_utils');
-const {mailService, UploadService, MessageService} = require('lumeos_services');
+const {mailService, UploadService, MessageService, userEmailsService} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 const {usersValidate} = require('lumeos_controllers/validateSchemas');
 const {omit} = require('lodash');
@@ -963,46 +963,60 @@ userRouter
                 res.status(status).json({error: 'Error', message});
             });
     })
-    .put([
-        check('verifyToken').custom((value, {req}) => {
+    .put(
+        [ check('verifyToken').custom((value, {req}) => {
             if (value) {
                 return token.verify(value).then(() => {
                     req.verifyToken = value;
                 });
             }
-        })
-    ], function (req, res) {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(422).json({errors: errors.array()});
-        }
-        User.findOne({
-            where: {
-                verify_token: req.verifyToken,
-                verify: false,
-            }
-        })
-            .then(function (user) {
-                if (!user) {
-                    throw new Error('User was verify');
-                }
-                return user.update(model.formattingValue({
-                    verifyToken: null,
-                    verify: true,
-                    balance: user.balance + 50
-                })).then((user) => {
-                    res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
-                });
-            })
-            .catch(function (error) {
-                let message = 'Some error.';
-                let status = 500;
-                if (error.name === 'Error') {
-                    message = error.message;
-                    status = 400;
-                }
-                res.status(status).json({error: 'Error', message});
+        })],
+
+        (req, res) => {
+
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+            const findUserByToken = User.findOne({
+                where: { verify_token: req.verifyToken, verify: false }
             });
+            const findEmailByToken = userEmailsService.getUnverifiedEmailByVerifyToken(req.verifyToken);
+
+            Promise.all([ findUserByToken, findEmailByToken ])
+                .then(async ([ userEntity, emailEntity ]) => {
+
+                    if (!userEntity && !emailEntity)
+                        throw new Error('No email or user found for this token');
+
+                    if(!userEntity){
+                        userEntity = await User.findById(emailEntity.userId);
+                    }else{
+                        await userEntity.update({
+                            verifyToken: null,
+                            verify: true,
+                        })
+                    }
+
+                    if( emailEntity ){
+                        await emailEntity.update({verify: true});
+                    }
+
+                    const updatedUser = await userEntity.update({
+                        balance: userEntity.balance + 50
+                    });
+
+                    res.json(omit(updatedUser.toJSON(), EXCLUDE_USER_ATTR));
+                })
+                .catch(error => {
+                    let message = 'Some error.';
+                    let status = 500;
+                    if (error.name === 'Error') {
+                        message = error.message;
+                        status = 400;
+                    }
+                    console.error(error);
+                    res.status(status).json({ error: 'Error', message });
+                });
     });
 
 userRouter
