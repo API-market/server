@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const dbObjects = require("./db_setup");
 const {UploadS3Service} = require('lumeos_services');
+const { userEmail } = require('lumeos_models');
 const sequelize = dbObjects.dbInstance;
 
 var bcrypt = require('bcrypt');
@@ -60,6 +61,13 @@ const UserBase = sequelize.define('user', {
             if (phonePrev !== phoneCurrent && verifyPhone) {
                 model.verify_phone = false
             }
+        }
+    },
+    scopes: {
+        emails: {
+            include: [
+                { model: userEmail, as: 'emails'}
+            ]
         }
     },
 	timestamps: true,
@@ -133,6 +141,7 @@ const Tokens = sequelize.define('tokens', {
 });
 
 User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
+User.userEmail = User.hasMany(userEmail, { as: 'emails', foreignKey: 'userId' });
 
 Tokens.User = Tokens.belongsTo(User, {
     as: 'users',
@@ -285,4 +294,4 @@ module.exports = {
   Transaction: Transaction,
   getProfileImage: getProfileImage,
   verifyPassword,
-}
+};

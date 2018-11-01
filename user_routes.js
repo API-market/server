@@ -41,7 +41,6 @@ const {verifyPassword} = db_entities;
 const jwt = require('jsonwebtoken');
 
 const User = db_entities.User;
-const Address = db_entities.Address;
 const Tokens = db_entities.Tokens;
 const ProfileImage = db_entities.ProfileImage;
 const Followship = db_entities.Followship;
@@ -147,10 +146,10 @@ userRouter.post('/login', [
 		return res.status(422).json({errors: errors.array()});
 	}
 
-	User.findOne(
+	User.scope(["defaultScope", `emails`]).findOne(
 		{where: {email: req.body['email']}},
 		{include: [{association: User.Tokens}]}
-	).then(function(user) {
+	).then(user => {
 		if(user && user.verifyPassword(req.body['password'])){
 			Tokens.destroy({ where: {
 				user_id: user.id,
@@ -221,11 +220,7 @@ userRouter.post('/users', [
         return res.status(422).json({errors: errors.array()});
     }
 
-    User.create(req.body, {
-        // include: [{
-        //   association: User.Address
-        // }]
-    })
+    User.create(req.body)
     .then(user => {
 		return Tokens.destroy({
 			where: {
@@ -244,7 +239,8 @@ userRouter.post('/users', [
 			console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
 			const dataUser = {
 				user_id: user['id'],
-				token: getToken(user)
+				token: getToken(user),
+                emails: [],
 			};
 			Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
 			return addProfileImage(res, user, EXCLUDE_USER_ATTR);
@@ -285,11 +281,8 @@ const addProfileImage = function (res, user, exclude) {
 
 userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
-  User.findById(userId, {
-    attributes: STANDARD_USER_ATTR,
-    // include: [
-    //   {association: User.Address, as: 'address'}
-    // ],
+  User.scope(["defaultScope", "emails"]).findById(userId, {
+      attributes: STANDARD_USER_ATTR,
   }).then(user => {
     if (user) {
       if (req.query["isFollowerOf"]) {
@@ -434,7 +427,7 @@ userRouter.get('/users', function(req, res) {
 		limit: limit,
 		attributes: STANDARD_USER_ATTR
 	};
-	User.findAll(where_object).then(users => {
+	User.scope(["defaultScope", "emails"]).findAll(where_object).then(users => {
 		if(users){
 			return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
 				users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
@@ -470,7 +463,8 @@ userRouter.post('/follow', [
   }
   User.findById(followee_id, {
     include: [
-        {association: User.Tokens}
+        {association: User.Tokens},
+        {association: User.userEmail},
     ]
   }).then(followee => {
     if (followee) {
