@@ -15,6 +15,7 @@ class UserEmailsValidate {
                     .required(),
 				email: Joi
 					.string()
+                    .email()
 					.required(),
             }));
     }
@@ -24,6 +25,17 @@ class UserEmailsValidate {
             .object()
             .keys({
 				userId: Joi
+                    .number()
+                    .required(),
+            })
+		);
+    }
+
+    get verify() {
+        return requestValidator(Joi
+            .object()
+            .keys({
+				emailId: Joi
                     .number()
                     .required(),
             })

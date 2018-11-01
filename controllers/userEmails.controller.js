@@ -5,7 +5,7 @@ class UserEmailsController {
 
     async list(req, res, next) {
         const currentUserId = req.auth.user_id;
-        const userId = req.params.userId;
+        const userId = req.query.userId;
 
         try {
 
@@ -20,15 +20,38 @@ class UserEmailsController {
     }
 
     async create(req, res, next) {
-        const userId = req.auth.user_id;
 
+        const userId = req.auth.user_id;
         const { type, email } = req.body;
-        const createEmailParams = { email, userId, type };
 
         try {
 
+            const verify_token = await userEmailsService.generateEmailVerifyToken(userId);
+            const createEmailParams = { email, userId, type, verify_token };
+
             const emailEntity = await userEmailsService.create(createEmailParams);
             res.sendResponse(emailEntity)
+
+        } catch (e) {
+            next(e)
+        }
+
+    }
+
+    async verify(req, res, next) {
+
+        const currentUserId = req.auth.user_id;
+        const emailId = req.params.emailId;
+
+        try {
+
+            const emailEntity = await userEmailsService.getEmailById(emailId);
+
+            if(!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
+            if(emailEntity.userId !== currentUserId) throw errors.forbidden(`Can verify only your own emails`);
+            if(emailEntity.verify === true) throw errors.badRequest(`Email already verified`);
+
+            await userEmailsService.sendEmailVerifyLink(req.auth, emailEntity);
 
         } catch (e) {
             next(e)

@@ -5,7 +5,7 @@ const {userEmailsValidator} = require('lumeos_validators');
 
 const router = express.Router();
 
-router.route('/emails/:userId').get(
+router.route('/emails/').get(
 	auth,
 	userEmailsValidator.list,
 	userEmailsController.list,
@@ -17,5 +17,10 @@ router.route('/emails').post(
 	userEmailsController.create,
 );
 
+router.route('/emails/:emailId/verify').post(
+    auth,
+    userEmailsValidator.verify,
+    userEmailsController.verify,
+);
 
 module.exports = router;
