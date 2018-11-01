@@ -49,6 +49,10 @@ class UserEmailsService {
 	    return await userEmail.findOne({where: { verify_token, verify: false }})
     }
 
+    static getEmailAddressDomain(email){
+        return (email).trim().toLowerCase().split("@")[1];
+    }
+
 }
 
 module.exports = UserEmailsService;

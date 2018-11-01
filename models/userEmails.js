@@ -20,6 +20,11 @@ module.exports = (sequelize, DataTypes) => {
 			unique: true
 		},
 
+		domain: {
+			type: DataTypes.STRING,
+			allowNull: false,
+		},
+
 		type: {
 			type: DataTypes.STRING,
 			allowNull: false,

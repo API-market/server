@@ -27,7 +27,8 @@ class UserEmailsController {
         try {
 
             const verify_token = await userEmailsService.generateEmailVerifyToken(userId);
-            const createEmailParams = { email, userId, type, verify_token };
+            const domain = userEmailsService.getEmailAddressDomain(email);
+            const createEmailParams = { email, domain, userId, type, verify_token };
 
             const emailEntity = await userEmailsService.create(createEmailParams);
             res.sendResponse(emailEntity)
