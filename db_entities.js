@@ -1,10 +1,10 @@
 const Sequelize = require('sequelize');
 const dbObjects = require("./db_setup");
-const {UploadS3Service, PushService, UploadService} = require('lumeos_services');
+const {UploadS3Service} = require('lumeos_services');
+const { userEmail } = require('lumeos_models');
 const sequelize = dbObjects.dbInstance;
 
 var bcrypt = require('bcrypt');
-const atob = require('atob');
 
 const AWS = require('aws-sdk');
 AWS.config.update({
@@ -12,21 +12,6 @@ AWS.config.update({
   secretAccessKey: process.env.SECRET_ACCESS_KEY,
   region: process.env.S3_REGION || "us-west-2"
 });
-
-const lumeosS3Bucket = new AWS.S3({params: {Bucket: process.env.S3_BUCKET_NAME || "lumeos"}});
-
-const rekognition = new AWS.Rekognition();
-
-const profile_images_key = "profile_images_" + process.env.LUMEOS_ENV;
-
-function imageFromBase64(dataURI) {
-  var binary = atob(dataURI);
-  var array = [];
-  for (var i = 0; i < binary.length; i++) {
-    array.push(binary.charCodeAt(i));
-  }
-  return Buffer.from(new Uint8Array(array));
-}
 
 const UserBase = sequelize.define('user', {
   eos: Sequelize.STRING,
@@ -76,6 +61,13 @@ const UserBase = sequelize.define('user', {
             if (phonePrev !== phoneCurrent && verifyPhone) {
                 model.verify_phone = false
             }
+        }
+    },
+    scopes: {
+        emails: {
+            include: [
+                { model: userEmail, as: 'emails'}
+            ]
         }
     },
 	timestamps: true,
@@ -137,13 +129,6 @@ class User extends UserBase {
     }
 }
 
-const Address = sequelize.define('address', {
-  street: Sequelize.STRING,
-  city: Sequelize.STRING,
-  region: Sequelize.STRING,
-  postalCode: Sequelize.STRING,
-});
-
 const Tokens = sequelize.define('tokens', {
     user_id: {
         type: Sequelize.INTEGER,
@@ -156,8 +141,8 @@ const Tokens = sequelize.define('tokens', {
 });
 
 User.Tokens = User.hasMany(Tokens, { as: 'tokens', foreignKey: 'user_id' });
+User.userEmail = User.hasMany(userEmail, { as: 'emails', foreignKey: 'userId' });
 
-// User.Address = User.belongsTo(Address, {as: 'address', constraints: false});
 Tokens.User = Tokens.belongsTo(User, {
     as: 'users',
     foreignKey: 'user_id',
@@ -309,4 +294,4 @@ module.exports = {
   Transaction: Transaction,
   getProfileImage: getProfileImage,
   verifyPassword,
-}
+};

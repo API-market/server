@@ -8,5 +8,6 @@ exports.MessageService = require('./message_service');
 
 exports.CommunityPollService = require('./communityPoll.service');
 exports.ImagesService = require('./images.service');
+exports.userEmailsService = require('./userEmails.service');
 
 exports.mailService = new exports.MailService();

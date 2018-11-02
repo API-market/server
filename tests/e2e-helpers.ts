@@ -20,7 +20,7 @@ export async function expectCorrectUser(user) {
     await expect(user).toBeDefined();
     const fields = [
         'firstName', 'lastName', 'email', 'dob', 'balance', 'followee_count', 'follower_count',
-        'answer_count', 'user_id', 'token', 'schoolId',
+        'answer_count', 'user_id', 'token', 'schoolId', 'emails',
     ];
     for (const field of fields){
         await expect(user).toHaveProperty(field);
