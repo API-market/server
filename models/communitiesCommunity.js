@@ -35,7 +35,18 @@ module.exports = (sequelize, DataTypes) => {
         },
         creator_id: {
             type: DataTypes.INTEGER,
-        }
+        },
+
+		allowedDomains: {
+            type: DataTypes.STRING,
+			get: function () {
+				if (this.getDataValue('allowedDomains')) return JSON.parse(this.getDataValue('allowedDomains'));
+			},
+			set: function (val) {
+				return this.setDataValue('allowedDomains', JSON.stringify(val));
+			}
+        },
+
     }, {
         schema: 'communities',
         tableName: 'community',
