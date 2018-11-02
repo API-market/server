@@ -1,6 +1,6 @@
 const {community, communityUsers, sequelize} = require('lumeos_models');
 const {model} = require('lumeos_utils');
-const {UploadService, UploadS3Service} = require('lumeos_services');
+const {UploadService, UploadS3Service, communitiesService} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 
 class CommunityController {
@@ -105,25 +105,39 @@ class CommunityController {
             .catch(next);
     }
 
-    joinToCommunity(req, res, next) {
-        return community.findById(req.params.community_id)
-            .then((communityEntity) => {
-                if (!communityEntity) {
-                    throw errors.notFound('Community not exists');
-                }
-                if (communityEntity.creator_id === +req.auth.user_id) {
-                    throw errors.badRequest('You already joined');
-                }
-                return communityUsers.create(model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat']))
-                    .then((communityUsersEntity) => {
-                        if (!communityUsersEntity) {
-                            throw errors.badRequest();
-                        }
-                        res.sendResponse();
-                    });
-            })
-            .catch(next);
-    }
+    async joinToCommunity(req, res, next){
+    	try{
+
+			const communityEntity = await community.findById(req.params.community_id);
+			const currentUser = req.auth.user;
+
+			if (!communityEntity) {
+				throw errors.notFound('Community not exists');
+			}
+			if (communityEntity.creator_id === +req.auth.user_id) {
+				throw errors.badRequest('You already joined');
+			}
+
+			const canUserAccessCommunity = await communitiesService.canUserAccessCommunity(currentUser, communityEntity);
+			if(!canUserAccessCommunity){
+				const allowedEmailsString = communityEntity.allowedDomains.join(", ");
+				throw errors.forbidden(`Only users with ${allowedEmailsString} emails allowed`)
+			}
+
+			const communityUsersEntity = await communityUsers.create(
+				model.formattingValue(Object.assign(req.params, req.auth), ['user', 'iat'])
+			);
+
+			if (!communityUsersEntity) {
+				throw errors.badRequest();
+			}
+
+			res.sendResponse();
+
+		}catch(e){
+			next(e);
+		}
+	}
 
     unJoinFromCommunity(req, res, next) {
         return community.findById(req.params.community_id)
@@ -163,18 +177,31 @@ class CommunityController {
 		.catch(next);
 	}
 
-	get(req, res, next) {
+	async get(req, res, next) {
 		const {user_id} = req.auth;
 
-		return community.getOne(req.params.communityId, user_id)
-		.then(communityEntity => {
+		try{
+
+			const communityEntity = await community.getOne(req.params.communityId, user_id);
+
 			if (!communityEntity) {
 				throw errors.notFound('Community not found');
 			}
-			return communityEntity;
-		})
-		.then(res.sendResponse)
-		.catch(next);
+
+			const canUserAccessCommunity = await communitiesService.canUserAccessCommunity(req.auth.user, communityEntity.get());
+
+			if(!canUserAccessCommunity){
+				const allowedEmailsString = communityEntity.get().allowedDomains.join(", ");
+				throw errors.forbidden(`Only users with ${allowedEmailsString} emails allowed`)
+			}
+
+			res.sendResponse(communityEntity);
+
+		}catch(e){
+			next(e);
+		}
+
+
 	}
 }
 

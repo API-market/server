@@ -5,7 +5,7 @@ class UserEmailsController {
 
     async list(req, res, next) {
         const currentUserId = req.auth.user_id;
-        const userId = req.query.userId;
+        const userId = parseInt(req.query.userId, 10);
 
         try {
 
