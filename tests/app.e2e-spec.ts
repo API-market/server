@@ -397,6 +397,15 @@ describe('Global e2e tests', () => {
         await expect(parseInt(response.body.data.polls.count_polls, 10)).toBe(0);
         await expect(response.body.data.answers).toBe(null);
 
+        // can set allowed domains for community
+        response = await request(server)
+            .put(`/v1/community/${community.id}`)
+            .send({allowedDomains: ['example.com'], name: generateRandomString(), description: generateRandomString()})
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectAddCommunityResponse(response.body.data);
+        await expect(response.body.data.allowedDomains.length).toBe(1);
+
         // can delete community
         response = await request(server)
             .delete(`/v1/community/${community.id}`)
