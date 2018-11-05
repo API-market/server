@@ -1,5 +1,6 @@
 const { errors } = require('lumeos_utils');
 const { userEmailsService } = require('lumeos_services');
+const { User } = require('../db_entities');
 
 class UserEmailsController {
 
@@ -26,6 +27,9 @@ class UserEmailsController {
 
         try {
 
+        	const existingUser = await User.findOne({where: {email}});
+        	if(existingUser) throw errors.badRequest(`Email already in use`);
+
             const verify_token = await userEmailsService.generateEmailVerifyToken(userId);
             const domain = userEmailsService.getEmailAddressDomain(email);
             const createEmailParams = { email, domain, userId, type, verify_token };
@@ -49,11 +53,14 @@ class UserEmailsController {
         try {
 
         	let emailEntity = await userEmailsService.getEmailById(emailId);
-        	const updateParams = {type};
 
         	if(!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
 			if(emailEntity.userId !== currentUserId) throw errors.forbidden(`Can edit only your own emails`);
 
+			const existingUser = await User.findOne({where: {email}});
+			if(existingUser) throw errors.badRequest(`Email already in use`);
+
+			const updateParams = {type};
 			if(email && email !== emailEntity.email){
 				updateParams.verify = false;
 				updateParams.email = email;
