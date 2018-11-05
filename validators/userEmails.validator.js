@@ -7,15 +7,39 @@ class UserEmailsValidate {
         return requestValidator(Joi
             .object()
             .keys({
-                name: Joi
-                    .string()
-                    .optional(),
 				type: Joi
                     .string()
                     .required(),
 				email: Joi
 					.string()
                     .email()
+					.required(),
+            }));
+    }
+
+    get update() {
+        return requestValidator(Joi
+            .object()
+            .keys({
+				type: Joi
+                    .string()
+                    .optional(),
+				email: Joi
+					.string()
+                    .email()
+					.optional(),
+				emailId: Joi
+					.number()
+					.required(),
+            }));
+    }
+
+    get delete() {
+        return requestValidator(Joi
+            .object()
+            .keys({
+				emailId: Joi
+					.number()
 					.required(),
             }));
     }

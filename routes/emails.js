@@ -17,6 +17,18 @@ router.route('/emails').post(
 	userEmailsController.create,
 );
 
+router.route('/emails/:emailId').put(
+	auth,
+	userEmailsValidator.update,
+	userEmailsController.update,
+);
+
+router.route('/emails/:emailId').delete(
+	auth,
+	userEmailsValidator.delete,
+	userEmailsController.delete,
+);
+
 router.route('/emails/:emailId/verify').post(
     auth,
     userEmailsValidator.verify,

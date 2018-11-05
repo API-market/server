@@ -39,6 +39,62 @@ class UserEmailsController {
 
     }
 
+    async update(req, res, next) {
+
+        const currentUserId = req.auth.user_id;
+        const emailId = req.params.emailId;
+
+        const { type, email } = req.body;
+
+        try {
+
+        	let emailEntity = await userEmailsService.getEmailById(emailId);
+        	const updateParams = {type};
+
+        	if(!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
+			if(emailEntity.userId !== currentUserId) throw errors.forbidden(`Can edit only your own emails`);
+
+			if(email && email !== emailEntity.email){
+				updateParams.verify = false;
+				updateParams.email = email;
+				updateParams.domain = userEmailsService.getEmailAddressDomain(email);
+				updateParams.verify_token = await userEmailsService.generateEmailVerifyToken(currentUserId);
+			}
+
+			if(type) updateParams.type = type;
+
+			emailEntity = await emailEntity.update(updateParams);
+
+            res.sendResponse(emailEntity)
+
+        } catch (e) {
+            next(e)
+        }
+
+    }
+
+    async delete(req, res, next) {
+
+        const currentUserId = req.auth.user_id;
+        const emailId = req.params.emailId;
+
+        try {
+
+        	const emailEntity = await userEmailsService.getEmailById(emailId);
+
+        	if(!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
+			if(emailEntity.userId !== currentUserId) throw errors.forbidden(`Can delete only your own emails`);
+
+			const result = await userEmailsService.delete(emailId);
+
+            res.sendResponse(result)
+
+        } catch (e) {
+            next(e)
+        }
+
+    }
+
     async verify(req, res, next) {
 
         const currentUserId = req.auth.user_id;
