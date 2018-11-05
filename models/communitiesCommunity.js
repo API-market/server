@@ -41,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
 			get: function () {
 				if (this.getDataValue('allowedDomains')) return JSON.parse(this.getDataValue('allowedDomains'));
+				else return null;
 			},
 			set: function (val) {
 				return this.setDataValue('allowedDomains', JSON.stringify(val));
@@ -101,7 +102,7 @@ module.exports = (sequelize, DataTypes) => {
     };
     CommunitiesCommunity.formatter = (models, _) => {
         CommunitiesCommunity.formatData = (data) => {
-            return _.pick(data, ['name', 'description', 'creator_id']);
+            return _.pick(data, ['name', 'description', 'creator_id', 'allowedDomains']);
         };
         CommunitiesCommunity.formatResponse = (data) => {
             if (data instanceof Array) {
