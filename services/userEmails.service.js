@@ -19,8 +19,12 @@ class UserEmailsService {
         return await userEmail.create(createEmailParams);
     }
 
-    static async update(emailId, updateParams){
-        return await userEmail.update(emailId, updateParams);
+    static async update(id, updateParams){
+        return await userEmail.update({ where: {id}}, updateParams);
+    }
+
+    static async delete(id){
+        return await userEmail.destroy({ where: {id}});
     }
 
     static async generateEmailVerifyToken(userId){
