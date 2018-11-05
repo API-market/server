@@ -115,7 +115,7 @@ class UserEmailsController {
             if(emailEntity.userId !== currentUserId) throw errors.forbidden(`Can verify only your own emails`);
             if(emailEntity.verify === true) throw errors.badRequest(`Email already verified`);
 
-            await userEmailsService.sendEmailVerifyLink(req.auth, emailEntity);
+            await userEmailsService.sendEmailVerifyLink(req.auth.user, emailEntity);
 
             res.status(204).json();
 
