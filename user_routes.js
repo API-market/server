@@ -971,11 +971,12 @@ userRouter
                         await emailEntity.update({verify: true});
                     }
 
-                    const updatedUser = await userEntity.update({
+                    await userEntity.update({
                         balance: userEntity.balance + 50
                     });
 
-                    res.json(omit(updatedUser.toJSON(), EXCLUDE_USER_ATTR));
+                    const userForResponse = await User.scope([`defaultScope`, `emails`]).findById(emailEntity.userId);
+                    res.json(omit(userForResponse.toJSON(), EXCLUDE_USER_ATTR));
                 })
                 .catch(error => {
                     let message = 'Some error.';
