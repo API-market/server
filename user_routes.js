@@ -751,7 +751,7 @@ userRouter.put('/users',
         if (!errors.isEmpty()) {
             return res.status(422).json({errors: errors.array()});
         }
-        const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
+        const userDoc = res.user || User.scope([`defaultScope`, `emails`]).findById(parseInt(req.auth.user_id)).then((user) => {
             if (!user) {
                 return Promise.reject(new Error('User not found'));
             }
