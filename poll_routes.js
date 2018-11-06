@@ -9,21 +9,18 @@ const {UploadService, ImagesService, UploadS3Service} = require('lumeos_services
 const dbSetup = require("./db_setup.js");
 const sequelize = dbSetup.dbInstance;
 
-const db_entities = require("./db_entities.js");
-var User = db_entities.User;
-var Poll = db_entities.Poll;
-var Result = db_entities.Result;
-var Transaction = db_entities.Transaction;
+const db_entities     = require("./db_entities.js");
+const User            = db_entities.User;
+const Poll            = db_entities.Poll;
+const Result          = db_entities.Result;
+const Transaction     = db_entities.Transaction;
 const getProfileImage = db_entities.getProfileImage;
-
-var util = require("./utilities.js");
-const removeEmpty = util.removeEmpty;
 
 // in prod we use postgress, which requires iLike to case insensitive.
 // sqlite does not support iLike operator
 const likeOp = (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) ? Op.iLike : Op.like;
 
-var pollRouter = express.Router();
+const pollRouter = express.Router();
 
 // I am sure there is more clever way of doing this
 function updatePollPrice(poll) {
@@ -85,7 +82,7 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
 					})
 					.then(([poll, image]) => {
 						poll.setDataValue('poll_id', poll.id);
-						res.json(removeEmpty(poll));
+						res.json(poll);
 					});
 			});
 		}).catch((error) => {
@@ -206,7 +203,7 @@ pollRouter.get('/polls', function (req, res) {
       attributes: ["poll_id"]
     }).then(result => {
       if (!Array.isArray(result) || !result.length) {
-          res.json(removeEmpty([]));
+          res.json([]);
           // res.status(404).json({error: "Not Found", message: "Poll not found"})
       } else {
         where_params.push({
@@ -218,7 +215,7 @@ pollRouter.get('/polls', function (req, res) {
           if (poll) {
             Promise.all(poll.map(x => getProfileImage(x["creator_id"]))).then(result => {
               poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
-              res.json(removeEmpty(poll));
+              res.json(poll);
             });
           } else {
             res.status(200).json([]);
@@ -250,7 +247,7 @@ pollRouter.get('/polls', function (req, res) {
                 // We queryed all polls user participated, and exclude it from the final list.
                 poll = poll.filter(element => !participated.has(element.dataValues["poll_id"]) &&
                   (callerId !== element.dataValues["creator_id"]));
-                res.json(removeEmpty(poll));
+                res.json(poll);
               } else {
                 poll = poll.filter(element => {
                   if (participated.has(element.dataValues["poll_id"])) {
@@ -261,11 +258,11 @@ pollRouter.get('/polls', function (req, res) {
 
                   return element;
                 });
-                res.json(removeEmpty(poll));
+                res.json(poll);
               }
             });
           } else {
-            res.json(removeEmpty(poll));
+            res.json(poll);
           }
         });
       }
