@@ -5,7 +5,13 @@ const { errors } = require('lumeos_utils');
 class ImagesController {
 
     list(req, res, next) {
-		images.findAll()
+
+    	const where = {};
+
+    	if(req.query.entityType) where[`entityType`] = req.query.entityType;
+    	if(req.query.entityId) where[`entityId`] = parseInt(req.query.entityId, 10);
+
+		images.findAll({ where })
 		.then(images => res.sendResponse(images))
 		.catch(next);
     }

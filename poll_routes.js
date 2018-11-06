@@ -1,53 +1,26 @@
-//
-//  Copyright (c) 2018, Respective Authors all rights reserved.
-//
-//  The MIT License
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to
-//  deal in the Software without restriction, including without limitation the
-//  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-//  sell copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-//  IN THE SOFTWARE.
-//
-
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const {events} = require('lumeos_utils');
-const {UploadService, ImagesService} = require('lumeos_services');
+const {UploadService, ImagesService, UploadS3Service} = require('lumeos_services');
 
 const dbSetup = require("./db_setup.js");
 const sequelize = dbSetup.dbInstance;
 
-const db_entities = require("./db_entities.js");
-var User = db_entities.User;
-var Poll = db_entities.Poll;
-var Result = db_entities.Result;
-var Transaction = db_entities.Transaction;
+const db_entities     = require("./db_entities.js");
+const User            = db_entities.User;
+const Poll            = db_entities.Poll;
+const Result          = db_entities.Result;
+const Transaction     = db_entities.Transaction;
 const getProfileImage = db_entities.getProfileImage;
-
-var util = require("./utilities.js");
-const removeEmpty = util.removeEmpty;
 
 // in prod we use postgress, which requires iLike to case insensitive.
 // sqlite does not support iLike operator
 const likeOp = (process.env.ENV_PRODUCTION && process.env.LUMEOS_SERVER_DB) ? Op.iLike : Op.like;
 
-var pollRouter = express.Router();
+const pollRouter = express.Router();
 
 // I am sure there is more clever way of doing this
 function updatePollPrice(poll) {
@@ -100,8 +73,8 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
 								entityId: poll.id,
 								entityType: 'Poll',
 								name: 'PollImage',
-								imageUrl: cropped.file,
-								originalImageUrl: original.file,
+								imageUrl: UploadS3Service.getImage(cropped.file),
+								originalImageUrl: UploadS3Service.getImage(original.file),
 							})])
 						}else{
 							return Promise.all([poll, {}])
@@ -109,7 +82,7 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
 					})
 					.then(([poll, image]) => {
 						poll.setDataValue('poll_id', poll.id);
-						res.json(removeEmpty(poll));
+						res.json(poll);
 					});
 			});
 		}).catch((error) => {
@@ -118,75 +91,85 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
 		})
 	});
 
-pollRouter.get('/polls/:id', function (req, res) {
-  Poll.find({
-    where: {
-      id: parseInt(req.params["id"])
-    },
-    attributes: [
-      ["id", "poll_id"],
-      "question",
-      "answers",
-      "tags",
-      "participant_count",
-      "price",
-      "creator_id",
-      "createdAt"
-    ]
-  }).then(poll => {
-    if (poll) {
-    	ImagesService.getImagesForEntity('Poll', parseInt(req.params["id"]))
-		.then(images => {
-			poll.dataValues["images"] = images;
-    		return getProfileImage(poll["creator_id"])
-		})
-      .then(result => {
-        poll.dataValues["creator_image"] = result;
+pollRouter.get('/polls/:id', (req, res) => {
+    Poll.find({
+        where: {
+            id: parseInt(req.params["id"]),
+        },
+        attributes: [
+            ["id", "poll_id"],
+            "question",
+            "answers",
+            "tags",
+            "participant_count",
+            "price",
+            "creator_id",
+            "createdAt",
+            "avatar",
+        ],
+    })
+    .then(poll => {
+        if (poll) {
+            ImagesService.getImagesForEntity('Poll', parseInt(req.params["id"]))
+            .then(images => {
+                poll.dataValues["images"] = images;
+                return getProfileImage(poll["creator_id"]);
+            })
+            .then(result => {
+                poll.dataValues["creator_image"] = result;
 
-        if (req.query["isAnswered"]) {
-          poll.dataValues["is_answered"] = 0;
-          Result.findOne({
-            where: {
-              user_id: parseInt(req.query["isAnswered"]),
-              poll_id: parseInt(req.params["id"])
-            },
-            attributes: ["poll_id"]
-          }).then(result => {
-            if (result) {
-              poll.dataValues["is_answered"] = 1;
-            }
-            res.json(poll);
-          }).catch(error => {
-            console.log("I guess this is a first vote ever? user_id: " + req.query["isAnswered"] + ", poll_id: " + req.param["id"]);
-            console.log(error);
-            res.json(poll);
-          });
-        } else if (req.query["isBought"]) {
-          poll.dataValues["is_bought"] = 0;
-          Transaction.findOne({
-            where: {
-              user_id: parseInt(req.query["isBought"]),
-              poll_id: parseInt(req.params["id"])
-            },
-            attributes: ["poll_id"]
-          }).then(result => {
-            if (result) {
-              poll.dataValues["is_bought"] = 1;
-            }
-            res.json(poll);
-          }).catch(error => {
-            console.log("I guess this is a first vote ever? user_id: " + req.query["isBought"] + ", poll_id: " + req.param["id"]);
-            console.log(error);
-            res.json(poll);
-          });
+                if (req.query["isAnswered"]) {
+                    poll.dataValues["is_answered"] = 0;
+                    Result.findOne({
+                        where: {
+                            user_id: parseInt(req.query["isAnswered"]),
+                            poll_id: parseInt(req.params["id"]),
+                        },
+                        attributes: ["poll_id"],
+                    })
+                    .then(isAnswered => {
+                        if (isAnswered) {
+                            poll.dataValues["is_answered"] = 1;
+                        }
+                        res.json(poll);
+                    })
+                    .catch(error => {
+                        console.log(`I guess this is a first vote ever? user_id: ${req.query["isAnswered"]}, poll_id: ${req.params["id"]}`);
+                        console.log(error);
+                        res.json(poll);
+                    });
+                } else if (req.query["isBought"]) {
+                    poll.dataValues["is_bought"] = 0;
+                    Transaction.findOne({
+                        where: {
+                            user_id: parseInt(req.query["isBought"]),
+                            poll_id: parseInt(req.params["id"]),
+                        },
+                        attributes: ["poll_id"],
+                    })
+                    .then(transaction => {
+                        if (transaction) {
+                            poll.dataValues["is_bought"] = 1;
+                        }
+                        res.json(poll);
+                    })
+                    .catch(error => {
+                        console.log(`I guess this is a first vote ever? user_id:${req.query["isBought"]}, poll_id: " + ${req.params["id"]}`);
+                        console.log(error);
+                        res.json(poll);
+                    });
+                } else {
+                    res.json(poll);
+                }
+            });
         } else {
-          res.json(poll);
+            res.status(404)
+            .json({
+                error: "Not Found",
+                message: "Poll not found",
+            });
         }
-      });
-    } else {
-      res.status(404).json({error: "Not Found", message: "Poll not found"})
-    }
-  })
+    });
 });
 
 pollRouter.get('/polls', function (req, res) {
@@ -230,7 +213,7 @@ pollRouter.get('/polls', function (req, res) {
       attributes: ["poll_id"]
     }).then(result => {
       if (!Array.isArray(result) || !result.length) {
-          res.json(removeEmpty([]));
+          res.json([]);
           // res.status(404).json({error: "Not Found", message: "Poll not found"})
       } else {
         where_params.push({
@@ -242,7 +225,7 @@ pollRouter.get('/polls', function (req, res) {
           if (poll) {
             Promise.all(poll.map(x => getProfileImage(x["creator_id"]))).then(result => {
               poll.map((elem, index) => elem.dataValues["creator_image"] = result[index]);
-              res.json(removeEmpty(poll));
+              res.json(poll);
             });
           } else {
             res.status(200).json([]);
@@ -274,7 +257,7 @@ pollRouter.get('/polls', function (req, res) {
                 // We queryed all polls user participated, and exclude it from the final list.
                 poll = poll.filter(element => !participated.has(element.dataValues["poll_id"]) &&
                   (callerId !== element.dataValues["creator_id"]));
-                res.json(removeEmpty(poll));
+                res.json(poll);
               } else {
                 poll = poll.filter(element => {
                   if (participated.has(element.dataValues["poll_id"])) {
@@ -285,11 +268,11 @@ pollRouter.get('/polls', function (req, res) {
 
                   return element;
                 });
-                res.json(removeEmpty(poll));
+                res.json(poll);
               }
             });
           } else {
-            res.json(removeEmpty(poll));
+            res.json(poll);
           }
         });
       }

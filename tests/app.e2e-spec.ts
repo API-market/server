@@ -397,6 +397,15 @@ describe('Global e2e tests', () => {
         await expect(parseInt(response.body.data.polls.count_polls, 10)).toBe(0);
         await expect(response.body.data.answers).toBe(null);
 
+        // can set allowed domains for community
+        response = await request(server)
+            .put(`/v1/community/${community.id}`)
+            .send({allowedDomains: ['example.com'], name: generateRandomString(), description: generateRandomString()})
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectAddCommunityResponse(response.body.data);
+        await expect(response.body.data.allowedDomains.length).toBe(1);
+
         // can delete community
         response = await request(server)
             .delete(`/v1/community/${community.id}`)
@@ -647,6 +656,14 @@ describe('Global e2e tests', () => {
         await expectCorrectPoll(response.body);
         await expect(response.body.images.length).toBe(0);
 
+        // empty images list for poll
+        response = await request(server)
+            .get(`/v1/images?entityId=${poll.poll_id}&entityType=Poll`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectImage, 0);
+        await expect(response.body.data.length).toBe(0);
+
         response = await request(server)
             .post(`/v1/images`)
             .set('Authorization', `Bearer ${authToken}`)
@@ -662,6 +679,13 @@ describe('Global e2e tests', () => {
             .send({entityType: `Poll`, entityId: poll.poll_id});
         await expectSuccessResponse(response);
         await expectCorrectImage(response.body.data);
+
+        // have at least 1 image for poll
+        response = await request(server)
+            .get(`/v1/images?entityId=${poll.poll_id}&entityType=Poll`)
+            .set('Authorization', `Bearer ${authToken}`);
+        await expectSuccessResponse(response);
+        await expectCorrectCollection(response.body.data, expectCorrectImage, 1);
 
         response = await request(server)
             .get(`/v1/polls/${poll.poll_id}`)

@@ -1,31 +1,7 @@
-//
-//  Copyright (c) 2018, Respective Authors all rights reserved.
-//
-//  The MIT License
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to
-//  deal in the Software without restriction, including without limitation the
-//  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-//  sell copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-//  IN THE SOFTWARE.
-//
-
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
-const {events, token, model, format} = require('lumeos_utils');
-const {mailService, UploadService, MessageService} = require('lumeos_services');
+const {events, token, format} = require('lumeos_utils');
+const {mailService, UploadService, MessageService, userEmailsService} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 const {usersValidate} = require('lumeos_controllers/validateSchemas');
 const {omit} = require('lodash');
@@ -41,7 +17,6 @@ const {verifyPassword} = db_entities;
 const jwt = require('jsonwebtoken');
 
 const User = db_entities.User;
-const Address = db_entities.Address;
 const Tokens = db_entities.Tokens;
 const ProfileImage = db_entities.ProfileImage;
 const Followship = db_entities.Followship;
@@ -147,10 +122,10 @@ userRouter.post('/login', [
 		return res.status(422).json({errors: errors.array()});
 	}
 
-	User.findOne(
+	User.scope(["defaultScope", `emails`]).findOne(
 		{where: {email: req.body['email']}},
 		{include: [{association: User.Tokens}]}
-	).then(function(user) {
+	).then(user => {
 		if(user && user.verifyPassword(req.body['password'])){
 			Tokens.destroy({ where: {
 				user_id: user.id,
@@ -221,11 +196,7 @@ userRouter.post('/users', [
         return res.status(422).json({errors: errors.array()});
     }
 
-    User.create(req.body, {
-        // include: [{
-        //   association: User.Address
-        // }]
-    })
+    User.create(req.body)
     .then(user => {
 		return Tokens.destroy({
 			where: {
@@ -244,7 +215,8 @@ userRouter.post('/users', [
 			console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
 			const dataUser = {
 				user_id: user['id'],
-				token: getToken(user)
+				token: getToken(user),
+                emails: [],
 			};
 			Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
 			return addProfileImage(res, user, EXCLUDE_USER_ATTR);
@@ -285,11 +257,8 @@ const addProfileImage = function (res, user, exclude) {
 
 userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
-  User.findById(userId, {
-    attributes: STANDARD_USER_ATTR,
-    // include: [
-    //   {association: User.Address, as: 'address'}
-    // ],
+  User.scope(["defaultScope", "emails"]).findById(userId, {
+      attributes: STANDARD_USER_ATTR,
   }).then(user => {
     if (user) {
       if (req.query["isFollowerOf"]) {
@@ -434,7 +403,7 @@ userRouter.get('/users', function(req, res) {
 		limit: limit,
 		attributes: STANDARD_USER_ATTR
 	};
-	User.findAll(where_object).then(users => {
+	User.scope(["defaultScope", "emails"]).findAll(where_object).then(users => {
 		if(users){
 			return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
 				users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
@@ -470,7 +439,8 @@ userRouter.post('/follow', [
   }
   User.findById(followee_id, {
     include: [
-        {association: User.Tokens}
+        {association: User.Tokens},
+        {association: User.userEmail},
     ]
   }).then(followee => {
     if (followee) {
@@ -781,7 +751,7 @@ userRouter.put('/users',
         if (!errors.isEmpty()) {
             return res.status(422).json({errors: errors.array()});
         }
-        const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
+        const userDoc = res.user || User.scope([`defaultScope`, `emails`]).findById(parseInt(req.auth.user_id)).then((user) => {
             if (!user) {
                 return Promise.reject(new Error('User not found'));
             }
@@ -963,46 +933,61 @@ userRouter
                 res.status(status).json({error: 'Error', message});
             });
     })
-    .put([
-        check('verifyToken').custom((value, {req}) => {
+    .put(
+        [ check('verifyToken').custom((value, {req}) => {
             if (value) {
                 return token.verify(value).then(() => {
                     req.verifyToken = value;
                 });
             }
-        })
-    ], function (req, res) {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(422).json({errors: errors.array()});
-        }
-        User.findOne({
-            where: {
-                verify_token: req.verifyToken,
-                verify: false,
-            }
-        })
-            .then(function (user) {
-                if (!user) {
-                    throw new Error('User was verify');
-                }
-                return user.update(model.formattingValue({
-                    verifyToken: null,
-                    verify: true,
-                    balance: user.balance + 50
-                })).then((user) => {
-                    res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
-                });
-            })
-            .catch(function (error) {
-                let message = 'Some error.';
-                let status = 500;
-                if (error.name === 'Error') {
-                    message = error.message;
-                    status = 400;
-                }
-                res.status(status).json({error: 'Error', message});
+        })],
+
+        (req, res) => {
+
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+            const findUserByToken = User.findOne({
+                where: { verify_token: req.verifyToken, verify: false }
             });
+            const findEmailByToken = userEmailsService.getUnverifiedEmailByVerifyToken(req.verifyToken);
+
+            Promise.all([ findUserByToken, findEmailByToken ])
+                .then(async ([ userEntity, emailEntity ]) => {
+
+                    if (!userEntity && !emailEntity)
+                        throw new Error('No email or user found for this token');
+
+                    if(!userEntity){
+                        userEntity = await User.findById(emailEntity.userId);
+                    }else{
+                        await userEntity.update({
+                            verifyToken: null,
+                            verify: true,
+                        })
+                    }
+
+                    if( emailEntity ){
+                        await emailEntity.update({verify: true});
+                    }
+
+                    await userEntity.update({
+                        balance: userEntity.balance + 50
+                    });
+
+                    const userForResponse = await User.scope([`defaultScope`, `emails`]).findById(emailEntity.userId);
+                    res.json(omit(userForResponse.toJSON(), EXCLUDE_USER_ATTR));
+                })
+                .catch(error => {
+                    let message = 'Some error.';
+                    let status = 500;
+                    if (error.name === 'Error') {
+                        message = error.message;
+                        status = 400;
+                    }
+                    console.error(error);
+                    res.status(status).json({ error: 'Error', message });
+                });
     });
 
 userRouter
