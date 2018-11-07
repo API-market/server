@@ -34,7 +34,8 @@ class UserEmailsService {
         return token.generate({
             user_id: userId,
             verify: false,
-            iat: Math.floor(new Date() / 1000)
+            iat: Math.floor(new Date() / 1000),
+            randomSeed: Math.random().toString(36).slice(-8),
         }, {});
 
     }
