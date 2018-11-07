@@ -10,7 +10,7 @@
 		"padded-blocks": "off",
 		"class-methods-use-this": "off",
 		"quotes": "off",
-		"prefer-destructuring": "warn",
+		"prefer-destructuring": "off",
 		"function-paren-newline": "off",
 		"camelcase": "off",
 		"strict": "warn",
@@ -32,7 +32,9 @@
 		"global-require": "off",
 		"no-underscore-dangle": "off",
 		"prefer-template": "warn",
-		"radix": "off"
+		"radix": "off",
+		"object-curly-newline": "off",
+		"no-trailing-spaces": "off"
 	}
 
 }

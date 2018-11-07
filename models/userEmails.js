@@ -1,61 +1,64 @@
-'use strict';
-
 module.exports = (sequelize, DataTypes) => {
-	const UserEmail = sequelize.define('userEmail', {
 
-		id: {
-			autoIncrement: true,
-			primaryKey: true,
-			type: DataTypes.INTEGER
-		},
+    const UserEmail = sequelize.define('userEmail', {
 
-		userId: {
-			type: DataTypes.INTEGER,
-			allowNull: false,
-		},
+        id: {
+            autoIncrement: true,
+            primaryKey: true,
+            type: DataTypes.INTEGER,
+        },
 
-		email: {
-			type: DataTypes.STRING,
-			allowNull: false,
-			unique: true
-		},
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
 
-		domain: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
+        email: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+        },
 
-		type: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
+        domain: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
 
-		verify: {type: DataTypes.BOOLEAN, defaultValue: false},
-		verify_token: DataTypes.STRING,
+        type: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
 
-		createdAt: {
-			type: DataTypes.DATE,
-			defaultValue: new Date()
-		},
-		updatedAt: {
-			type: DataTypes.DATE,
-			defaultValue: new Date()
-		},
+        verify: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        verify_token: DataTypes.STRING,
 
-	}, {
-		tableName: 'user_emails',
-		timestamps: true,
-		updatedAt: 'updatedAt',
-		createdAt: 'createdAt',
-		paranoid: true,
-	});
+        createdAt: {
+            type: DataTypes.DATE,
+            defaultValue: new Date(),
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            defaultValue: new Date(),
+        },
 
-	UserEmail.associate = function (models) {
-		UserEmail.belongsTo(models.users, {as: 'user', foreignKey: 'userId'});
-	};
+    }, {
+        tableName: 'user_emails',
+        timestamps: true,
+        updatedAt: 'updatedAt',
+        createdAt: 'createdAt',
+        paranoid: true,
+    });
 
-	UserEmail.methods = (models, _, db) => {
-	};
+    UserEmail.associate = function (models) {
+        UserEmail.belongsTo(models.users, {
+            as: 'user',
+            foreignKey: 'userId',
+        });
+    };
 
-	return UserEmail;
+
+    return UserEmail;
 };
