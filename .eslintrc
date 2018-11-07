@@ -33,7 +33,8 @@
 		"no-underscore-dangle": "off",
 		"prefer-template": "warn",
 		"radix": "off",
-		"object-curly-newline": "off"
+		"object-curly-newline": "off",
+		"no-trailing-spaces": "off"
 	}
 
 }
