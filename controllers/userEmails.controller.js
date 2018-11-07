@@ -13,10 +13,10 @@ class UserEmailsController {
             if (currentUserId !== userId) throw errors.forbidden('Can view only your own emails');
 
             const emails = await userEmailsService.getEmailsByUserId(userId);
-            res.sendResponse(emails)
+            res.sendResponse(emails);
 
         } catch (e) {
-            next(e)
+            next(e);
         }
     }
 
@@ -27,18 +27,18 @@ class UserEmailsController {
 
         try {
 
-        	const existingUser = await User.findOne({where: {email}});
-        	if(existingUser) throw errors.badRequest(`Email already in use`);
+            const existingUser = await User.findOne({ where: { email } });
+            if (existingUser) throw errors.badRequest(`Email already in use`);
 
             const verify_token = await userEmailsService.generateEmailVerifyToken(userId);
             const domain = userEmailsService.getEmailAddressDomain(email);
             const createEmailParams = { email, domain, userId, type, verify_token };
 
             const emailEntity = await userEmailsService.create(createEmailParams);
-            res.sendResponse(emailEntity)
+            res.sendResponse(emailEntity);
 
         } catch (e) {
-            next(e)
+            next(e);
         }
 
     }
@@ -46,36 +46,36 @@ class UserEmailsController {
     async update(req, res, next) {
 
         const currentUserId = req.auth.user_id;
-        const emailId = req.params.emailId;
+        const { emailId } = req.params;
 
         const { type, email } = req.body;
 
         try {
 
-        	let emailEntity = await userEmailsService.getEmailById(emailId);
+            let emailEntity = await userEmailsService.getEmailById(emailId);
 
-        	if(!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
-			if(emailEntity.userId !== currentUserId) throw errors.forbidden(`Can edit only your own emails`);
+            if (!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
+            if (emailEntity.userId !== currentUserId) throw errors.forbidden(`Can edit only your own emails`);
 
-			const existingUser = await User.findOne({where: {email}});
-			if(existingUser) throw errors.badRequest(`Email already in use`);
+            const existingUser = await User.findOne({ where: { email } });
+            if (existingUser) throw errors.badRequest(`Email already in use`);
 
-			const updateParams = {type};
-			if(email && email !== emailEntity.email){
-				updateParams.verify = false;
-				updateParams.email = email;
-				updateParams.domain = userEmailsService.getEmailAddressDomain(email);
-				updateParams.verify_token = await userEmailsService.generateEmailVerifyToken(currentUserId);
-			}
+            const updateParams = { type };
+            if (email && email !== emailEntity.email) {
+                updateParams.verify = false;
+                updateParams.email = email;
+                updateParams.domain = userEmailsService.getEmailAddressDomain(email);
+                updateParams.verify_token = await userEmailsService.generateEmailVerifyToken(currentUserId);
+            }
 
-			if(type) updateParams.type = type;
+            if (type) updateParams.type = type;
 
-			emailEntity = await emailEntity.update(updateParams);
+            emailEntity = await emailEntity.update(updateParams);
 
-            res.sendResponse(emailEntity)
+            res.sendResponse(emailEntity);
 
         } catch (e) {
-            next(e)
+            next(e);
         }
 
     }
@@ -87,17 +87,17 @@ class UserEmailsController {
 
         try {
 
-        	const emailEntity = await userEmailsService.getEmailById(emailId);
+            const emailEntity = await userEmailsService.getEmailById(emailId);
 
-        	if(!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
-			if(emailEntity.userId !== currentUserId) throw errors.forbidden(`Can delete only your own emails`);
+            if (!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
+            if (emailEntity.userId !== currentUserId) throw errors.forbidden(`Can delete only your own emails`);
 
-			const result = await userEmailsService.delete(emailId);
+            const result = await userEmailsService.delete(emailId);
 
-            res.sendResponse(result)
+            res.sendResponse(result);
 
         } catch (e) {
-            next(e)
+            next(e);
         }
 
     }
@@ -111,16 +111,16 @@ class UserEmailsController {
 
             const emailEntity = await userEmailsService.getEmailById(emailId);
 
-            if(!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
-            if(emailEntity.userId !== currentUserId) throw errors.forbidden(`Can verify only your own emails`);
-            if(emailEntity.verify === true) throw errors.badRequest(`Email already verified`);
+            if (!emailEntity) throw errors.notFound(`Email ${emailId} not found`);
+            if (emailEntity.userId !== currentUserId) throw errors.forbidden(`Can verify only your own emails`);
+            if (emailEntity.verify === true) throw errors.badRequest(`Email already verified`);
 
             await userEmailsService.sendEmailVerifyLink(req.auth.user, emailEntity);
 
             res.status(204).json();
 
         } catch (e) {
-            next(e)
+            next(e);
         }
 
     }
