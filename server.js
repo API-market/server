@@ -1,38 +1,14 @@
-//
-//  Copyright (c) 2018, Respective Authors all rights reserved.
-//
-//  The MIT License
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to
-//  deal in the Software without restriction, including without limitation the
-//  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-//  sell copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-//  IN THE SOFTWARE.
-//
-
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const {responseFormatter, basicAuth} = require('lumeos_middlewares')
+const {responseFormatter, basicAuth} = require('lumeos_middlewares');
 const bodyParser = require('body-parser');
 const {join} = require('path');
 app.use(bodyParser.json({limit: '5mb'}));
 app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
 app.use(cors());
 
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 serverInfo = require("./server_info.js");
 const VERSION = serverInfo.VERSION;
@@ -52,6 +28,7 @@ app.use('/v' + VERSION, function (req, res, next) {
     || req.url.match(/\/send\/all\/notification/)
     || req.url.match(/\/push/)
     || req.url.match(/\/versions/)
+    || req.url.match(/\/schools/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
     || req.url.endsWith("/faqs/")) {
@@ -67,15 +44,6 @@ app.use('/v' + VERSION, function (req, res, next) {
   }
 });
 
-// TODO import model model instead db_entity
-// const Models = require('./models');
-// console.log(Models.users, '<<<');
-// Models.users.create({
-//     lastName: 'Admin',
-//     firstName: 'Admin',
-//     email: 'admin@lumeos.io',
-//     password: 'SEED_AUTH',
-// }).then(console.log).catch(console.log)
 
 basicRoutes = require("./basic_routes.js");
 userRoutes = require("./user_routes.js");
@@ -83,15 +51,17 @@ pollRoutes = require("./poll_routes.js");
 notificationsRoutes = require("./notifications_routes");
 
 app.use('/app', (req, res) => {
-    if (req._parsedUrl.search) {
-        let protocol = 'lumeos:';
-        if (!req.headers['user-agent'].match(/mobile/i)) {
-            protocol = ''
-        }
-        return res.redirect(`${protocol}//${req._parsedUrl.search}`);
-    }
-    res.end();
-})
+
+	const device = require('device')(req.headers['user-agent']);
+	const isMobile = device.is('tablet') || device.is('phone');
+
+    if (req._parsedUrl.search && isMobile) {
+        return res.redirect(`lumeos://${req._parsedUrl.search}`);
+    }else{
+		res.send(`Sorry, the link you clicked can only be opened from your mobile phone. Please go to your mobile phone and open the email we sent you and try the link again.`);
+	}
+
+});
 app.use('/v' + VERSION, basicRoutes);
 app.use('/v' + VERSION, userRoutes);
 app.use('/v' + VERSION, pollRoutes);

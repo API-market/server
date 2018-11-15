@@ -1,36 +1,13 @@
-//
-//  Copyright (c) 2018, Respective Authors all rights reserved.
-//
-//  The MIT License
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to
-//  deal in the Software without restriction, including without limitation the
-//  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-//  sell copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-//  IN THE SOFTWARE.
-//
-
 const express = require('express');
 const {check, validationResult} = require('express-validator/check');
-const {events, token, model, format} = require('lumeos_utils');
-const {mailService, UploadService, MessageService} = require('lumeos_services');
+const {events, token, format} = require('lumeos_utils');
+const {mailService, UploadService, MessageService, userEmailsService} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 const {usersValidate} = require('lumeos_controllers/validateSchemas');
 const {omit} = require('lodash');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
+const { schools } = require('lumeos_models');
 
 const dbObjects = require("./db_setup.js");
 const sequelize = dbObjects.dbInstance;
@@ -40,7 +17,6 @@ const {verifyPassword} = db_entities;
 const jwt = require('jsonwebtoken');
 
 const User = db_entities.User;
-const Address = db_entities.Address;
 const Tokens = db_entities.Tokens;
 const ProfileImage = db_entities.ProfileImage;
 const Followship = db_entities.Followship;
@@ -74,6 +50,7 @@ const STANDARD_USER_ATTR = [
   "verify_token",
   "verify_phone",
   "verify",
+  "schoolId",
 ];
 
 const EXCLUDE_USER_ATTR = ['id', 'password', 'createdAt'];
@@ -90,53 +67,97 @@ const getToken = (user) => {
         },
         require('./server_info.js').SUPER_SECRET_JWT_KEY
     )
-}
+};
 
 const emailValidate = check("email").isEmail().normalizeEmail();
 
+const validateSchoolEmail = (req, res, next) => {
+
+	// skip if user won't change email or school
+	if(!(`schoolId` in req.body) && !(`email` in req.body)) return next();
+
+	const userId = req.auth ? req.auth.user_id : null;
+
+	User.findById(userId)
+	.then(userEntity => {
+
+		userEntity = userEntity || {};
+
+		const userEmail = (`email` in req.body) ? req.body.email : userEntity.email;
+		const schoolId = (`schoolId` in req.body) ? req.body.schoolId : userEntity.schoolId;
+
+		return Promise.all([
+			userEmail, schoolId, schools.findById(schoolId)
+		])
+	})
+	.then(([userEmail, schoolId, school]) => {
+
+		if(!schoolId) return next(); // no need to verify email domain if user has no school chosen
+		if(!school) throw errors.notFound(`School ${schoolId} not found`);
+
+		const userEmailDomain = userEmail.trim().toLowerCase().split(`@`)[1];
+		const schoolEmailDomain = school.emailDomain.trim().toLowerCase();
+
+		if(userEmailDomain !== schoolEmailDomain) throw errors.badRequest(`Please provide your @${schoolEmailDomain} email to register as ${school.name} student`);
+		else return next();
+	})
+	.catch(next)
+
+};
+
 userRouter.post('/login', [
-    emailValidate,
-    check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
-    check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
-    check("name_phone").isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
-    check('password', 'The password must be 8+ chars long and contain a number')
-        .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
-        .isLength({min: 8})
-        .matches(/\d/)
-], function (req, res) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-      return res.status(422).json({errors: errors.array()});
-  }
-    User.findOne(
-        {where: {email: req.body['email']}},
-        {include: [{association: User.Tokens}]}
-    ).then(function (user) {
-        if (user && user.verifyPassword(req.body['password'])) {
-            Tokens.upsert({
-                user_id: user.id,
-                token: req.body.token_phone,
-                name: req.body.name_phone,
-                platform: req.body.platform,
-            }).then((data) => {
-            console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
-          }).catch((err) => {
-            console.log(err, '<<<');
-            // return res.status(400).json({error: "Bad Request", message: err.message})
-          })
-            const dataUser = {
-                user_id: user['id'],
-                token: getToken(user)
-            };
-            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
-            addProfileImage(res, user, EXCLUDE_USER_ATTR);
-    } else {
-      res.status(404).json({error: "Not Found", message: "User not found or password is incorrect."})
-    }
-  }).catch((err) => {
-    console.log(err);
-    res.status(500).json({error: "Error", message: "Some error."})
-  })
+	emailValidate,
+	check("token_phone").exists().isString().trim().escape().withMessage("Field 'token_phone' cannot be empty"),
+	check("platform").exists().isString().trim().escape().isIn(['ios', 'android', 'window']).withMessage('Platform must be android, ios, window'),
+	check("name_phone").isString().trim().escape().withMessage("Field 'name_phone' cannot be empty"),
+	check('password', 'The password must be 8+ chars long and contain a number')
+		.not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
+		.isLength({min: 8})
+		.matches(/\d/)
+], function(req, res) {
+
+	const errors = validationResult(req);
+
+	if(!errors.isEmpty()){
+		return res.status(422).json({errors: errors.array()});
+	}
+
+	User.scope(["defaultScope", `emails`]).findOne(
+		{where: {email: req.body['email']}},
+		{include: [{association: User.Tokens}]}
+	).then(user => {
+		if(user && user.verifyPassword(req.body['password'])){
+			Tokens.destroy({ where: {
+				user_id: user.id,
+				name: req.body.name_phone,
+				platform: req.body.platform,
+			}})
+			.then(() =>
+				Tokens.upsert({
+					user_id: user.id,
+					token: req.body.token_phone,
+					name: req.body.name_phone,
+					platform: req.body.platform,
+				}).then((data) => {
+					console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+				}).catch((err) => {
+					console.log(err, '<<<');
+				})
+			);
+
+			const dataUser = {
+				user_id: user['id'],
+				token: getToken(user)
+			};
+			Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+			addProfileImage(res, user, EXCLUDE_USER_ATTR);
+		}else{
+			res.status(404).json({error: "Not Found", message: "User not found or password is incorrect."})
+		}
+	}).catch((err) => {
+		console.log(err);
+		res.status(500).json({error: "Error", message: "Some error."})
+	})
 });
 
 userRouter.post('/logout', usersValidate.logout, function (req, res, next) {
@@ -154,11 +175,14 @@ userRouter.post('/logout', usersValidate.logout, function (req, res, next) {
 });
 
 userRouter.post('/users', [
-    check('firstName').not().isEmpty().trim().escape().withMessage('Field \'firstName\' cannot be empty'),
-    check('lastName').not().isEmpty().trim().escape().withMessage('Field \'lastName\' cannot be empty'),
+    check('firstName').optional().trim(),
+    check('lastName').optional().trim(),
+	check('name_phone').not().isEmpty().trim().escape().withMessage('Field \'name_phone\' cannot be empty'),
+	check('token_phone').not().isEmpty().trim().escape().withMessage('Field \'token_phone\' cannot be empty'),
+	check('platform').not().isEmpty().trim().escape().withMessage('Field \'platform\' cannot be empty'),
     check('email').isEmail().normalizeEmail(),
     check('phone').optional().isMobilePhone('any'),
-    // check('dob').isISO8601().withMessage('Invalid \'dob\' specified, ISO8601 required'),
+    check('dob').isISO8601().optional(),
     check('gender').optional().isIn(['male', 'female', 'other']),
     check('school').optional().trim().escape(),
     check('employer').optional().trim().escape(),
@@ -166,33 +190,38 @@ userRouter.post('/users', [
         .not().isIn(['123456789', '12345678', 'password1']).withMessage('Do not use a common word as the password')
         .isLength({min: 8})
         .matches(/\d/)
-], (req, res) => {
+], validateSchoolEmail, (req, res) => {
   const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({errors: errors.array()});
     }
 
-    User.create(req.body, {
-        // include: [{
-        //   association: User.Address
-        // }]
-    })
+    User.create(req.body)
     .then(user => {
-        return Tokens.upsert({
-            user_id: user.id,
-            token: req.body.token_phone,
-            name: req.body.name_phone,
-            platform: req.body.platform,
-        }).then((data) => {
-            console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
-            const dataUser = {
-                user_id: user['id'],
-                token: getToken(user)
-            };
-            Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
-            return addProfileImage(res, user, EXCLUDE_USER_ATTR);
-        });
-    })
+		return Tokens.destroy({
+			where: {
+				user_id: user.id,
+				name: req.body.name_phone,
+				platform: req.body.platform,
+			}
+		})
+		.then(() => Tokens.upsert({
+			user_id: user.id,
+			token: req.body.token_phone,
+			name: req.body.name_phone,
+			platform: req.body.platform,
+		}))
+		.then(data => {
+			console.log('<><><><> Token create <><><<><><><', JSON.stringify(data));
+			const dataUser = {
+				user_id: user['id'],
+				token: getToken(user),
+                emails: [],
+			};
+			Object.keys(dataUser).map(e => user.dataValues[e] = dataUser[e]);
+			return addProfileImage(res, user, EXCLUDE_USER_ATTR);
+		});
+	})
     .catch((error) => {
         const status = 422;
         if (error.message === 'Validation error') {
@@ -215,24 +244,21 @@ userRouter.post('/users', [
 });
 
 const addProfileImage = function (res, user, exclude) {
-  const userId = user.dataValues["user_id"];
-  return getProfileImage(userId).then(result => {
-    user.dataValues["profile_image"] = result;
-    user = removeEmpty(user);
-    if(exclude) {
-      user = omit(user.toJSON(), exclude)
-    }
-    res.json(user);
-  });
-}
+    const userId = user.dataValues["user_id"];
+    return getProfileImage(userId).then(result => {
+        user.dataValues["profile_image"] = result;
+        // user = removeEmpty(user); // code disabled to keep server response consistent
+        if (exclude) {
+            user = omit(user.toJSON(), exclude)
+        }
+        res.json(user);
+    });
+};
 
 userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
-  User.findById(userId, {
-    attributes: STANDARD_USER_ATTR,
-    // include: [
-    //   {association: User.Address, as: 'address'}
-    // ],
+  User.scope(["defaultScope", "emails"]).findById(userId, {
+      attributes: STANDARD_USER_ATTR,
   }).then(user => {
     if (user) {
       if (req.query["isFollowerOf"]) {
@@ -284,63 +310,112 @@ userRouter.get('/users/:id', function (req, res) {
   });
 });
 
-userRouter.get('/users', function (req, res) {
-  let orderParams = [];
-  let limit = 10e3;
-  if (req.query["orderBy"]) {
-    orderParams.push([sequelize.col(req.query["orderBy"]), 'DESC'])
-  }
-  if (req.query["limit"]) {
-    limit = req.query["limit"];
-  }
-  var where_params = [];
-  if (req.query["queryName"]) {
-    where_params.push({
-      [Op.or]: [
-        {firstName: {[Op.like]: "%" + req.query["queryName"] + "%"}},
-        {lastName: {[Op.like]: "%" + req.query["queryName"] + "%"}}
-      ]
-    });
-  }
-  if (req.query["querySchool"]) {
-    where_params.push({
-      school: {[Op.like]: "%" + req.query["querySchool"] + "%"}
-    });
-  }
-  if (req.query["queryEmployer"]) {
-    where_params.push({
-      employer: {[Op.like]: "%" + req.query["queryEmployer"] + "%"}
-    });
-  }
-  if (req.query["queryEmail"]) {
-    where_params.push({
-      email: req.query["queryEmail"]
-    });
-  }
-  if (req.query["queryPhone"]) {
-    where_params.push({
-      phone: req.query["queryPhone"]
-    });
-  }
-  var where_object = {
-    where: Object.assign({}, ...where_params),
-    order: orderParams,
-    limit: limit,
-    attributes: STANDARD_USER_ATTR
-  };
-  User.findAll(where_object).then(users => {
-    if (users) {
-      return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
-        users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-        res.json(removeEmpty(users));
-      });
-    }
-    else {
-      res.status(404).json({error: "Not Found", message: "User not found"})
-    }
-  }).catch(error => {
-    res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
-  });
+userRouter.get('/users/:id/rank', function(req, res, next) {
+
+	const userId = parseInt(req.params[`id`]);
+	if(!userId) return res.status(400).json({error: "Bad request", message: "Bad request"});
+
+	User.findOne({
+		where: {id: userId}
+	})
+	.then(user => {
+		if(!user) throw errors.notFound('Unable to find user');
+
+		return 	User.findAndCountAll({
+			where: {
+				[Op.or]:
+					[
+						{ balance: {[Op.gt]: user.balance} },
+						{
+							balance: user.balance,
+							follower_count: {[Op.gt]: user.follower_count},
+						},
+						{
+							balance: user.balance,
+							follower_count: user.follower_count,
+							createdAt: {[Op.lt]: user.createdAt},
+						},
+					]
+			},
+			limit: 0,
+		})
+	})
+	.then(result => {
+		const {count} = result;
+		return res.json({rank: count + 1});
+	})
+	.catch(next);
+});
+
+userRouter.get('/users', function(req, res) {
+	const orderParams = [];
+	let limit       = req.query["limit"] || 100;
+
+	if(req.query["orderBy"]){
+
+		const orderString = req.query["orderBy"] || ``;
+
+		if (orderString.match(/((balance|follower_count):(asc|desc)(,)?)+/gi)){
+			orderString.split(`,`).forEach(option => {
+				if (option) {
+					const [field, direction] = option.split(`:`);
+					orderParams.push([sequelize.col(field), direction.toUpperCase()])
+				}
+			});
+		}else if ([`balance`, `follower_count`].indexOf(orderString) >= 0){
+			orderParams.push([sequelize.col(req.query["orderBy"]), 'DESC'])
+		}
+
+	}
+
+	const where_params = [];
+	if(req.query["queryName"]){
+		where_params.push({
+			[Op.or]: [
+				{firstName: {[Op.like]: "%" + req.query["queryName"] + "%"}},
+				{lastName: {[Op.like]: "%" + req.query["queryName"] + "%"}}
+			]
+		});
+	}
+	if(req.query["querySchool"]){
+		where_params.push({
+			school: {[Op.like]: "%" + req.query["querySchool"] + "%"}
+		});
+	}
+	if(req.query["queryEmployer"]){
+		where_params.push({
+			employer: {[Op.like]: "%" + req.query["queryEmployer"] + "%"}
+		});
+	}
+	if(req.query["queryEmail"]){
+		where_params.push({
+			email: req.query["queryEmail"]
+		});
+	}
+	if(req.query["queryPhone"]){
+		where_params.push({
+			phone: req.query["queryPhone"]
+		});
+	}
+	var where_object = {
+		where: Object.assign({}, ...where_params),
+		order: orderParams,
+		limit: limit,
+		attributes: STANDARD_USER_ATTR
+	};
+	User.scope(["defaultScope", "emails"]).findAll(where_object).then(users => {
+		if(users){
+			return Promise.all(users.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
+				users.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
+				res.json(users);
+			});
+		}
+		else{
+			res.status(404).json({error: "Not Found", message: "User not found"})
+		}
+	}).catch(error => {
+		res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
+	});
 });
 
 
@@ -364,7 +439,8 @@ userRouter.post('/follow', [
   }
   User.findById(followee_id, {
     include: [
-        {association: User.Tokens}
+        {association: User.Tokens},
+        {association: User.userEmail},
     ]
   }).then(followee => {
     if (followee) {
@@ -466,7 +542,7 @@ userRouter.get('/followers/:user_id', function (req, res) {
             }).then(followers => {
               Promise.all(followers.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
                 followers.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-                res.json(removeEmpty(followers));
+                res.json(followers);
               });
             });
           }) // followshipt.findAll
@@ -500,7 +576,7 @@ userRouter.get('/followees/:user_id', function (req, res) {
             }).then(followees => {
               Promise.all(followees.map(x => getProfileImage(x.dataValues["user_id"]))).then(result => {
                 followees.map((elem, index) => elem.dataValues["profile_image"] = result[index]);
-                res.json(removeEmpty(followees));
+                res.json(followees);
               });
             });
           }) // followshipt.findAll
@@ -533,7 +609,7 @@ userRouter.post('/profile_images/', UploadService.middleware('image'), [
                 throw new Error('Image exist for current user');
             }
             return UploadService.upload(req.file, 'users').then(({file: image}) => {
-                Object.assign(req.body, {image});
+                Object.assign(req.body, {image, createdAt: new Date().toLocaleString(), updatedAt: new Date().toLocaleString()});
                 return ProfileImage.create(req.body)
                     .then((profile) => {
                         res.json(profile.toJSON())
@@ -669,41 +745,48 @@ userRouter.put('/users',
             .isBoolean()
             .withMessage('Field "custom_notifications" must be boolean.')
     ],
+	validateSchoolEmail,
     function (req, res) {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(422).json({errors: errors.array()});
         }
-        const userDoc = res.user || User.findById(parseInt(req.auth.user_id)).then((user) => {
+        const userDoc = res.user || User.scope([`defaultScope`, `emails`]).findById(parseInt(req.auth.user_id)).then((user) => {
             if (!user) {
                 return Promise.reject(new Error('User not found'));
             }
             return user;
         });
 
-    userDoc.then((user) => {
-        if (
-            req.body.not_answers_notifications
-            || req.body.follows_you_notifications
-            || req.body.custom_notifications
-        ) {
-            Object.assign(req.body, {
-              all_notifications: false
-            });
-        }
-        return user.update(req.body).then((userUpdated) => {
-            res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
-        });
-    }).catch((err) => {
-        if (err.message === 'Validation error') {
-            const errors = err.errors.map(err => ({
-                param: err.path,
-                msg: format.messageValidate(err, err.path)
-            }));
-            const status = 422;
-            return res.status(status).json({errors});
-        }
-        res.status(500).json({error: 'Error', message: 'Some error.'});    });
+		userDoc.then((user) => {
+			if (
+				req.body.not_answers_notifications
+				|| req.body.follows_you_notifications
+				|| req.body.custom_notifications
+			) {
+				Object.assign(req.body, {
+				  all_notifications: false
+				});
+			}
+
+			if(req.body.email && req.body.email !== user.email){
+				// if user changes email, he have to re-verify it once more
+				req.body.verify = false;
+			}
+
+			return user.update(req.body).then((userUpdated) => {
+				res.status(200).json(omit(userUpdated.toJSON(), EXCLUDE_USER_ATTR));
+			});
+		}).catch((err) => {
+			if (err.message === 'Validation error') {
+				const errors = err.errors.map(err => ({
+					param: err.path,
+					msg: format.messageValidate(err, err.path)
+				}));
+				const status = 422;
+				return res.status(status).json({errors});
+			}
+			res.status(500).json({error: 'Error', message: 'Some error.'});    });
 });
 
 userRouter.delete('/users/:id', function (req, res) {
@@ -850,46 +933,61 @@ userRouter
                 res.status(status).json({error: 'Error', message});
             });
     })
-    .put([
-        check('verifyToken').custom((value, {req}) => {
+    .put(
+        [ check('verifyToken').custom((value, {req}) => {
             if (value) {
                 return token.verify(value).then(() => {
                     req.verifyToken = value;
                 });
             }
-        })
-    ], function (req, res) {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(422).json({errors: errors.array()});
-        }
-        User.findOne({
-            where: {
-                verify_token: req.verifyToken,
-                verify: false,
-            }
-        })
-            .then(function (user) {
-                if (!user) {
-                    throw new Error('User was verify');
-                }
-                return user.update(model.formattingValue({
-                    verifyToken: null,
-                    verify: true,
-                    balance: user.balance + 50
-                })).then((user) => {
-                    res.json(omit(user.toJSON(), EXCLUDE_USER_ATTR));
-                });
-            })
-            .catch(function (error) {
-                let message = 'Some error.';
-                let status = 500;
-                if (error.name === 'Error') {
-                    message = error.message;
-                    status = 400;
-                }
-                res.status(status).json({error: 'Error', message});
+        })],
+
+        (req, res) => {
+
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+            const findUserByToken = User.findOne({
+                where: { verify_token: req.verifyToken, verify: false }
             });
+            const findEmailByToken = userEmailsService.getUnverifiedEmailByVerifyToken(req.verifyToken);
+
+            Promise.all([ findUserByToken, findEmailByToken ])
+                .then(async ([ userEntity, emailEntity ]) => {
+
+                    if (!userEntity && !emailEntity)
+                        throw new Error('No email or user found for this token');
+
+                    if(!userEntity){
+                        userEntity = await User.findById(emailEntity.userId);
+                    }else{
+                        await userEntity.update({
+                            verifyToken: null,
+                            verify: true,
+                        })
+                    }
+
+                    if( emailEntity ){
+                        await emailEntity.update({verify: true});
+                    }
+
+                    await userEntity.update({
+                        balance: userEntity.balance + 50
+                    });
+
+                    const userForResponse = await User.scope([`defaultScope`, `emails`]).findById(emailEntity.userId);
+                    res.json(omit(userForResponse.toJSON(), EXCLUDE_USER_ATTR));
+                })
+                .catch(error => {
+                    let message = 'Some error.';
+                    let status = 500;
+                    if (error.name === 'Error') {
+                        message = error.message;
+                        status = 400;
+                    }
+                    console.error(error);
+                    res.status(status).json({ error: 'Error', message });
+                });
     });
 
 userRouter

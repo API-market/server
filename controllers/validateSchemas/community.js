@@ -24,6 +24,10 @@ class CommunityValidate {
                 description: Joi
                     .string()
                     .required(),
+				allowedDomains: Joi
+					.array()
+					.items(Joi.string().required())
+					.optional(),
                 image: Joi
                     .object()
                     .keys({
@@ -48,8 +52,8 @@ class CommunityValidate {
         return requestValidator(Joi
             .object()
             .keys({
-                id: Joi
-                    .string()
+                communityId: Joi
+                    .number()
                     .required(),
                 name: Joi
                     .string()
@@ -57,6 +61,10 @@ class CommunityValidate {
                 description: Joi
                     .string()
                     .required(),
+				allowedDomains: Joi
+					.array()
+					.items(Joi.string().required())
+					.optional(),
                 image: Joi
                     .object()
                     .label('"image" must be file')

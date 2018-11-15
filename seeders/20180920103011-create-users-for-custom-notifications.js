@@ -23,10 +23,11 @@ module.exports = {
                         updatedAt: new Date(),
 
                     },
-                ]);
-                return ProfileImage.upsert({
-                    user_id: user.id,
-                    image: 'd335853c84e28984997b7c7e_logo.png'
+                ], {returning: true}).then((user) => {
+                    return ProfileImage.upsert({
+                        user_id: user[0].id,
+                        image: 'd335853c84e28984997b7c7e_logo.png'
+                    });
                 });
             }
         });

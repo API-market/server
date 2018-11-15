@@ -35,40 +35,74 @@ module.exports = (sequelize, DataTypes) => {
         },
         creator_id: {
             type: DataTypes.INTEGER,
-        }
+        },
+
+		allowedDomains: {
+            type: DataTypes.STRING,
+			get: function () {
+				if (this.getDataValue('allowedDomains')) return JSON.parse(this.getDataValue('allowedDomains'));
+				else return null;
+			},
+			set: function (val) {
+				return this.setDataValue('allowedDomains', JSON.stringify(val));
+			}
+        },
+
     }, {
         schema: 'communities',
         tableName: 'community',
         timestamps: true,
-		updatedAt: 'updated_at',
-		createdAt: 'created_at',
-		paranoid: true,
+        updatedAt: 'updated_at',
+        createdAt: 'created_at',
+        paranoid: true,
     });
     CommunitiesCommunity.associate = (models) => {
         CommunitiesCommunity.belongsTo(models.users, {foreignKey: 'creator_id'});
         CommunitiesCommunity.belongsTo(models.countParticipantView, {foreignKey: 'id', as: 'members'});
         CommunitiesCommunity.belongsTo(models.communityCountAnswersView, {foreignKey: 'id', as: 'answers'});
+        CommunitiesCommunity.belongsTo(models.communityCountPollsView, {foreignKey: 'id', as: 'polls'});
     };
     CommunitiesCommunity.methods = (models, _, db) => {
         CommunitiesCommunity.getList = (query, {order, user_id}) => {
-            return CommunitiesCommunity.scope('defaultScope', 'relatedData').findAll({
-                attributes: Object.keys(CommunitiesCommunity.attributes)
-                    .filter(e => e !== 'creator_id')
-                    .concat([[
-                        sequelize.literal(`(
+            return CommunitiesCommunity
+                .scope(['defaultScope', 'relatedData'])
+                .findAll({
+                    attributes: Object.keys([])
+                        .concat([sequelize.literal('DISTINCT "community"."id"')])
+                        .filter(e => e !== 'creator_id')
+                        .concat([[
+                            sequelize.literal(`(
                             SELECT CASE WHEN count(c_cu.community_id) > 0 THEN TRUE ELSE FALSE END
                             FROM communities.community_users AS c_cu
                             WHERE c_cu.user_id = ${user_id} 
                             AND community.id = c_cu.community_id
                             )`), 'is_joined'
-                    ]]),
-                order: order || [['id', 'desc']]
-            });
+                        ]]).concat(Object.keys(CommunitiesCommunity.attributes)),
+                    order: order || [['id', 'desc']]
+                });
+        };
+
+        CommunitiesCommunity.getOne = (id, user_id) => {
+            return CommunitiesCommunity
+                .scope(['defaultScope', 'relatedData'])
+                .findById(id, {
+                    attributes: Object.keys([])
+                        .concat([sequelize.literal('DISTINCT "community"."id"')])
+                        .filter(e => e !== 'creator_id')
+                        .concat([[
+                            sequelize.literal(`(
+                            SELECT CASE WHEN count(c_cu.community_id) > 0 THEN TRUE ELSE FALSE END
+                            FROM communities.community_users AS c_cu
+                            WHERE c_cu.user_id = ${user_id} 
+                            AND community.id = c_cu.community_id
+                            )`), 'is_joined'
+                        ]]).concat(Object.keys(CommunitiesCommunity.attributes)),
+                });
         };
     };
     CommunitiesCommunity.formatter = (models, _) => {
         CommunitiesCommunity.formatData = (data) => {
-            return _.pick(data, ['name', 'description', 'creator_id']);
+            return _.pick(data, ['name', 'description', 'creator_id', 'allowedDomains']);
         };
         CommunitiesCommunity.formatResponse = (data) => {
             if (data instanceof Array) {
@@ -80,8 +114,8 @@ module.exports = (sequelize, DataTypes) => {
             return _.omit(data, ['updated_at']);
         };
     };
-    CommunitiesCommunity.scopes = (models, sequelize) => {
-    	CommunitiesCommunity.addScope('relatedData', {
+	CommunitiesCommunity.scopes = (models, sequelize) => {
+		CommunitiesCommunity.addScope('relatedData', {
 			include: [
 				{
 					model: models.users,
@@ -98,6 +132,11 @@ module.exports = (sequelize, DataTypes) => {
 					model: models.communityCountAnswersView,
 					as: 'answers',
 					attributes: ['count_answers', 'rank']
+				},
+				{
+					model: models.communityCountPollsView,
+					as: 'polls',
+					attributes: ['count_polls'],
 				}
 			],
 		})

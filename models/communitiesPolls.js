@@ -58,6 +58,7 @@ module.exports = (sequelize, DataTypes) => {
 		timestamps: true,
 		updatedAt: 'updated_at',
 		createdAt: 'created_at',
+		paranoid: true,
 		scopes: {
 			community: () => ({
 				include: [
@@ -77,20 +78,28 @@ module.exports = (sequelize, DataTypes) => {
 						attributes: [`id`]
 					}
 				]
-			})
+			}),
+
+			participants: () => ({
+				include: [{
+					model: sequelize.models.communityPollCountAnswersView, as: 'participants',
+				}]
+			}),
+
 		}
 	});
 
 	CommunitiesPolls.associate = function (models) {
 		CommunitiesPolls.belongsTo(models.users, {as: 'user', foreignKey: 'creator_id'});
 		CommunitiesPolls.belongsTo(models.community, {as: 'community', foreignKey: 'community_id'});
+		CommunitiesPolls.belongsTo(models.communityPollCountAnswersView, {as: 'participants', foreignKey: 'id'});
 	};
 
 	CommunitiesPolls.methods = (models, _, db) => {
 		const attributes = Object.keys(_.omit(CommunitiesPolls.attributes, ['community_id']));
 		CommunitiesPolls.getList = ({where}, {order}) => {
 			return CommunitiesPolls
-			.scope(['community', 'user'])
+			.scope(['community', 'user', 'participants'])
 			.findAll({
 				where,
 				attributes,
@@ -99,7 +108,7 @@ module.exports = (sequelize, DataTypes) => {
 		};
 		CommunitiesPolls.getOne = ({where}, {}) => {
 			return CommunitiesPolls
-			.scope(['community', 'user'])
+			.scope(['community', 'user', 'participants'])
 			.findOne({
 				where,
 				attributes,
@@ -126,6 +135,11 @@ module.exports = (sequelize, DataTypes) => {
 						: process.env.S3_DEFAULT_PROFILE_IMAGE || "https://s3-us-west-2.amazonaws.com/lumeos/profile_default_image.png"
 				;
 				delete data[`user`];
+
+				data[`participant_count`] = data[`participants`] && data[`participants`][`count_answers`]
+					? parseInt(data[`participants`][`count_answers`], 10)
+					: 0;
+				delete data[`participants`];
 
 				return data;
 			};
