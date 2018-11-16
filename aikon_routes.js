@@ -22,79 +22,55 @@
 //  IN THE SOFTWARE.
 //
 
-
-const { ApiMarketClient } = require('@apimarket/apimarket');
 const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
 const jwtdecode = require('jwt-decode');
-// NOTE You'll need a config file... This can be downloaded from the api.market after licensing the OREID API
-const config = require("./apimarket_config.json");
 
+//Load settings from file
+var settings = require('./.env.json');
+const APP_ID = settings.APP_ID; //This is provided after you register your app with ORE ID
+var CALLBACK = settings.CALLBACK; // The url called by the server when login flow is finished - must match one of the callback strings listed in the App Registration
+var PROVIDER = settings.PROVIDER; // ('facebook', 'google', 'twitter', etc.) - If provided, will start the login flow automatically for this provider 
+var ENVIRONMENT = settings.ENVIRONMENT;  // ('prod', 'staging', or 'dev') - If this setting is wrong, you'll get an invalid_token error e.g. `state` does not match
+var OREID_URI = settings.OREID_URI; // HTTP Address of OREID server
+var BACKGROUND_COLOR = settings.BACKGROUND_COLOR; // Background color shown during login flow 
 
+//Configure and connect to the apimarketclient
+const { ApiMarketClient } = require('@apimarket/apimarket');
+const config = require("./apimarket_config.json"); // You'll need a config file... This can be downloaded from api.market after licensing the OREID API
 const apimarketClient = new ApiMarketClient(config);
 apimarketClient.connect();
 
-const ORE_API_NAME_AUTH = "exchange.openrights.id.auth";
-const ORE_API_NAME_USER = "exchange.openrights.id.user";
-const CLAIM_BASE_URI = "https://id.openrights.exchange";
-const APP_ID = "68aab02c-505c-4eeb-a355-bbaa8cfa2597"; //This is provided after you register your app with OREID
+//Names of the OREID api endpoints (used by apimarketClient)
+const ORE_API_NAME_APPTOKEN = "com.aikon.oreid.appToken";
+const ORE_API_NAME_USERTOKEN = "com.aikon.oreid.userToken";
+const ORE_API_NAME_USER = "com.aikon.oreid.user";
+const CLAIM_BASE_URI = "https://oreid.aikon.com";
 
-var CALLBACK = `https://callback.sampleapp.com`;
-var WEB_URI;
-var PROVIDER = 'facebook'; //will start the Facebook login flow automatically
+const app = express.Router();
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
-//IMPORTANT: Uncomment the correct line below for prod, staging, or dev
-//If this setting is wrong, you'll get an invalid_token error e.g. `state` does not match
-
-// const environment = 'prod';      //Production
-// const environment = 'staging';   //Staging - Use this value for testing your app flow
-const environment = 'staging';          // Local dev
-
-switch (environment) {
-  case 'prod':
-    WEB_URI = "https://id.openrights.exchange";
-    break;
-  case 'staging':
-    WEB_URI = "https://id-staging.openrights.exchange";
-    break;
-  case 'dev':
-    WEB_URI = "http://localhost:3000";
-    break;
-}
-
-
-var aikonRouter = express.Router();
-
-aikonRouter.use('/auth', async function(req, res) {
-  //AUTH endpoint
-  console.log("Step 1")
+//AUTH endpoint
+app.use('/authInfo', async function(req, res) {
   var params = {
-    appId: APP_ID
+    appId: APP_ID,
+    env: ENVIRONMENT
   };
-  console.log("Step 2")
-  //add 'env' param for ORE to know which endpoint to use
-  if(environment != 'prod') {
-    params.env = environment;
-  }
-  console.log("Step 3")
+
   try {
-    console.log(ORE_API_NAME_AUTH)
-    const response = await apimarketClient.fetch(ORE_API_NAME_AUTH, params);
-    console.log("Step 4")
-    const { authToken } = response;
-    console.log(authToken)
-    console.log("Step 5")
+    const response = await apimarketClient.fetch(ORE_API_NAME_APPTOKEN, params);
+    const { appAccessToken } = response;
     const returnPayload = {
-      access_token: authToken,
+      app_access_token: appAccessToken,
       callback_url: CALLBACK,
-      oreid_uri: WEB_URI,
+      oreid_uri: OREID_URI,
       provider: PROVIDER,
-      oreid_auth_url: `${WEB_URI}/auth#access_token=${authToken}?provider=${PROVIDER}?callbackUrl=${encodeURIComponent(CALLBACK)}`
+      backgroundColor: BACKGROUND_COLOR,
+      oreid_auth_url: `${OREID_URI}/auth#access_token=${appAccessToken}?provider=${PROVIDER}?callbackUrl=${encodeURIComponent(CALLBACK)}?backgroundColor=${BACKGROUND_COLOR}`
     };
-    console.log("Step 6")
-    console.log(returnPayload);
     res.status(200).json(returnPayload);
   }
   catch (error) {
@@ -102,47 +78,40 @@ aikonRouter.use('/auth', async function(req, res) {
   }
 });
 
-aikonRouter.get('/user', async function (req, res) {
-  // TODO Verify the access token has a valid signature
-  const { access_token } = req.query;
+//USER endpoint
+app.use('/user', async function(req, res) {
+    // TODO Verify the access token has a valid signature
+    const { access_token } = req.query;
 
-  if(!access_token) {
-    res.status(400, 'Missing a user access_token');
-  }
+    if(!access_token) {
+      res.status(400).json({error:`Missing a user access_token`});
+    }
 
- try {
-   let accessToken = jwtdecode(access_token);
-   let account = accessToken[`${CLAIM_BASE_URI}/account`];
+   try {
+     let accessToken = jwtdecode(access_token);
+     let account = accessToken[`${CLAIM_BASE_URI}/account`];
 
-   if(!account) {
-    res.status(400, 'Missing account parameter in access_token');
+     if(!account || account === undefined) {
+      res.status(400).json({error:`Missing account parameter in access_token`});
+     }
+
+     var params = {
+        appId: APP_ID,
+        account: account,
+        env: ENVIRONMENT
+     };
+
+     const response = await apimarketClient.fetch(ORE_API_NAME_USER, params);
+     const returnPayload = {
+       ...response,
+       ...accessToken
+     };
+
+     res.status(200).json(returnPayload);
+
+   } catch (error) {
+      console.error("Error:", error);
    }
-
-   var params = {
-      appId: APP_ID,
-      account: account
-   };
-
-   //add 'env' param for ORE to know which endpoint to use
-   if(environment != 'prod') {
-     params.env = environment;
-   }
-
-   const response = await apimarketClient.fetch(ORE_API_NAME_USER, params);
-   const returnPayload = {
-     ...response,
-     ...accessToken
-   };
-
-   res.status(200).json(returnPayload);
-
- } catch (error) {
-    console.error("Error:", error);
- }
 });
-// 
-// aikonRouter.get('/send/push', function (req, res) {});
-
 
 module.exports = aikonRouter;
-
