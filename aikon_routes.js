@@ -48,13 +48,13 @@ const ORE_API_NAME_USERTOKEN = "com.aikon.oreid.userToken";
 const ORE_API_NAME_USER = "com.aikon.oreid.user";
 const CLAIM_BASE_URI = "https://oreid.aikon.com";
 
-const app = express.Router();
+const aikonRouter = express.Router();
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+aikonRouter.use(bodyParser.json());
+aikonRouter.use(bodyParser.urlencoded({ extended: false }));
 
 //AUTH endpoint
-app.use('/authInfo', async function(req, res) {
+aikonRouter.use('/authInfo', async function(req, res) {
   var params = {
     appId: APP_ID,
     env: ENVIRONMENT
@@ -79,7 +79,7 @@ app.use('/authInfo', async function(req, res) {
 });
 
 //USER endpoint
-app.use('/user', async function(req, res) {
+aikonRouter.use('/user', async function(req, res) {
     // TODO Verify the access token has a valid signature
     const { access_token } = req.query;
 
