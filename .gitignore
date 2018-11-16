@@ -14,3 +14,7 @@ export_credentials
 *-lock.json
 *.log
 *.zip
+
+
+apimarket_config.json
+.env.json

@@ -54,7 +54,10 @@ app.use('/v' + VERSION, function (req, res, next) {
     || req.url.match(/\/versions/)
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
-    || req.url.endsWith("/faqs/")) {
+    || req.url.endsWith("/faqs/")
+    || req.path.endsWith("/authInfo")
+    || req.path.endsWith("/user")
+    || req.path.endsWith("/user/")) {
     next()
   } else {
       try {
@@ -81,6 +84,7 @@ basicRoutes = require("./basic_routes.js");
 userRoutes = require("./user_routes.js");
 pollRoutes = require("./poll_routes.js");
 notificationsRoutes = require("./notifications_routes");
+aikonRoutes = require("./aikon_routes")
 
 app.use('/app', (req, res) => {
     if (req._parsedUrl.search) {
@@ -96,6 +100,7 @@ app.use('/v' + VERSION, basicRoutes);
 app.use('/v' + VERSION, userRoutes);
 app.use('/v' + VERSION, pollRoutes);
 app.use('/v' + VERSION, notificationsRoutes);
+app.use('/v' + VERSION, aikonRoutes);
 app.use(require('./routes'));
 
 /**
