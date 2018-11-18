@@ -247,6 +247,24 @@ const addProfileImage = function (res, user, exclude) {
     });
 };
 
+userRouter.get('/users/eos/:eos', function (req, res) {
+  const eosAcct = req.params["eos"];
+  User.findOne({
+          where: { eos: eosAcct },
+          attributes: STANDARD_USER_ATTR,
+  }).then(user => {
+    if (user) {
+        res.json(removeEmpty(user));
+    } else {
+      console.log("error: " + error);
+      res.status(404).json({error: "Not Found", message: "User not found"})
+    }
+  }).catch(error => {
+    console.log("error: " + error);
+    res.status(404).json({error: "Not Found", message: "Users table doesn't exist"})
+  });
+});
+
 userRouter.get('/users/:id', function (req, res) {
   const userId = parseInt(req.params["id"]);
   User.findById(userId, {
