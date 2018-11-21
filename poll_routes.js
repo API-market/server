@@ -68,7 +68,7 @@ function updatePollPrice(poll) {
 }
 
 pollRouter.post('/polls', UploadService.middleware('avatar'), [
-    check("question").not().isEmpty().trim().withMessage("Field 'question' cannot be empty"),
+    check("question").isLength({ max: 255 }).not().isEmpty().trim().withMessage("Field 'question' cannot be empty"),
     check("answers").isArray().withMessage("Field 'answers' must be an array."),
     check("tags").optional().isArray().withMessage("Field 'tags' must be an array."),
     check("creator_id").custom((value, {req}) => {
@@ -104,7 +104,7 @@ pollRouter.post('/polls', UploadService.middleware('avatar'), [
         });
       }).catch((error) => {
           console.log(error);
-          res.status(500).json({error: "Error", message: "Some error."})
+          res.status(500).json({error: error, message: "Some error."})
       })
   });
 

@@ -48,8 +48,8 @@ class CommunityValidate {
         return requestValidator(Joi
             .object()
             .keys({
-                id: Joi
-                    .string()
+                communityId: Joi
+                    .number()
                     .required(),
                 name: Joi
                     .string()

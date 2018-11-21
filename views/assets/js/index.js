@@ -90,9 +90,25 @@ $(document).ready(() => {
             return this;
         }
 
+        initHelper() {
+            $('[data-helper]').on({
+                click() {
+                    const $helper = $('.helper');
+                    $helper.addClass('show');
+                    $helper.html($('[data-helper]').data('helper'));
+                    setTimeout(() => {
+                        $helper.removeClass('show');
+                    }, 2000)
+                }
+            });
+
+            return this;
+        }
+
         init() {
             this.deleteConfirm()
                 .allSelected()
+                .initHelper()
                 .initTooltip()
                 .sendNotifications();
         }

@@ -1,6 +1,6 @@
 const {community, communityUsers, sequelize} = require('lumeos_models');
 const {model} = require('lumeos_utils');
-const {UploadS3Service} = require('lumeos_services');
+const {UploadService, UploadS3Service} = require('lumeos_services');
 const {errors} = require('lumeos_utils');
 
 class CommunityController {
@@ -31,7 +31,11 @@ class CommunityController {
     create(req, res, next) {
         return sequelize.transaction((transaction) => {
             Object.assign(req.body, {creator_id: req.auth.user_id});
-            return community.create(community.formatData(req.body), {transaction})
+            return community.findOne({where: {name: req.body.name}})
+				.then(_community => {
+					if(_community) throw errors.badRequest(`Community '${req.body.name}' already exists!`);
+					return community.create(community.formatData(req.body), {transaction})
+				})
                 .then((communityNew) => {
                     return communityUsers.create({
                         community_id: communityNew.id,
@@ -41,7 +45,7 @@ class CommunityController {
                     });
                 })
                 .then((communityNew) => {
-                    return UploadS3Service
+                    return UploadService
                         .upload(req.body.image, 'community')
                         .then(({file}) => {
                             if (file) {
@@ -59,8 +63,9 @@ class CommunityController {
     }
 
     update(req, res, next) {
+        const {communityId} = req.body;
         return sequelize.transaction((transaction) => {
-            return community.findById(req.body.id)
+            return community.findById(communityId)
                 .then((communityEntity) => {
                     if (!communityEntity) {
                         throw errors.notFound();
@@ -71,7 +76,7 @@ class CommunityController {
                     let oldImage = communityEntity.image;
                     return communityEntity.update(community.formatData(req.body), {transaction})
                         .then((communityUpdated) => {
-                            return UploadS3Service
+                            return UploadService
                                 .upload(req.body.image, 'community')
                                 .then(({file}) => {
                                     if (!file) {
@@ -159,7 +164,9 @@ class CommunityController {
 	}
 
 	get(req, res, next) {
-		return community.scope('defaultScope', 'relatedData').findById(req.params.communityId)
+		const {user_id} = req.auth;
+
+		return community.getOne(req.params.communityId, user_id)
 		.then(communityEntity => {
 			if (!communityEntity) {
 				throw errors.notFound('Community not found');

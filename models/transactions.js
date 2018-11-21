@@ -1,7 +1,5 @@
 'use strict';
 
-const bcrypt = require('bcrypt');
-
 module.exports = (sequelize, DataTypes) => {
     const Transactions = sequelize.define('transactions', {
         poll_id: DataTypes.INTEGER,

@@ -1,8 +1,9 @@
 'use strict';
 const {migration} = require('lumeos_utils');
-const {count_participant, poll_answers, community_count_answers, constansts} = require('../migrations_views');
+const db = require('lumeos_models');
+const {count_participant, poll_answers, community_count_answers, constants} = require('../migrations_views');
 
-const schemaName = 'communities';
+const schemaName = db.schemaNames.communities;
 module.exports = {
     up: (queryInterface, Sequelize) => {
         return queryInterface.createSchema(schemaName)
@@ -76,7 +77,7 @@ module.exports = {
                     schema: schemaName
                 });
             }).then(() => {
-                return migration.createView(queryInterface, constansts.countParticipant, count_participant(), {schema: schemaName});
+                return migration.createView(queryInterface, constants.countParticipant, count_participant(), {schema: schemaName});
             }).then(() => {
                 return queryInterface.createTable('polls', {
                     id: {
@@ -151,18 +152,18 @@ module.exports = {
                     type: 'unique',
                 });
             }).then(() => {
-                return migration.createView(queryInterface, constansts.pollAnswers, poll_answers(), {schema: schemaName});
+                return migration.createView(queryInterface, constants.pollAnswers, poll_answers(), {schema: schemaName});
             }).then(() => {
-                return migration.createView(queryInterface, constansts.communityCountAnswers, community_count_answers(), {schema: schemaName});
+                return migration.createView(queryInterface, constants.communityCountAnswers, community_count_answers(), {schema: schemaName});
             });
     },
 
     down: (queryInterface) => {
-        return migration.dropView(queryInterface, constansts.communityCountAnswers, null, {schema: schemaName})
+        return migration.dropView(queryInterface, constants.communityCountAnswers, null, {schema: schemaName})
             .then(() => {
-                return migration.dropView(queryInterface, constansts.pollAnswers, null, {schema: schemaName});
+                return migration.dropView(queryInterface, constants.pollAnswers, null, {schema: schemaName});
             }).then(() => {
-                return migration.dropView(queryInterface, constansts.countParticipant, null, {schema: schemaName});
+                return migration.dropView(queryInterface, constants.countParticipant, null, {schema: schemaName});
             }).then(() => {
                 return queryInterface.dropTable('polls_answers', {schema: schemaName});
             }).then(() => {

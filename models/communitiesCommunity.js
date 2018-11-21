@@ -40,30 +40,52 @@ module.exports = (sequelize, DataTypes) => {
         schema: 'communities',
         tableName: 'community',
         timestamps: true,
-		updatedAt: 'updated_at',
-		createdAt: 'created_at',
-		paranoid: true,
+        updatedAt: 'updated_at',
+        createdAt: 'created_at',
+        paranoid: true,
     });
     CommunitiesCommunity.associate = (models) => {
         CommunitiesCommunity.belongsTo(models.users, {foreignKey: 'creator_id'});
         CommunitiesCommunity.belongsTo(models.countParticipantView, {foreignKey: 'id', as: 'members'});
         CommunitiesCommunity.belongsTo(models.communityCountAnswersView, {foreignKey: 'id', as: 'answers'});
+        CommunitiesCommunity.belongsTo(models.communityCountPollsView, {foreignKey: 'id', as: 'polls'});
     };
     CommunitiesCommunity.methods = (models, _, db) => {
         CommunitiesCommunity.getList = (query, {order, user_id}) => {
-            return CommunitiesCommunity.scope('defaultScope', 'relatedData').findAll({
-                attributes: Object.keys(CommunitiesCommunity.attributes)
-                    .filter(e => e !== 'creator_id')
-                    .concat([[
-                        sequelize.literal(`(
+            return CommunitiesCommunity
+                .scope(['defaultScope', 'relatedData'])
+                .findAll({
+                    attributes: Object.keys([])
+                        .concat([sequelize.literal('DISTINCT "community"."id"')])
+                        .filter(e => e !== 'creator_id')
+                        .concat([[
+                            sequelize.literal(`(
                             SELECT CASE WHEN count(c_cu.community_id) > 0 THEN TRUE ELSE FALSE END
                             FROM communities.community_users AS c_cu
                             WHERE c_cu.user_id = ${user_id} 
                             AND community.id = c_cu.community_id
                             )`), 'is_joined'
-                    ]]),
-                order: order || [['id', 'desc']]
-            });
+                        ]]).concat(Object.keys(CommunitiesCommunity.attributes)),
+                    order: order || [['id', 'desc']]
+                });
+        };
+
+        CommunitiesCommunity.getOne = (id, user_id) => {
+            return CommunitiesCommunity
+                .scope(['defaultScope', 'relatedData'])
+                .findById(id, {
+                    attributes: Object.keys([])
+                        .concat([sequelize.literal('DISTINCT "community"."id"')])
+                        .filter(e => e !== 'creator_id')
+                        .concat([[
+                            sequelize.literal(`(
+                            SELECT CASE WHEN count(c_cu.community_id) > 0 THEN TRUE ELSE FALSE END
+                            FROM communities.community_users AS c_cu
+                            WHERE c_cu.user_id = ${user_id} 
+                            AND community.id = c_cu.community_id
+                            )`), 'is_joined'
+                        ]]).concat(Object.keys(CommunitiesCommunity.attributes)),
+                });
         };
     };
     CommunitiesCommunity.formatter = (models, _) => {
@@ -80,8 +102,8 @@ module.exports = (sequelize, DataTypes) => {
             return _.omit(data, ['updated_at']);
         };
     };
-    CommunitiesCommunity.scopes = (models, sequelize) => {
-    	CommunitiesCommunity.addScope('relatedData', {
+	CommunitiesCommunity.scopes = (models, sequelize) => {
+		CommunitiesCommunity.addScope('relatedData', {
 			include: [
 				{
 					model: models.users,
@@ -98,6 +120,11 @@ module.exports = (sequelize, DataTypes) => {
 					model: models.communityCountAnswersView,
 					as: 'answers',
 					attributes: ['count_answers', 'rank']
+				},
+				{
+					model: models.communityCountPollsView,
+					as: 'polls',
+					attributes: ['count_polls'],
 				}
 			],
 		})
