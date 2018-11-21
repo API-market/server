@@ -48,28 +48,31 @@ const ORE_API_NAME_USERTOKEN = "com.aikon.oreid.userToken";
 const ORE_API_NAME_USER = "com.aikon.oreid.user";
 const CLAIM_BASE_URI = "https://oreid.aikon.com";
 
-const app = express.Router();
+const aikonRouter = express.Router();
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+aikonRouter.use(bodyParser.json());
+aikonRouter.use(bodyParser.urlencoded({ extended: false }));
 
 //AUTH endpoint
-app.use('/authInfo', async function(req, res) {
+aikonRouter.use('/auth-info', async function(req, res) {
   var params = {
-    appId: APP_ID,
+    app_id: APP_ID,
     env: ENVIRONMENT
   };
 
+  console.log(`params:`,params)
+
   try {
     const response = await apimarketClient.fetch(ORE_API_NAME_APPTOKEN, params);
+    console.log(`apimarketClient ORE_API_NAME_APPTOKEN response: `, response)
     const { appAccessToken } = response;
     const returnPayload = {
-      app_access_token: appAccessToken,
-      callback_url: CALLBACK,
-      oreid_uri: OREID_URI,
+      appAccessToken: appAccessToken,
+      callbackUrl: CALLBACK,
+      oreidUri: OREID_URI,
       provider: PROVIDER,
       backgroundColor: BACKGROUND_COLOR,
-      oreid_auth_url: `${OREID_URI}/auth#access_token=${appAccessToken}?provider=${PROVIDER}?callbackUrl=${encodeURIComponent(CALLBACK)}?backgroundColor=${BACKGROUND_COLOR}`
+      oreIdAuthUrl: `${OREID_URI}/auth#app_access_token=${appAccessToken}?provider=${PROVIDER}?callback_url=${encodeURIComponent(CALLBACK)}?background_color=${BACKGROUND_COLOR}`
     };
     res.status(200).json(returnPayload);
   }
@@ -79,32 +82,25 @@ app.use('/authInfo', async function(req, res) {
 });
 
 //USER endpoint
-app.use('/user', async function(req, res) {
+aikonRouter.use('/user', async function(req, res) {
     // TODO Verify the access token has a valid signature
-    const { access_token } = req.query;
+    const { account } = req.query;
 
-    if(!access_token) {
-      res.status(400).json({error:`Missing a user access_token`});
+    if(!account || account === undefined) {
+      res.status(400).json({error:`Missing the account parameter`});
     }
 
    try {
-     let accessToken = jwtdecode(access_token);
-     let account = accessToken[`${CLAIM_BASE_URI}/account`];
-
-     if(!account || account === undefined) {
-      res.status(400).json({error:`Missing account parameter in access_token`});
-     }
 
      var params = {
-        appId: APP_ID,
+        app_id: APP_ID,
         account: account,
         env: ENVIRONMENT
      };
 
      const response = await apimarketClient.fetch(ORE_API_NAME_USER, params);
      const returnPayload = {
-       ...response,
-       ...accessToken
+       ...response
      };
 
      res.status(200).json(returnPayload);

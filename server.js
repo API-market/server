@@ -55,7 +55,7 @@ app.use('/v' + VERSION, function (req, res, next) {
     || req.url.endsWith("/login/")
     || req.url.endsWith("/faqs")
     || req.url.endsWith("/faqs/")
-    || req.path.endsWith("/authInfo")
+    || req.path.endsWith("/auth-info")
     || req.path.endsWith("/user")
     || req.path.endsWith("/user/")) {
     next()
